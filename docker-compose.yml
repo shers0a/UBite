@@ -1,0 +1,19 @@
+# Local development: PostgreSQL only. Run the app with `npm run dev` against it:
+#   docker compose up -d
+#   DATABASE_URL=postgres://ubite:ubite@localhost:5432/ubite npm run dev
+# (Without Docker, the API falls back to an embedded PGlite database in apps/api/.data.)
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ubite
+      POSTGRES_PASSWORD: ubite
+      POSTGRES_DB: ubite
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ubite"]
+      interval: 5s
+      retries: 10
+volumes:
+  pgdata:

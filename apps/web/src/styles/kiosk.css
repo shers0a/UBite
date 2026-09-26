@@ -1,0 +1,76 @@
+/* The wall kiosk — ui_kits/kiosk/index.html and attract.html, filling the tablet's screen instead
+   of a 1280×800 frame. Read from three metres: body 24px and up, rows 32px, the level 132px, no
+   thin weights. Tokens only, except the attract loop's white QR plate, drawn as in the kit. */
+
+.ub-kiosk { position: fixed; inset: 0; background: var(--surface-page); color: var(--text-primary); display: flex; flex-direction: column; overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.ub-kiosk-head { display: flex; align-items: baseline; gap: var(--space-6); padding: 28px 48px 12px; }
+.ub-kiosk-clock { font-size: 34px; font-weight: var(--weight-bold); letter-spacing: -.02em; }
+.ub-kiosk-place { margin-left: auto; font-size: 22px; color: var(--text-secondary); }
+.ub-kiosk-body { flex: 1; padding: 12px 48px; min-height: 0; }
+.ub-kiosk-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 56px; align-content: start; }
+.ub-kiosk-cat { font-size: 22px; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-muted); font-weight: var(--weight-semibold); margin: 10px 0 8px; }
+.ub-kiosk-row { display: flex; justify-content: space-between; gap: var(--space-6); font-size: 32px; font-weight: var(--weight-medium); padding: 7px 0; line-height: 1.15; }
+.ub-kiosk-row span:last-child { font-weight: var(--weight-bold); white-space: nowrap; }
+.ub-kiosk-qr { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); height: 100%; }
+.ub-kiosk-qr-title { font-size: var(--text-display); font-weight: var(--weight-bold); letter-spacing: var(--tracking-display); line-height: 1.05; max-width: 16ch; }
+.ub-kiosk-qr-body { font-size: var(--text-2xl); color: var(--text-secondary); margin-top: 18px; max-width: 22ch; }
+.ub-kiosk-qr-url { font-size: var(--text-2xl); color: var(--accent); margin-top: 22px; font-weight: var(--weight-semibold); }
+.ub-kiosk-qr-box { background: var(--surface-raised); border-radius: var(--radius-lg); padding: var(--space-6); flex: none; }
+.ub-kiosk-full { display: grid; grid-template-columns: 1fr 360px; gap: 40px; }
+.ub-kiosk-vote { display: flex; flex-direction: column; justify-content: center; gap: var(--space-5); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; }
+.ub-kiosk-voteq { font-size: var(--text-2xl); font-weight: var(--weight-bold); letter-spacing: -.02em; }
+.ub-kiosk-faces { display: flex; gap: var(--space-3); }
+.ub-face { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; background: var(--surface-raised); border: 0; border-radius: var(--radius-md); padding: var(--space-5) var(--space-2); color: var(--text-secondary); font: inherit; font-size: var(--text-md); cursor: pointer; min-height: 140px; }
+.ub-face[data-on="true"] { background: var(--accent); color: var(--text-on-accent); }
+.ub-kiosk-thanks { font-size: 22px; color: var(--crowd-low-text); font-weight: var(--weight-semibold); }
+.ub-kiosk-foot { display: flex; align-items: center; gap: var(--space-5); padding: 16px 48px 28px; font-size: var(--text-lg); color: var(--text-muted); }
+.ub-kiosk-dots { display: flex; gap: var(--space-2); }
+.ub-kiosk-dots span { width: 12px; height: 12px; border-radius: 50%; background: var(--border-strong); }
+.ub-kiosk-dots span[data-on="true"] { background: var(--accent); }
+.ub-kiosk-stamp { margin-left: auto; font-size: var(--text-lg); color: var(--status-warning-text); }
+.ub-fadein { animation: ub-k-fade var(--motion-slow) var(--ease-out); }
+@keyframes ub-k-fade { from { opacity: 0; } to { opacity: 1; } }
+.ub-kiosk-empty { display: grid; place-items: center; height: 100%; text-align: center; font-size: var(--text-2xl); color: var(--text-secondary); }
+
+/* The attract loop: one 11-second story for someone walking past at three metres. */
+.ub-attract { position: fixed; inset: 0; overflow: hidden; background: var(--surface-page); color: var(--text-primary); }
+.ub-attract .scene { position: absolute; inset: 0; display: grid; place-items: center; padding: 64px; }
+.ub-attract .in { animation: ub-a-rise 300ms var(--ease-out) both; }
+.ub-attract .in-2 { animation-delay: 80ms; } .ub-attract .in-3 { animation-delay: 160ms; } .ub-attract .in-4 { animation-delay: 240ms; }
+@keyframes ub-a-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.ub-attract .brand { display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center; }
+.ub-attract .brand p { font-size: var(--text-2xl); color: var(--text-secondary); }
+.ub-attract .dishes { width: 100%; display: flex; flex-direction: column; gap: 36px; }
+.ub-attract .dishes h2 { font-size: 56px; font-weight: var(--weight-bold); letter-spacing: var(--tracking-display); }
+.ub-attract .dishes h2 span { color: var(--text-muted); font-weight: var(--weight-medium); font-size: 32px; margin-left: var(--space-4); letter-spacing: 0; }
+.ub-attract .plates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.ub-attract .plate { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-6); display: flex; flex-direction: column; gap: 14px; }
+.ub-attract .plate-img { height: 260px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--surface-sunken); overflow: hidden; }
+.ub-attract .plate-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.ub-attract .plate b { font-size: 32px; font-weight: var(--weight-semibold); line-height: 1.15; }
+.ub-attract .plate span { font-size: var(--text-2xl); font-weight: var(--weight-bold); }
+.ub-attract .qr { display: flex; align-items: center; justify-content: space-between; gap: 64px; width: 100%; }
+.ub-attract .qr h2 { font-size: 84px; font-weight: var(--weight-bold); letter-spacing: -.035em; line-height: 1.02; max-width: 12ch; }
+.ub-attract .qr p { font-size: 32px; color: var(--text-secondary); margin-top: 22px; max-width: 22ch; }
+.ub-attract .qr .url { font-size: 34px; color: var(--accent); font-weight: var(--weight-semibold); margin-top: var(--space-6); }
+.ub-attract .qr-box { border-radius: var(--radius-lg); padding: 26px; flex: none; }
+.ub-attract .progress { position: absolute; left: 64px; right: 64px; bottom: 36px; display: flex; gap: 10px; }
+.ub-attract .progress i { flex: 1; height: 6px; border-radius: 3px; background: var(--border-subtle); overflow: hidden; position: relative; }
+.ub-attract .progress i b { position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+.ub-attract .progress i[data-state="done"] b { transform: scaleX(1); }
+.ub-attract .progress i[data-state="now"] b { animation: ub-a-fill var(--d) linear forwards; }
+@keyframes ub-a-fill { to { transform: scaleX(1); } }
+.ub-attract .corner { position: absolute; top: 36px; left: 64px; display: flex; align-items: center; gap: 14px; font-size: var(--text-xl); color: var(--text-muted); z-index: 2; }
+.ub-attract .runner { position: absolute; bottom: 40px; left: 0; animation: ub-a-run 2000ms linear both; }
+@keyframes ub-a-run { from { transform: translateX(-340px); } to { transform: translateX(110vw); } }
+.ub-attract .qr-left { display: flex; flex-direction: column; align-self: stretch; padding-top: 56px; }
+.ub-attract .qr-spot { margin-top: auto; margin-left: -20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ub-fadein, .ub-attract .in, .ub-attract .runner { animation: none; }
+  .ub-attract .runner { display: none; }
+  .ub-attract .progress i[data-state="now"] b { animation: none; transform: scaleX(1); }
+}
+
+/* The doodle wallpaper, drifting, as on the attract loop. */
+.ub-kiosk { isolation: isolate; }

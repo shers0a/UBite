@@ -1,0 +1,62 @@
+# Production on the UB VM (or any Linux host with Docker): Caddy for HTTPS, the app, PostgreSQL,
+# and — only with the `camera` profile — the vision service next to them (docs/12, docs/23).
+#
+#   cp .env.example .env        # fill in DOMAIN, SESSION_SECRET, SMTP_URL, VAPID_*, …
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js migrate
+#   docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js seed
+#   docker compose -f docker-compose.prod.yml --profile camera up -d vision
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN, e.g. ubite.unibuc.ro}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [app]
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://ubite:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/ubite
+      PUBLIC_URL: https://${DOMAIN}
+      TRUST_PROXY: "1"
+    depends_on:
+      db: { condition: service_healthy }
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ubite
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ubite
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ubite"]
+      interval: 5s
+      retries: 10
+
+  # Counts people in the queue zone from the camera's RTSP stream; posts only numbers.
+  vision:
+    profiles: [camera]
+    build: services/vision
+    restart: unless-stopped
+    environment:
+      VISION_THREADS: "2"
+      VISION_TOKEN: ${VISION_TOKEN:-}
+    command: ["watch", "--source", "${CAMERA_RTSP_URL:-}", "--every", "5",
+              "--post", "http://app:8080/api/vision/observations", "--config", "http://app:8080/api/vision/config"]
+    depends_on: [app]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
