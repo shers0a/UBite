@@ -1,0 +1,6 @@
+# Store text with LF; shell scripts and Dockerfiles must stay LF even in a Windows checkout,
+# because they run on Linux (the UB VM, CI, containers).
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+deploy/Caddyfile text eol=lf

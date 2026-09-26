@@ -1,0 +1,53 @@
+{
+  "name": "ubite",
+  "private": true,
+  "description": "UBite — the University of Bucharest canteen PWA. Workspace root.",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm:dev -w @ubite/api\" \"npm:dev -w @ubite/web\"",
+    "build": "npm run build -w @ubite/web && npm run build -w @ubite/api",
+    "start": "npm run start -w @ubite/api",
+    "test": "npm run test -w @ubite/shared && npm run test -w @ubite/api && npm run test -w @ubite/web",
+    "typecheck": "npm run typecheck -w @ubite/shared && npm run typecheck -w @ubite/api && npm run typecheck -w @ubite/web",
+    "lint": "oxlint -c .oxlintrc.json apps packages && node scripts/check-tokens.mjs",
+    "db:migrate": "npm run migrate -w @ubite/api",
+    "db:seed": "npm run seed -w @ubite/api",
+    "asset": "node scripts/asset.mjs",
+    "assets:batch": "node scripts/asset.mjs batch",
+    "assets:check": "node scripts/check-assets.mjs",
+    "video": "node scripts/render-video.mjs",
+    "style:lock": "node scripts/lock-style.mjs",
+    "mockup": "node scripts/build-mockup.mjs",
+    "ai:start": "node scripts/local-ai.mjs start",
+    "ai:status": "node scripts/local-ai.mjs status",
+    "ai:stop": "node scripts/local-ai.mjs stop",
+    "import:gemini": "node scripts/import-gemini.mjs",
+    "screens": "node scripts/screens.mjs",
+    "e2e": "node scripts/e2e.mjs",
+    "ocr:bench": "tsx scripts/ocr-bench.ts",
+    "vercel:build": "tsx scripts/vercel-build.ts"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.6",
+    "@babel/plugin-transform-block-scoping": "^8.0.5",
+    "@babel/preset-react": "^8.0.1",
+    "@gradio/client": "^2.7.0",
+    "@huggingface/inference": "^4.13.30",
+    "ffmpeg-static": "^5.3.0",
+    "opentype.js": "^2.0.0",
+    "potrace": "^2.1.8",
+    "puppeteer-core": "^25.11.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.34.3",
+    "concurrently": "^10.0.5",
+    "oxlint": "^1.85.0",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}

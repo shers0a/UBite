@@ -1,0 +1,30 @@
+# docs/12: CI on every pull request — typecheck, lint, tests, build. Deploys are manual and never
+# between 11:00 and 17:30 on a weekday.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run assets:check
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: app
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t ubite .

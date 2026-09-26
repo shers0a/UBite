@@ -1,0 +1,37 @@
+# secrets
+.env
+.env.*
+!.env.example
+.private/
+
+# tooling
+node_modules/
+.DS_Store
+Thumbs.db
+
+# raw generator output — only curated files in assets/ are committed
+assets/_raw/
+dist/
+
+# local databases (PGlite) and screenshots
+.data/
+apps/api/.data/
+
+# Vercel CLI: the linked project and the pulled environment (secrets)
+.vercel
+.env*
+!.env.example
+
+# Claude Code: instructions and local settings stay on each machine. Only the design system is
+# shared, because the app builds from it (apps/web/vite.config.ts, Dockerfile).
+CLAUDE.md
+CLAUDE.local.md
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/ubite-design/
+skills-lock.json
+
+# Python
+__pycache__/
+*.pyc
