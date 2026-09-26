@@ -1,5 +1,10 @@
 # HTTPS is mandatory: a PWA will not install without it and push will not work (docs/12).
-{$DOMAIN} {
+# DOMAIN is where the app lives. DOMAIN_ALIASES (optional, space-separated) get certificates too and
+# are sent on to DOMAIN, so the PWA is only ever installed on one origin. The redirect stays
+# temporary while the main domain can still change (sslip.io → ubite.hypha.ro → ubite.unibuc.ro).
+{$DOMAIN} {$DOMAIN_ALIASES} {
+	@alias not host {$DOMAIN}
+	redir @alias https://{$DOMAIN}{uri}
 	encode zstd gzip
 	reverse_proxy app:8080
 	header {

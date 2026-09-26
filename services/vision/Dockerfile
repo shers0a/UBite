@@ -2,7 +2,7 @@
 # Build after `python export_model.py` has produced models/*.onnx.
 #   docker build -t ubite-vision .
 #   docker run --rm --cpus=2 ubite-vision speed --imgsz 640 480 320
-FROM python:3.12-slim
+FROM docker.io/library/python:3.12-slim
 WORKDIR /app
 # Match the CPUs the VM or container actually gets (see counter.py).
 ENV VISION_THREADS=2

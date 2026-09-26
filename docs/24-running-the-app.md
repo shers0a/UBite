@@ -89,6 +89,33 @@ Rules that come from the docs:
 - **Feature flags** in `.env`: `FEATURE_CAMERA`, `FEATURE_LOYALTY`, `FEATURE_WASTE`,
   `FEATURE_PREDICTION` (the typical-hours chart also hides itself in week one).
 
+### On the UB VM: Podman
+
+The ACC-UB VM runs Podman and podman-compose instead of Docker. The compose file runs unchanged, but
+there are three differences:
+
+- **Run it as root** (`sudo -i`). Rootless Podman cannot bind ports 80/443, and its port forwarder
+  hides the client's IP, which the per-IP limits on wait reports need.
+- **Name the services.** podman-compose 1.0 has no `--profile`, so a bare `up` would also try to
+  build the vision service.
+- **Reboots:** `podman-restart.service` brings back containers whose policy is `restart: always`.
+
+```bash
+git clone https://github.com/shers0a/UBite.git /opt/ubite && cd /opt/ubite
+cp .env.example .env && chmod 600 .env   # DOMAIN, DOMAIN_ALIASES, POSTGRES_PASSWORD, SESSION_SECRET, VAPID_*, SMTP_URL
+podman-compose -f docker-compose.prod.yml build app
+podman-compose -f docker-compose.prod.yml up -d db
+podman-compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js migrate
+podman-compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js seed
+podman-compose -f docker-compose.prod.yml up -d db app caddy
+crontab -e                               # 30 3 * * * /opt/ubite/deploy/backup.sh
+```
+
+To update: `git pull`, rebuild `app`, run `migrate` (after a backup), then `up -d app`.
+
+While the final domain is pending, `DOMAIN` is the address that works now and `DOMAIN_ALIASES` lists
+the others. Caddy gets certificates for all of them and sends the aliases to `DOMAIN`.
+
 ### Free hosting: Vercel
 
 The same app runs on Vercel as static files plus one function, with a managed PostgreSQL (Neon,

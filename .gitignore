@@ -13,9 +13,10 @@ Thumbs.db
 assets/_raw/
 dist/
 
-# local databases (PGlite) and screenshots
+# local databases (PGlite) and screenshots; database dumps from deploy/backup.sh
 .data/
 apps/api/.data/
+backups/
 
 # Vercel CLI: the linked project and the pulled environment (secrets)
 .vercel

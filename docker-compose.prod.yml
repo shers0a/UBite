@@ -1,5 +1,7 @@
-# Production on the UB VM (or any Linux host with Docker): Caddy for HTTPS, the app, PostgreSQL,
-# and — only with the `camera` profile — the vision service next to them (docs/12, docs/23).
+# Production on the UB VM (or any Linux host with Docker or Podman): Caddy for HTTPS, the app,
+# PostgreSQL, and — only with the `camera` profile — the vision service next to them (docs/12, docs/23).
+# Image names are fully qualified and restart is `always` so the file runs unchanged under Podman,
+# which has no default registry and restarts only `always` containers at boot (docs/24).
 #
 #   cp .env.example .env        # fill in DOMAIN, SESSION_SECRET, SMTP_URL, VAPID_*, …
 #   docker compose -f docker-compose.prod.yml up -d --build
@@ -8,11 +10,12 @@
 #   docker compose -f docker-compose.prod.yml --profile camera up -d vision
 services:
   caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
+    image: docker.io/library/caddy:2-alpine
+    restart: always
     ports: ["80:80", "443:443"]
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN, e.g. ubite.unibuc.ro}
+      DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -21,7 +24,7 @@ services:
 
   app:
     build: .
-    restart: unless-stopped
+    restart: always
     env_file: .env
     environment:
       NODE_ENV: production
@@ -32,8 +35,8 @@ services:
       db: { condition: service_healthy }
 
   db:
-    image: postgres:17-alpine
-    restart: unless-stopped
+    image: docker.io/library/postgres:17-alpine
+    restart: always
     environment:
       POSTGRES_USER: ubite
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -48,7 +51,7 @@ services:
   vision:
     profiles: [camera]
     build: services/vision
-    restart: unless-stopped
+    restart: always
     environment:
       VISION_THREADS: "2"
       VISION_TOKEN: ${VISION_TOKEN:-}
