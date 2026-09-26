@@ -13,5 +13,5 @@ db() {
 }
 if [ "${1:-}" = "--restore" ]; then db psql -q -U ubite ubite; exit; fi
 mkdir -p backups
-db pg_dump -U ubite --clean --if-exists ubite | gzip > "backups/ubite-$(date +%F).sql.gz"
+db pg_dump -U ubite --clean --if-exists ubite < /dev/null | gzip > "backups/ubite-$(date +%F).sql.gz"
 find backups -name 'ubite-*.sql.gz' -mtime +14 -delete
