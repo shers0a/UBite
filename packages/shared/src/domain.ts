@@ -6,8 +6,11 @@ export const LANGS: Lang[] = ['ro', 'en'];
 export type Role = 'student' | 'canteen_staff' | 'dccas_admin' | 'tech_admin';
 export const ROLES: Role[] = ['student', 'canteen_staff', 'dccas_admin', 'tech_admin'];
 
-/** Only addresses in this domain may hold the student role (docs/10). */
-export const STUDENT_DOMAIN = '@s.unibuc.ro';
+/** Anyone with a University of Bucharest mailbox may hold an account (docs/10): students on
+ *  s.unibuc.ro, staff on g.unibuc.ro, unibuc.ro and the faculties' own subdomains (fmi.unibuc.ro, …).
+ *  The code sent to the address is the proof, so no subdomain needs listing. */
+export const UB_DOMAIN = 'unibuc.ro';
+export const isUbEmail = (email: string) => /^[^\s@]+@([a-z0-9-]+\.)*unibuc\.ro$/i.test(email);
 
 export type Category = 'soup' | 'main' | 'side' | 'dessert' | 'salad' | 'drink' | 'extra';
 export const CATEGORIES: Category[] = ['soup', 'main', 'side', 'dessert', 'salad', 'drink', 'extra'];

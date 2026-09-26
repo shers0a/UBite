@@ -125,7 +125,7 @@ async function api(p, method, url, body) {
 async function signIn(p, email, opener) {
   if (opener) await opener();
   await see(p, 'Intră în cont');
-  await fill(p, email.endsWith('@s.unibuc.ro') ? 'Adresa ta de student' : 'Adresa contului', email);
+  await fill(p, email.endsWith('@s.unibuc.ro') ? 'Adresa ta de la universitate' : 'Adresa contului', email);
   await click(p, 'Trimite codul');
   await see(p, /Codul tău este \d{6}/);
   await click(p, 'Intră');

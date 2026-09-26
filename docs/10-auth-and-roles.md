@@ -12,7 +12,7 @@ action they were attempting.
 This matters for the pilot: the target is 300 unique users in roughly thirteen operating days.
 Every screen placed before the value costs a measurable share of them.
 
-## Chosen method: email code to `@s.unibuc.ro`
+## Chosen method: email code to a UB address
 
 The user enters their institutional address and receives a six-digit code.
 
@@ -21,19 +21,23 @@ was an idea in the group chat, nobody has formally requested it from UB digitali
 sits behind the same bureaucracy as the server and the domain — all three still verbal.
 
 Email codes take a day to build, depend on nobody, and verify exactly what matters: that the
-person holds a UB student address.
+person holds a UB address.
 
 ### Rules
 
-- Only addresses ending in `@s.unibuc.ro` are accepted for the student role
+- Any UB address is accepted for the `student` role: `unibuc.ro` or any subdomain of it. Students
+  are on `s.unibuc.ro`, staff and professors on `g.unibuc.ro` or `unibuc.ro`, and faculties run
+  their own (`fmi.unibuc.ro`, …). The canteen serves students and employees alike, and the code
+  proves the mailbox, so no subdomain is listed (D-28). The role keeps its name; it means
+  "someone from UB"
 - Codes are six digits, valid for ten minutes, single use
 - Rate limited per address and per IP
 - Sessions are long-lived — students should not re-authenticate to check a menu
 - Failed attempts are throttled with increasing delay
 
-> **NOTE** — Official canteen policy restricts access to students and employees. Staff may hold
-> a different address domain; confirm during the site visit and add the domain to the allowlist
-> for the `canteen_staff` account.
+> **NOTE** — Official canteen policy restricts access to students and employees, which is why
+> every UB domain is accepted. The shared `canteen_staff` account is created by an admin
+> (`user:add`) and may use any address.
 
 ### If SSO arrives later
 
@@ -48,7 +52,7 @@ Design the session layer with this in mind; do not couple session handling to th
 | Role | Who | Can |
 |---|---|---|
 | *(anonymous)* | Anyone | Menu, dish details, crowding, hours, announcements, submit a wait report, submit feedback |
-| `student` | Verified `@s.unibuc.ro` | All of the above plus favourites, ratings, loyalty, personal history, notification preferences |
+| `student` | Verified UB address (`…unibuc.ro`) | All of the above plus favourites, ratings, loyalty, personal history, notification preferences |
 | `canteen_staff` | **One shared account** | Publish menus, manage the catalogue, post announcements, redeem reward codes |
 | `dccas_admin` | DCCAS | Read-only dashboard and exports |
 | `tech_admin` | The three developers | Everything, plus configuration: crowding thresholds, camera zones, schedule |

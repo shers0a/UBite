@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_SCHEDULE, formatLei, hoursOn, hoursSummary, isOpenAt, localDate, matchesDiet, nextOpening, parseCardInput,
+  DEFAULT_SCHEDULE, formatLei, hoursOn, hoursSummary, isOpenAt, isUbEmail, localDate, matchesDiet, nextOpening, parseCardInput,
   parseLei, parseRewardInput, qrPayload, rewardCodeAt, rewardDigits, rewardStep, weekdayOf, zonedToUtc,
 } from '../src';
 
@@ -75,5 +75,18 @@ describe('reward codes', () => {
     expect(parseRewardInput(qrPayload.reward('K7P4 4839'))).toEqual({ rewardId: 'K7P4', digits: '4839' });
     expect(parseRewardInput('K7P2 4839')).toBeNull(); // 2 is not in the alphabet
     expect(parseCardInput(qrPayload.card('0f8b3c1e-6c55-4d0e-9f53-2d4f1a2b3c4d'))).toBe('0f8b3c1e-6c55-4d0e-9f53-2d4f1a2b3c4d');
+  });
+});
+
+describe('who may hold an account (docs/10)', () => {
+  it('takes every UB mailbox: students, staff and the faculties', () => {
+    for (const e of ['ana.pop@s.unibuc.ro', 'maria.pop@g.unibuc.ro', 'secretariat@unibuc.ro', 'ion@fmi.unibuc.ro', 'X@Drept.UniBuc.ro']) {
+      expect(isUbEmail(e), e).toBe(true);
+    }
+  });
+  it('refuses lookalikes', () => {
+    for (const e of ['someone@gmail.com', 'x@notunibuc.ro', 'x@s-unibuc.ro', 'x@unibuc.ro.evil.com', 'x@unibuc.rom', '@unibuc.ro', 'a b@unibuc.ro']) {
+      expect(isUbEmail(e), e).toBe(false);
+    }
   });
 });

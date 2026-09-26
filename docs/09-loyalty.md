@@ -40,7 +40,7 @@ The trade-off is OCR quality on thermal receipts, which is genuinely variable.
 |---|---|
 | One point per calendar day | Unique index on `(user_id, occurred_on)` where counted |
 | Only during opening hours | Rejected outside Mon–Fri 11:30–17:00 |
-| One account per student | Email verified at `@s.unibuc.ro` |
+| One account per person | Email verified at a UB address (`…unibuc.ro`) |
 | A receipt counts once, globally | `receipt_hash` unique across all users |
 | Points do not expire during the pilot | Simplicity; revisit afterwards |
 

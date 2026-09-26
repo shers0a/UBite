@@ -93,6 +93,12 @@ delay can no longer threaten the launch date.
 One day of work, no external dependency, verifies exactly what matters. *Consequence:* SSO can
 be added later against the same accounts, because they are keyed on email.
 
+**D-28 · Every UB address, not only `@s.unibuc.ro` (26 Sep 2026).**
+The canteen serves employees as well as students, and staff mail lives on `g.unibuc.ro`,
+`unibuc.ro` and the faculties' own subdomains (raised by Sergiu Nisioi after the first live
+test). *Consequence:* `unibuc.ro` and any subdomain are accepted; the `student` role keeps its
+name and means anyone from UB.
+
 **D-17 · Polling every 30 seconds, not persistent connections.**
 Three levels do not change second to second, and polling survives weak Wi-Fi.
 

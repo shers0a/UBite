@@ -25,10 +25,17 @@ async function dish(name: string, category = 'main', bani = 1500) {
 }
 
 describe('sign-in by email code (docs/10)', () => {
-  it('accepts only @s.unibuc.ro for new accounts', async () => {
+  it('accepts only UB addresses for new accounts', async () => {
     const r = await request(app).post('/api/auth/request-code').set(H).send({ email: 'someone@gmail.com' });
     expect(r.status).toBe(422);
     expect(r.body.error).toBe('email_domain');
+  });
+
+  it('holds accounts for every UB domain in the database too, and nothing else', async () => {
+    // The address rule itself is unit-tested in packages/shared; this is migration 002.
+    const add = (email: string) => ctx.db.query("INSERT INTO users (email, role) VALUES ($1, 'student')", [email]);
+    for (const email of ['ana.pop@s.unibuc.ro', 'maria.pop@g.unibuc.ro', 'secretariat@unibuc.ro', 'ion@fmi.unibuc.ro']) await add(email);
+    await expect(add('someone@gmail.com')).rejects.toThrow(/student_domain/);
   });
 
   it('signs a student in with the six-digit code and sets an httpOnly cookie', async () => {

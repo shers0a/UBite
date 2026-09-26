@@ -127,7 +127,7 @@ which is the worst spot in the building for signal.
 | GET | `/api/crowding/typical` | public | Hourly baseline for today |
 | POST | `/api/crowding/report` | optional | Submit waited minutes |
 | GET | `/api/status` | public | Open/closed, hours, announcements |
-| POST | `/api/auth/request-code` | public | Email OTP to `@s.unibuc.ro` |
+| POST | `/api/auth/request-code` | public | Email OTP to a UB address |
 | POST | `/api/auth/verify` | public | Exchange code for session |
 | GET | `/api/me` | student | Profile, preferences |
 | GET | `/api/me/loyalty` | student | Progress, QR payload, rewards |

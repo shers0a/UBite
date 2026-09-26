@@ -1,9 +1,10 @@
-/* Email codes to @s.unibuc.ro (docs/10, D-16). No password exists, so none can be stolen.
+/* Email codes to any UB address, unibuc.ro or one of its subdomains (docs/10, D-16, D-28). No
+   password exists, so none can be stolen.
    Sessions are a table of their own, keyed on the user, so SSO can be added as a second way in
    without touching them. */
 import crypto from 'node:crypto';
 import type { Lang, Role } from '@ubite/shared';
-import { STUDENT_DOMAIN } from '@ubite/shared';
+import { isUbEmail, UB_DOMAIN } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
@@ -27,9 +28,10 @@ export function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-/** Students by domain; staff, DCCAS and the developers only when an admin created the account. */
+/** Anyone at UB by domain; outside addresses (staff, DCCAS, the developers) only when an admin
+ *  created the account. */
 export async function canSignIn(db: Queryable, email: string): Promise<boolean> {
-  if (email.endsWith(STUDENT_DOMAIN) && /^[^\s@]+@s\.unibuc\.ro$/.test(email)) return true;
+  if (isUbEmail(email)) return true;
   const r = await db.query("SELECT 1 FROM users WHERE email = $1 AND role <> 'student' AND deleted_at IS NULL", [email]);
   return r.rowCount > 0;
 }
@@ -37,7 +39,7 @@ export async function canSignIn(db: Queryable, email: string): Promise<boolean> 
 export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   const email = normaliseEmail(rawEmail);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(422, 'invalid_email');
-  if (!(await canSignIn(ctx.db, email))) throw new HttpError(422, 'email_domain', `Use your ${STUDENT_DOMAIN} address.`);
+  if (!(await canSignIn(ctx.db, email))) throw new HttpError(422, 'email_domain', `Use your university address, ending in ${UB_DOMAIN}.`);
   if (!ctx.mail.enabled) throw new HttpError(503, 'mail_unavailable', 'Sign-in email is not configured.');
 
   const recent = await ctx.db.query<{ n: number }>(

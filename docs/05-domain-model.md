@@ -82,7 +82,7 @@ Price is snapshotted per day so that the spending history stays correct when pri
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
-| `email` | citext UNIQUE | Must end in `@s.unibuc.ro` for students |
+| `email` | citext UNIQUE | Must be a UB address (`@unibuc.ro` or `@<subdomain>.unibuc.ro`) for the `student` role |
 | `role` | enum: `student`, `canteen_staff`, `dccas_admin`, `tech_admin` | |
 | `display_name` | text null | Optional; not required for any feature |
 | `locale` | enum: `ro`, `en` | |
