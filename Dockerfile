@@ -5,7 +5,7 @@
 #   docker build -t ubite .
 #   docker run --env-file .env -p 8080:8080 ubite
 
-FROM node:22-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps/api/package.json apps/api/
@@ -19,7 +19,7 @@ COPY packages packages
 COPY apps apps
 RUN npm run build -w @ubite/web && npm run build -w @ubite/api
 
-FROM node:22-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
@@ -29,11 +29,11 @@ RUN npm ci --omit=dev --no-audit --no-fund && mkdir -p apps/api/node_modules
 
 # The integer "best" Romanian model tesseract.js ships with: on scripts/ocr-bench.ts it reads
 # thermal receipts markedly better than tessdata_fast, at the same speed.
-FROM node:22-bookworm-slim AS tessdata
+FROM node:26-bookworm-slim AS tessdata
 ADD https://cdn.jsdelivr.net/npm/@tesseract.js-data/ron@1.0.0/4.0.0_best_int/ron.traineddata.gz /tessdata/ron.traineddata.gz
 RUN gunzip /tessdata/ron.traineddata.gz && chmod 644 /tessdata/ron.traineddata
 
-FROM node:22-bookworm-slim
+FROM node:26-bookworm-slim
 ENV NODE_ENV=production     PORT=8080     WEB_DIST=/app/web     MIGRATIONS_DIR=/app/apps/api/migrations     OCR_LANG_PATH=/app/tessdata     OCR_CACHE_PATH=/tmp/tesseract
 # The workspace layout is kept: a package another dependency pins to an older major version is
 # installed under apps/api/node_modules, and Node resolves it from there.
