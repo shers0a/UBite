@@ -43,9 +43,12 @@ three panels:
 
 | Panel | Duration | Content |
 |---|---|---|
-| Menu | ~12s | Today's dishes by category with prices, large type |
-| Crowding | ~8s | Level, estimated wait, freshness |
-| Download | ~8s | Large QR code and one line of explanation |
+| Menu | ~8s | Today's dishes by category with prices, large type |
+| Crowding | ~5s | Level, estimated wait, freshness |
+| Download | ~5s | Large QR code and one line of explanation |
+
+*Shortened from 12/8/8 s on 22 Sep 2026 at the team's request: the panels changed too slowly
+for someone walking past. The attract loop (brand, queue, dishes, QR) runs 11 s end to end.*
 
 Readable from **three metres**: minimum 24px effective body text at viewing distance, high
 contrast, no thin weights.

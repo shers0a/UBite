@@ -14,6 +14,9 @@ Because PostgreSQL runs locally, on free tiers and on a UB server alike, migrati
 connection-string change rather than a rewrite. This risk is therefore cheap to neutralise, and
 neutralising it unblocks everything else.
 
+> The commands, the image and the compose files that implement this document are in
+> [24-running-the-app.md](24-running-the-app.md).
+
 ## Environments
 
 | Environment | Purpose | Hosting | Database |

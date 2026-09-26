@@ -142,6 +142,14 @@ which is the worst spot in the building for signal.
 | GET | `/api/dashboard/*` | dccas | Aggregations |
 | POST | `/api/vision/observations` | service | Camera counts |
 
+Also implemented, because the flows above need them: `POST /api/auth/logout`; `PATCH` and
+`DELETE /api/me` (preferences, erasure); `PUT /api/me/notifications`, `POST`/`DELETE /api/me/push`;
+`POST /api/me/visits/scan` (read the receipt, then confirm with `POST /api/me/visits`);
+`GET /api/dishes/:id/photo`; `GET /api/staff/menu`, `/api/staff/dishes` (catalogue),
+`/api/staff/announcements`; `GET /api/dashboard/summary` and `/api/dashboard/export/:name.csv`;
+`/api/admin/*` (thresholds, camera zone, schedule, accounts, health); `GET /api/vision/config`;
+`POST /api/analytics/event`; `GET /api/health`.
+
 ## Environments
 
 | Environment | Purpose | Hosting |

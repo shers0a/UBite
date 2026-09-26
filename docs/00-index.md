@@ -34,6 +34,8 @@ working on this codebase.
 | [20](20-canteen-field-facts.md) | Canteen field facts | You need real numbers about the place |
 | [21](21-glossary.md) | Glossary | Someone said a word you didn't recognise |
 | [22](22-decision-log.md) | Decision log | You want to know *why* something is the way it is |
+| [23](23-camera-research.md) | Camera research | You are choosing a camera, or deciding where counting runs |
+| [24](24-running-the-app.md) | Running the app | You are running, testing or deploying the code |
 | [for-andra](for-andra-summary.md) | One-page summary (RO) | You are talking to Andra, DCCAS or UNIHUB |
 
 ## Conventions used in these documents

@@ -121,7 +121,7 @@ Composite PK on `(user_id, dish_id)` — one rating per person per dish, updatab
 | `receipt_hash` | text UNIQUE | SHA-256 of normalised receipt number — anti-fraud |
 | `receipt_total_bani` | integer null | Parsed from receipt, powers spend history |
 | `items_json` | jsonb null | Parsed line items, powers "what I ate" |
-| `source` | enum: `receipt_ocr`, `staff_confirmed`, `manual_admin` | |
+| `source` | enum: `receipt_ocr`, `receipt_manual`, `staff_confirmed`, `manual_admin` | `receipt_manual` is the typed fallback when OCR fails |
 | `counted_for_loyalty` | boolean | |
 | `created_at` | timestamptz | |
 
@@ -247,3 +247,13 @@ historical baseline ┘
 - **Top dishes** — aggregate over `ratings`.
 - **Historical crowding baseline** — median `wait_minutes` per weekday × 15-minute slot,
   materialised nightly for speed.
+
+## Implementation tables
+
+The running system adds tables for things this model implies but does not name — sign-in codes,
+sessions, notification preferences and push subscriptions, catalogue photos, receipt hashes kept
+after an account is erased, one-day schedule exceptions, tech-admin configuration, the materialised
+historical baseline, cookie-free analytics counters and job bookkeeping. They are listed, with the
+reason for each, in [24-running-the-app.md](24-running-the-app.md) and commented in
+`apps/api/migrations/001_init.sql`. None of them stores anything about a person beyond what this
+document already allows.
