@@ -130,7 +130,9 @@ export function fuse(input: FusionInput): FusionResult | null {
   let waitMinutes: number;
   let historyWeight = 0;
   if (lambdaCam + lambdaRep > 0) {
-    waitMinutes = (lambdaCam * (camMin ?? 0) + lambdaRep * (rep.minutes ?? 0)) / (lambdaCam + lambdaRep);
+    // As a share, so a single source comes through exactly: λ·x/λ can land one ulp off x.
+    const repShare = lambdaRep / (lambdaCam + lambdaRep);
+    waitMinutes = (1 - repShare) * (camMin ?? 0) + repShare * (rep.minutes ?? 0);
   } else if (input.historyMinutes !== null) {
     waitMinutes = input.historyMinutes;
     historyWeight = 1;
