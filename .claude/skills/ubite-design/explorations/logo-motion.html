@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ro" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — logo în mișcare</title>
+<link rel="icon" href="../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../_ds_bundle.js"></script>
+<style>
+/* The lockup's intro as a clip — for the kiosk, the store listing and social posts. Recorded by
+   scripts/render-video.mjs: ?armed waits for the recorder's start event. ?theme=light for the
+   day version, ?level=low|moderate|high for the counters. */
+body{margin:0;background:#000;display:grid;place-items:center;min-height:100vh}
+.stage{position:relative;width:1280px;height:720px;overflow:hidden;background:var(--surface-page);display:grid;place-items:center}
+.line{margin-top:34px;font-size:30px;color:var(--text-secondary);text-align:center;animation:rise 420ms var(--ease-out) 900ms both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.runner{position:absolute;bottom:26px;left:0;animation:run 2600ms linear 1100ms both}
+@keyframes run{from{transform:translateX(-300px)}to{transform:translateX(1320px)}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Logo, Pattern, Illustration } = window.UBiteDesignSystem_40c8c2;
+const q = new URLSearchParams(location.search);
+if (q.get('theme')) document.documentElement.setAttribute('data-theme', q.get('theme'));
+const base = '../../../../assets/';
+function Clip() {
+  const [go, setGo] = React.useState(!q.has('armed'));
+  React.useEffect(() => { const f = () => setGo(true); window.addEventListener('ubite:start', f); return () => window.removeEventListener('ubite:start', f); }, []);
+  return (
+    <div className="stage">
+      <Pattern src={`${base}patterns/canteen.svg`} opacity={0.07} size={425} drift />
+      {go && <div style={{ position: 'relative', display: 'grid', justifyItems: 'center' }}>
+        <Logo variant="tray" size={180} level={q.get('level') || 'moderate'} intro withText />
+        <div className="line">Cantina Universității din București, în buzunar</div>
+      </div>}
+      {go && <span className="runner"><Illustration src={`${base}illustrations/spots/run.svg`} tone="accent" boil width={200} height={200} /></span>}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Clip />);
+</script></body></html>

@@ -1,0 +1,31 @@
+<!-- @dsCard group="Brand" viewport="760x420" name="Illustration layer" subtitle="Characters in a Spotlight, pictograms, the doodle wallpaper — all in token colours" -->
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="../../ui_kits/assets.js"></script>
+<style>body{padding:18px;background:var(--surface-page)}.row{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}.lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--text-muted);margin:14px 0 8px}.picto{width:56px;height:56px;border-radius:50%;background:var(--surface);display:grid;place-items:center}.wall{position:relative;height:110px;border-radius:12px;background:var(--surface);overflow:hidden;flex:1;min-width:200px}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Spotlight, Illustration, Pattern } = window.UBiteDesignSystem_40c8c2;
+// ui_kits/assets.js paths are relative to a page two folders below the system root — as this card is.
+const A = window.UBITE_ASSETS;
+const at = (u) => u;
+function Card(){
+  return (<>
+    <div className="row">
+      <Spotlight art={at(A.spot('run'))} eyebrow="Sfat pentru marți" title="La 11:30 aștepți cam 2 minute. La 13:00, cam 12." action="Vezi orele" style={{ width: 340 }} />
+      <Spotlight art={at(A.spot('queue'))} tone="quiet" eyebrow="Ajută-i pe colegi" title="Spune cât ai stat la coadă." action="Raportez" style={{ width: 340 }} />
+    </div>
+    <p className="lbl">Pictograme · tapet</p>
+    <div className="row">
+      {['soup', 'main', 'sides', 'dessert', 'drink', 'bread'].map((k) => (
+        <span key={k} className="picto"><Illustration kind="picto" src={at(A.picto(k))} tone="current" width={36} height={36} /></span>
+      ))}
+      <div className="wall"><Pattern src={at(A.pattern)} opacity={0.35} size={275} /></div>
+    </div>
+  </>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card/>);
+</script></body></html>

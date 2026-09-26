@@ -1,0 +1,21 @@
+<!-- @dsCard group="Brand" viewport="700x260" name="Icon set" subtitle="Lucide outline, 24px grid, 2px stroke — the only icon system, no emoji" -->
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:18px;background:var(--surface-page)}.lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--text-muted);margin:0 0 8px}.sec{margin-bottom:18px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Icon, GLYPHS } = window.UBiteDesignSystem_40c8c2;
+function Card(){return (<>
+  <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:14,color:'var(--text-primary)'}}>
+    {Object.keys(GLYPHS).map(n => (
+      <div key={n} style={{display:'grid',placeItems:'center',gap:6}}>
+        <Icon name={n} size={22} />
+        <span style={{fontSize:9,color:'var(--text-muted)',textAlign:'center',lineHeight:1.2,wordBreak:'break-word'}}>{n}</span>
+      </div>
+    ))}
+  </div></>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card/>);
+</script></body></html>

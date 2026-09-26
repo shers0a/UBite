@@ -1,0 +1,21 @@
+/* Motion confirms that something happened. It never entertains.
+   Two places earn it: the crowding level changing, and a loyalty dot filling. */
+
+:root{
+  --motion-fast:150ms; /* @kind other */
+  --motion-base:200ms; /* @kind other */
+  --motion-slow:250ms; /* @kind other */
+  --ease-out:cubic-bezier(.22,.7,.25,1);   /* @kind other */
+  --ease-in-out:cubic-bezier(.5,0,.3,1);   /* @kind other */
+  --skeleton-cycle:1400ms; /* @kind other */
+}
+
+@media (prefers-reduced-motion:reduce){
+  :root{
+    --motion-fast:0ms; /* @kind other */
+    --motion-base:0ms; /* @kind other */
+    --motion-slow:0ms; /* @kind other */
+    --skeleton-cycle:0ms; /* @kind other */
+  }
+  *,*::before,*::after{animation-duration:0ms!important;animation-iteration-count:1!important;transition-duration:0ms!important;scroll-behavior:auto!important}
+}

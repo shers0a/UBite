@@ -1,0 +1,204 @@
+/* UBite colour — semantic names only, never literal ones.
+   Layer separation is by colour VALUE (tinted surfaces): no borders, no card shadows.
+   Light is the base. Dark is the same names redefined — one file, not a second stylesheet.
+   Order matters: base light → system dark → explicit [data-theme] overrides win.
+   Contrast ratios for every pair are recorded in guidelines/contrast.md. */
+
+:root{
+  color-scheme:light dark;
+  --surface-sunken:#E2E6EB;
+  --surface-page:#ECEFF3;
+  --surface:#F7F8FA;
+  --surface-raised:#FFFFFF;
+  --surface-inverse:#11161B;
+  --surface-overlay:rgba(17,22,27,.48);
+  --border-subtle:#DCE1E7;
+  --border-strong:#B9C2CB;
+  --text-primary:#11161B;
+  --text-secondary:#49545F;
+  --text-muted:#606A73;
+  --text-on-accent:#FFFFFF;
+  --text-inverse:#F2F5F8;
+  --accent:#1F4FD8;
+  --accent-hover:#1A43B8;
+  --accent-active:#163A9E;
+  --accent-quiet:#E4EAFB;
+  --accent-quiet-text:#1A43B8;
+  --crowd-low-text:#0B6B52;
+  --crowd-low-fill:#128A6B;
+  --crowd-low-quiet:#D8F0E8;
+  --crowd-moderate-text:#8A5300;
+  --crowd-moderate-fill:#C47A0A;
+  --crowd-moderate-quiet:#FBEBCF;
+  --crowd-high-text:#A83A1E;
+  --crowd-high-fill:#D1512F;
+  --crowd-high-quiet:#FBE2DA;
+  --crowd-closed-text:#49545F;
+  --crowd-closed-fill:#8A949E;
+  --crowd-closed-quiet:#E4E8ED;
+  --status-danger-text:#A81E1E;
+  --status-danger-fill:#CE2C2C;
+  --status-danger-quiet:#FBDEDE;
+  --status-warning-text:#8A5300;
+  --status-warning-quiet:#FBEBCF;
+  --status-success-text:#0B6B52;
+  --status-success-quiet:#D8F0E8;
+  --status-offline-fill:#3A4450;
+  --status-offline-text:#F2F5F8;
+  --focus-ring:#1F4FD8;
+  --focus-ring-contrast:#FFFFFF;
+  --hover-wash:rgba(17,22,27,.05);
+  --active-wash:rgba(17,22,27,.09);
+  --skeleton-base:#E2E6EB;
+  --skeleton-sheen:#EFF2F5;
+  --scrim:linear-gradient(to top,rgba(10,13,16,.78),rgba(10,13,16,0)); /* @kind other */
+}
+
+@media (prefers-color-scheme:dark){
+  :root{
+  --surface-sunken:#07090B;
+  --surface-page:#0D1116;
+  --surface:#161C22;
+  --surface-raised:#1E262E;
+  --surface-inverse:#F2F5F8;
+  --surface-overlay:rgba(4,6,8,.62);
+  --border-subtle:#29323B;
+  --border-strong:#3E4A55;
+  --text-primary:#EDF1F4;
+  --text-secondary:#B3BEC7;
+  --text-muted:#8695A0;
+  --text-on-accent:#06102A;
+  --text-inverse:#11161B;
+  --accent:#7BA5FF;
+  --accent-hover:#9CBBFF;
+  --accent-active:#B8CEFF;
+  --accent-quiet:#1B2740;
+  --accent-quiet-text:#9CBBFF;
+  --crowd-low-text:#4FD9B4;
+  --crowd-low-fill:#2FBF9B;
+  --crowd-low-quiet:#102A25;
+  --crowd-moderate-text:#F5BC55;
+  --crowd-moderate-fill:#E0A03A;
+  --crowd-moderate-quiet:#2C2314;
+  --crowd-high-text:#FF9276;
+  --crowd-high-fill:#EE6A4A;
+  --crowd-high-quiet:#2E1A15;
+  --crowd-closed-text:#B3BEC7;
+  --crowd-closed-fill:#6E7C88;
+  --crowd-closed-quiet:#1A2128;
+  --status-danger-text:#FF8F8F;
+  --status-danger-fill:#E14848;
+  --status-danger-quiet:#2E1618;
+  --status-warning-text:#F5BC55;
+  --status-warning-quiet:#2C2314;
+  --status-success-text:#4FD9B4;
+  --status-success-quiet:#102A25;
+  --status-offline-fill:#2A343E;
+  --status-offline-text:#EDF1F4;
+  --focus-ring:#9CBBFF;
+  --focus-ring-contrast:#07090B;
+  --hover-wash:rgba(237,241,244,.06);
+  --active-wash:rgba(237,241,244,.11);
+  --skeleton-base:#1E262E;
+  --skeleton-sheen:#28323B;
+  --scrim:linear-gradient(to top,rgba(4,6,8,.82),rgba(4,6,8,0)); /* @kind other */
+  }
+}
+
+:root[data-theme="light"]{
+  --surface-sunken:#E2E6EB;
+  --surface-page:#ECEFF3;
+  --surface:#F7F8FA;
+  --surface-raised:#FFFFFF;
+  --surface-inverse:#11161B;
+  --surface-overlay:rgba(17,22,27,.48);
+  --border-subtle:#DCE1E7;
+  --border-strong:#B9C2CB;
+  --text-primary:#11161B;
+  --text-secondary:#49545F;
+  --text-muted:#606A73;
+  --text-on-accent:#FFFFFF;
+  --text-inverse:#F2F5F8;
+  --accent:#1F4FD8;
+  --accent-hover:#1A43B8;
+  --accent-active:#163A9E;
+  --accent-quiet:#E4EAFB;
+  --accent-quiet-text:#1A43B8;
+  --crowd-low-text:#0B6B52;
+  --crowd-low-fill:#128A6B;
+  --crowd-low-quiet:#D8F0E8;
+  --crowd-moderate-text:#8A5300;
+  --crowd-moderate-fill:#C47A0A;
+  --crowd-moderate-quiet:#FBEBCF;
+  --crowd-high-text:#A83A1E;
+  --crowd-high-fill:#D1512F;
+  --crowd-high-quiet:#FBE2DA;
+  --crowd-closed-text:#49545F;
+  --crowd-closed-fill:#8A949E;
+  --crowd-closed-quiet:#E4E8ED;
+  --status-danger-text:#A81E1E;
+  --status-danger-fill:#CE2C2C;
+  --status-danger-quiet:#FBDEDE;
+  --status-warning-text:#8A5300;
+  --status-warning-quiet:#FBEBCF;
+  --status-success-text:#0B6B52;
+  --status-success-quiet:#D8F0E8;
+  --status-offline-fill:#3A4450;
+  --status-offline-text:#F2F5F8;
+  --focus-ring:#1F4FD8;
+  --focus-ring-contrast:#FFFFFF;
+  --hover-wash:rgba(17,22,27,.05);
+  --active-wash:rgba(17,22,27,.09);
+  --skeleton-base:#E2E6EB;
+  --skeleton-sheen:#EFF2F5;
+  --scrim:linear-gradient(to top,rgba(10,13,16,.78),rgba(10,13,16,0)); /* @kind other */
+}
+
+:root[data-theme="dark"]{
+  --surface-sunken:#07090B;
+  --surface-page:#0D1116;
+  --surface:#161C22;
+  --surface-raised:#1E262E;
+  --surface-inverse:#F2F5F8;
+  --surface-overlay:rgba(4,6,8,.62);
+  --border-subtle:#29323B;
+  --border-strong:#3E4A55;
+  --text-primary:#EDF1F4;
+  --text-secondary:#B3BEC7;
+  --text-muted:#8695A0;
+  --text-on-accent:#06102A;
+  --text-inverse:#11161B;
+  --accent:#7BA5FF;
+  --accent-hover:#9CBBFF;
+  --accent-active:#B8CEFF;
+  --accent-quiet:#1B2740;
+  --accent-quiet-text:#9CBBFF;
+  --crowd-low-text:#4FD9B4;
+  --crowd-low-fill:#2FBF9B;
+  --crowd-low-quiet:#102A25;
+  --crowd-moderate-text:#F5BC55;
+  --crowd-moderate-fill:#E0A03A;
+  --crowd-moderate-quiet:#2C2314;
+  --crowd-high-text:#FF9276;
+  --crowd-high-fill:#EE6A4A;
+  --crowd-high-quiet:#2E1A15;
+  --crowd-closed-text:#B3BEC7;
+  --crowd-closed-fill:#6E7C88;
+  --crowd-closed-quiet:#1A2128;
+  --status-danger-text:#FF8F8F;
+  --status-danger-fill:#E14848;
+  --status-danger-quiet:#2E1618;
+  --status-warning-text:#F5BC55;
+  --status-warning-quiet:#2C2314;
+  --status-success-text:#4FD9B4;
+  --status-success-quiet:#102A25;
+  --status-offline-fill:#2A343E;
+  --status-offline-text:#EDF1F4;
+  --focus-ring:#9CBBFF;
+  --focus-ring-contrast:#07090B;
+  --hover-wash:rgba(237,241,244,.06);
+  --active-wash:rgba(237,241,244,.11);
+  --skeleton-base:#1E262E;
+  --skeleton-sheen:#28323B;
+  --scrim:linear-gradient(to top,rgba(4,6,8,.82),rgba(4,6,8,0)); /* @kind other */
+}

@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Fields and skeletons" subtitle="16px minimum text, designed focus, skeletons shaped like the content" -->
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:18px;background:var(--surface-page)}.lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--text-muted);margin:0 0 8px}.sec{margin-bottom:18px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Input, Skeleton } = window.UBiteDesignSystem_40c8c2;
+function Card(){return (<>
+  <div className="sec" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+    <Input label="Preț" value="9" suffix="lei" inputMode="decimal" />
+    <Input label="Porții pregătite" placeholder="opțional" suffix="porții" icon="utensils" />
+    <Input label="Cod recompensă" value="UB-4F2K" icon="qr-code" hint="Codul e valabil 24 de ore" />
+    <Input label="Cod recompensă" value="UB-0000" icon="qr-code" error="Codul nu mai este valabil" />
+    <Input label="Caută fel" placeholder="ciorbă, pui, salată" icon="search" loading />
+    <Input label="Email" value="ana@unibuc.ro" disabled />
+  </div>
+  <div className="sec"><p className="lbl">Skeleton · forma conținutului final</p>
+    <div style={{display:'flex',gap:14,alignItems:'center'}}>
+      <Skeleton width={64} height={64} radius="var(--radius-md)" />
+      <div style={{flex:1}}><Skeleton width="62%" height={18} /><div style={{height:8}} /><Skeleton width="34%" height={14} /></div>
+      <Skeleton width={48} height={18} />
+    </div>
+  </div></>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card/>);
+</script></body></html>

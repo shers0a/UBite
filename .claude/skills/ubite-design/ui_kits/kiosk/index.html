@@ -1,0 +1,45 @@
+<!-- @dsCard group="Kiosk" viewport="1280x800" name="Wall kiosk" subtitle="Rotating menu → crowding → QR, readable at three metres; one tap opens the full menu" -->
+<!DOCTYPE html><html lang="ro" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — kiosk</title>
+<link rel="icon" href="../../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../assets/image-slot.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="../assets.js"></script>
+<style>
+body{background:#000;display:grid;place-items:center;min-height:100vh;padding:0}
+.ub-kiosk{width:1280px;height:800px;background:var(--surface-page);display:flex;flex-direction:column;overflow:hidden;position:relative;cursor:pointer}
+.ub-kiosk-head{display:flex;align-items:baseline;gap:24px;padding:28px 48px 12px}
+.ub-kiosk-clock{font-size:34px;font-weight:700;letter-spacing:-.02em}
+.ub-kiosk-place{margin-left:auto;font-size:22px;color:var(--text-secondary)}
+.ub-kiosk-body{flex:1;padding:12px 48px;min-height:0}
+.ub-kiosk-menu{display:grid;grid-template-columns:1fr 1fr;gap:12px 56px;align-content:start}
+.ub-kiosk-cat{font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin:10px 0 8px}
+.ub-kiosk-row{display:flex;justify-content:space-between;gap:24px;font-size:32px;font-weight:500;padding:7px 0;line-height:1.15}
+.ub-kiosk-row span:last-child{font-weight:700}
+.ub-kiosk-qr{display:flex;align-items:center;justify-content:space-between;gap:48px;height:100%}
+.ub-kiosk-qr-title{font-size:64px;font-weight:700;letter-spacing:-.03em;line-height:1.05;max-width:16ch}
+.ub-kiosk-qr-body{font-size:30px;color:var(--text-secondary);margin-top:18px;max-width:22ch}
+.ub-kiosk-qr-url{font-size:30px;color:var(--accent);margin-top:22px;font-weight:600}
+.ub-kiosk-qr-box{background:var(--surface-raised);border-radius:var(--radius-lg);padding:24px;flex:none}
+.ub-kiosk-full{display:grid;grid-template-columns:1fr 360px;gap:40px}
+.ub-kiosk-vote{display:flex;flex-direction:column;justify-content:center;gap:20px;background:var(--surface);border-radius:var(--radius-lg);padding:28px}
+.ub-kiosk-voteq{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.ub-kiosk-faces{display:flex;gap:12px}
+.ub-face{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface-raised);border:0;border-radius:var(--radius-md);padding:20px 8px;color:var(--text-secondary);font:inherit;font-size:18px;cursor:pointer;min-height:140px}
+.ub-face[data-on="true"]{background:var(--accent);color:var(--text-on-accent)}
+.ub-kiosk-thanks{font-size:22px;color:var(--crowd-low-text);font-weight:600}
+.ub-kiosk-foot{display:flex;align-items:center;gap:20px;padding:16px 48px 28px;font-size:20px;color:var(--text-muted)}
+.ub-kiosk-dots{display:flex;gap:8px}
+.ub-kiosk-dots span{width:12px;height:12px;border-radius:50%;background:var(--border-strong)}
+.ub-kiosk-dots span[data-on="true"]{background:var(--accent)}
+.ub-fadein{animation:ub-k-fade var(--motion-slow) var(--ease-out)}
+@keyframes ub-k-fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ub-fadein{animation:none}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="app.jsx"></script>
+</body></html>

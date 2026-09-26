@@ -1,0 +1,21 @@
+/* Shape and elevation. Exactly two elevation levels exist, and both are expressed as
+   surface VALUE, not shadow. --shadow-overlay is the single exception: it belongs to
+   things that float over the page (sheet, dialog) and nothing else may use it. */
+
+:root{
+  --radius-xs:4px;    /* tags, meter segments */
+  --radius-sm:6px;    /* inputs, buttons, chips */
+  --radius-md:10px;   /* cards, list rows */
+  --radius-lg:16px;   /* the crowding hero and dish photos only */
+  --radius-pill:999px;
+
+  --elevation-0:var(--surface-page);   /* the page itself */
+  --elevation-1:var(--surface);        /* cards, rows, sections */
+  --elevation-2:var(--surface-raised); /* the crowding hero, sheets, popovers */
+
+  --shadow-overlay:0 24px 48px -24px rgba(4,6,8,.55);
+
+  --hairline:1px solid var(--border-subtle);
+  --focus-width:3px;
+  --focus-offset:2px;
+}

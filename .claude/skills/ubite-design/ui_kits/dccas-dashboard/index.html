@@ -1,0 +1,41 @@
+<!-- @dsCard group="Staff" viewport="1200x820" name="DCCAS dashboard" subtitle="Read-only: footfall, ratings, feedback, loyalty cost, portions prepared vs sold" -->
+<!DOCTYPE html><html lang="ro" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — raport DCCAS</title>
+<link rel="icon" href="../../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{background:var(--surface-page)}
+.ub-dash{max-width:1200px;margin:0 auto;padding:22px}
+.ub-dash-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:16px}
+.ub-dash-lede{font-size:var(--text-md);color:var(--text-secondary);max-width:70ch;margin-bottom:18px}
+.ub-dash-lede strong{color:var(--text-primary)}
+.ub-dash-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.ub-metric{background:var(--surface-raised);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:4px}
+.ub-metric-v{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.ub-metric-u{font-size:20px;font-weight:600;color:var(--text-muted);margin-left:2px}
+.ub-metric-n{font-size:var(--text-sm);color:var(--text-muted)}
+.ub-dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ub-panel{background:var(--surface);border-radius:var(--radius-md);padding:18px}
+.ub-panel--wide{grid-column:1 / -1}
+.ub-panel h2{font-size:var(--text-lg);font-weight:var(--weight-semibold);margin-bottom:14px}
+.ub-note{font-size:var(--text-sm);color:var(--text-muted);margin-top:12px;max-width:72ch}
+.ub-bars{display:flex;flex-direction:column;gap:9px}
+.ub-bar-row{display:flex;align-items:center;gap:12px}
+.ub-bar-label{width:56px;font-size:var(--text-sm);color:var(--text-secondary);flex:none}
+.ub-bar-track{flex:1;height:14px;background:var(--surface-sunken);border-radius:var(--radius-xs);overflow:hidden}
+.ub-bar-fill{display:block;height:100%;background:var(--accent);border-radius:var(--radius-xs)}
+.ub-bar-v{width:64px;text-align:right;font-size:var(--text-sm);font-weight:600;flex:none}
+.ub-dish-line{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;font-size:var(--text-base);flex-wrap:wrap}
+.ub-table{width:100%;border-collapse:collapse;font-size:var(--text-base)}
+.ub-table th{text-align:left;font-size:var(--text-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:600;padding:6px 8px}
+.ub-table td{padding:10px 8px;border-top:1px solid var(--border-subtle)}
+.ub-table td:not(:first-child),.ub-table th:not(:first-child){text-align:right;width:120px}
+@media (max-width:1000px){.ub-dash-metrics{grid-template-columns:1fr 1fr}.ub-dash-grid{grid-template-columns:1fr}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="app.jsx"></script>
+</body></html>

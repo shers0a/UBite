@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Direction B — Departure Board</title><style>
+:root{--bg:#0E1113;--surface:#161A1D;--raised:#1E2428;--border:#2B3338;--ink:#F2F5F6;--ink-2:#AEB9BF;--ink-3:#7C888F;--accent:#3DDC97;--low:#3DDC97;--mod:#FFC24B;--high:#FF6B5A;--r:6px}
+*{box-sizing:border-box}body{margin:0;background:#07090A;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;justify-content:center;padding:24px}
+.phone{width:400px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;justify-content:space-between}
+.wm{font-size:20px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.wm span{color:var(--accent)}
+.meta{font-size:12px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 20px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.level{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:46px;line-height:1;font-weight:700;letter-spacing:-.01em;text-transform:uppercase;margin:12px 0 0;color:var(--mod)}
+.wait{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:34px;font-weight:700;margin-top:6px;color:var(--ink)}
+.wait small{font-size:15px;color:var(--ink-2);font-family:inherit;letter-spacing:.04em}
+.bars{display:flex;gap:4px;margin-top:18px}
+.bar{height:14px;flex:1;background:var(--border);border-radius:2px}.bar.on{background:var(--mod)}
+.legend{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.legend b{color:var(--mod)}
+.fresh{margin-top:16px;font-size:13px;color:var(--ink-2);font-family:ui-monospace,monospace;display:flex;gap:8px;align-items:center}
+.pulse{width:7px;height:7px;background:var(--accent);border-radius:50%}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.thumb{width:52px;height:52px;border-radius:4px;background:#252C31;flex:none}
+.name{font-size:16px;font-weight:600}.price{margin-left:auto;font-family:ui-monospace,monospace;font-size:16px;font-weight:700;color:var(--accent)}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;border:1px solid var(--border);color:var(--ink-2);margin-top:5px}
+.sw{display:flex;border-radius:4px;overflow:hidden;border:1px solid var(--border)}.sw div{height:40px;flex:1}
+.btn{display:inline-block;background:var(--accent);color:#07130D;font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:12px 18px;border-radius:4px;margin-top:12px}
+</style></head><body><div class="phone">
+<div class="top"><div class="wm">U<span>Bite</span></div><div class="meta">Departure board</div></div>
+<div class="hero"><div class="eyebrow">Queue right now</div><div class="level">Moderate</div><div class="wait">~6 <small>MIN WAIT</small></div>
+<div class="bars"><div class="bar"></div><div class="bar on"></div><div class="bar"></div></div>
+<div class="legend"><span>Low</span><b>Moderate</b><span>High</span></div>
+<div class="fresh"><span class="pulse"></span>UPDATED 40s AGO</div></div>
+<div class="card"><div class="eyebrow" style="margin-bottom:4px">Today · Main course</div>
+<div class="row"><div class="thumb"></div><div><div class="name">Ciorbă de perișoare</div><div class="tag">Gluten</div></div><div class="price">9 LEI</div></div>
+<div class="row" style="border:0"><div class="thumb"></div><div><div class="name">Pui la cuptor cu cartofi</div><div class="tag">Protein</div></div><div class="price">17 LEI</div></div>
+<span class="btn">Full menu</span></div>
+<div class="sw"><div style="background:var(--bg)"></div><div style="background:var(--surface)"></div><div style="background:var(--raised)"></div><div style="background:var(--accent)"></div><div style="background:var(--mod)"></div><div style="background:var(--high)"></div><div style="background:var(--ink)"></div></div>
+</div></body></html>

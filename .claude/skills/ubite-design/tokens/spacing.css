@@ -1,0 +1,30 @@
+/* 4px base grid. The home screen's density gradient uses --density-zone-* :
+   generous at the top where importance is highest, tightening as you scroll. */
+
+:root{
+  --space-0:0;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;
+
+  --gutter:16px;          /* phone side margin at 400px */
+  --gutter-wide:24px;
+  --max-phone:440px;
+  --min-target:44px;      /* touch target floor, also serves the kiosk */
+
+  --density-zone-1:28px;  /* crowding — maximum air */
+  --density-zone-2:20px;  /* menu */
+  --density-zone-3:16px;  /* loyalty */
+  --density-zone-4:14px;  /* report your wait */
+  --density-zone-5:12px;  /* typical crowding */
+  --density-zone-6:10px;  /* announcements */
+  --density-zone-7:8px;   /* footer */
+}

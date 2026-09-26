@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="ro" data-theme="light"><head><meta charset="utf-8"><title>UBite — laborator de logo</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:28px;background:var(--surface-page)}
+h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.sub{font-size:15px;color:var(--text-secondary);max-width:70ch;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(360px,1fr));gap:16px}
+.card{background:var(--surface);border-radius:var(--radius-md);padding:18px;display:flex;flex-direction:column;gap:14px}
+.hd{display:flex;align-items:baseline;gap:10px}
+.hd b{font-size:17px;font-weight:700}
+.hd span{font-size:13px;color:var(--text-muted)}
+.row{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.big{width:96px;height:96px;color:var(--accent)}
+.mid{width:40px;height:40px;color:var(--accent)}
+.tiny{width:18px;height:18px;color:var(--accent)}
+.chip{background:var(--surface-inverse);border-radius:10px;padding:10px;display:grid;place-items:center}
+.chip svg{width:40px;height:40px;color:var(--surface-raised)}
+.app{width:64px;height:64px;border-radius:14px;background:var(--accent);display:grid;place-items:center}
+.app svg{width:40px;height:40px;color:#fff}
+.lock{display:flex;align-items:center;gap:10px}
+.lock svg{width:34px;height:34px;color:var(--accent)}
+.lock b{font-size:28px;font-weight:700;letter-spacing:-.035em}
+.note{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.tools{display:flex;gap:10px;margin-bottom:18px}
+.tools button{min-height:40px;padding:0 14px;border:0;border-radius:8px;background:var(--surface-raised);color:var(--text-primary);font:inherit;font-weight:600;cursor:pointer}
+</style></head><body>
+<h1>Șase variante de marcă UBite</h1>
+<p class="sub">Toate desenate ca geometrie curată (cerc, linie, rază constantă), nu generate. Fiecare e arătată la 96px, 40px, 18px, ca icon de aplicație, monocrom pe fundal întunecat și în lockup cu numele. Alege una și o duc mai departe: fișier SVG, favicon, colț de kiosk, thumbnail.</p>
+<div class="tools">
+  <button onclick="document.documentElement.dataset.theme='light'">Zi</button>
+  <button onclick="document.documentElement.dataset.theme='dark'">Noapte</button>
+</div>
+<div class="grid">
+
+<div class="card"><div class="hd"><b>A · Tava-U</b><span>tavă în secțiune + trei capete la coadă</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="mid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="tiny" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="5" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="5" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="4"/></svg>
+  <span class="app"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22"/><circle cx="21" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="32" cy="12" r="4" fill="currentColor" stroke="none"/><circle cx="43" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>UBite</b></div>
+<p class="note">Litera U și tava sunt aceeași formă. Bulinele sunt exact indicatorul de coadă din aplicație — se pot umple în funcție de aglomerație, deci marca poate „respira" live.</p></div>
+
+<div class="card"><div class="hd"><b>B · Semnal</b><span>tava-U + trei bare crescătoare</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><path d="M21 16v-2"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="mid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="tiny" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="4"/></svg>
+  <span class="app"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24"/><rect x="17" y="10" width="8" height="8" rx="2" fill="currentColor" stroke="none"/><rect x="28" y="6" width="8" height="12" rx="2" fill="currentColor" stroke="none"/><rect x="39" y="2" width="8" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>UBite</b></div>
+<p class="note">Aceeași idee, citită ca semnal de încărcare. Mai „tehnic", mai aproape de un afișaj de sosiri. Bine la kiosk, puțin mai rece.</p></div>
+
+<div class="card"><div class="hd"><b>C · Mușcătura</b><span>disc plin cu o mușcătură</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64"><defs><mask id="mC"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg>
+  <svg class="mid" viewBox="0 0 64 64"><defs><mask id="mC2"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC2)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg>
+  <svg class="tiny" viewBox="0 0 64 64"><defs><mask id="mC3"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC3)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg>
+  <span class="app"><svg viewBox="0 0 64 64"><defs><mask id="mC4"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC4)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64"><defs><mask id="mC5"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC5)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64"><defs><mask id="mC6"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="currentColor" mask="url(#mC6)"/><circle cx="50" cy="14" r="5" fill="currentColor"/></svg><b>UBite</b></div>
+<p class="note">Jocul de cuvinte „bite", o singură formă, imposibil de citit greșit la 16px. Spune mâncare, nu spune coadă — cea mai simplă, cea mai puțin specifică.</p></div>
+
+<div class="card"><div class="hd"><b>D · Castron cu abur</b><span>bol + trei picături care urcă</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="3.5" fill="currentColor"/><circle cx="32" cy="10" r="3.5" fill="currentColor"/><circle cx="42" cy="16" r="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="mid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="3.5" fill="currentColor"/><circle cx="32" cy="10" r="3.5" fill="currentColor"/><circle cx="42" cy="16" r="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+  <svg class="tiny" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="4.5" fill="currentColor"/><circle cx="32" cy="9" r="4.5" fill="currentColor"/><circle cx="42" cy="16" r="4.5" fill="none" stroke="currentColor" stroke-width="4"/></svg>
+  <span class="app"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="3.5" fill="currentColor"/><circle cx="32" cy="10" r="3.5" fill="currentColor"/><circle cx="42" cy="16" r="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="3.5" fill="currentColor"/><circle cx="32" cy="10" r="3.5" fill="currentColor"/><circle cx="42" cy="16" r="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5"><path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/><circle cx="22" cy="16" r="3.5" fill="currentColor"/><circle cx="32" cy="10" r="3.5" fill="currentColor"/><circle cx="42" cy="16" r="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg><b>UBite</b></div>
+<p class="note">Cel mai cald dintre toate: ciorbă, aburi, prânz. Cele trei picături pot rămâne indicatorul de coadă. Riscul: seamănă cu multe logo-uri de restaurant.</p></div>
+
+<div class="card"><div class="hd"><b>E · Coada care intră</b><span>trei chevroane către fanta tăvii</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".35"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg>
+  <svg class="mid" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".35"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg>
+  <svg class="tiny" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".35"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg>
+  <span class="app"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".4"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".4"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20l8 12-8 12" opacity=".35"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></svg><b>UBite</b></div>
+<p class="note">Mișcare: coada care înaintează spre ghișeu. Cel mai dinamic, cel mai greu de citit la 16px din cauza opacităților — ar avea nevoie de o variantă simplificată pentru favicon.</p></div>
+
+<div class="card"><div class="hd"><b>F · Placa UB</b><span>lockup-ul actual, cu colț mușcat</span></div>
+<div class="row">
+  <svg class="big" viewBox="0 0 64 64"><defs><mask id="mF"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" mask="url(#mF)"/><text x="30" y="43" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="28" font-weight="800" fill="#fff">UB</text></svg>
+  <svg class="mid" viewBox="0 0 64 64"><defs><mask id="mF2"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" mask="url(#mF2)"/><text x="30" y="43" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="28" font-weight="800" fill="#fff">UB</text></svg>
+  <svg class="tiny" viewBox="0 0 64 64"><defs><mask id="mF3"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" mask="url(#mF3)"/><text x="30" y="44" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="30" font-weight="800" fill="#fff">UB</text></svg>
+  <span class="app"><svg viewBox="0 0 64 64"><defs><mask id="mF4"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="#fff" mask="url(#mF4)"/><text x="30" y="43" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="28" font-weight="800" fill="var(--accent)">UB</text></svg></span>
+  <span class="chip"><svg viewBox="0 0 64 64"><defs><mask id="mF5"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" mask="url(#mF5)"/><text x="30" y="43" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="28" font-weight="800" fill="var(--surface-inverse)">UB</text></svg></span>
+</div>
+<div class="lock"><svg viewBox="0 0 64 64"><defs><mask id="mF6"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs><rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" mask="url(#mF6)"/><text x="30" y="43" text-anchor="middle" font-family="Archivo Variable,system-ui" font-size="28" font-weight="800" fill="#fff">UB</text></svg><b>ite</b></div>
+<p class="note">Evoluția a ceea ce există deja în sistem: placa „UB" din lockup, cu un colț mușcat. Cea mai mică schimbare, se leagă direct de wordmark-ul din header.</p></div>
+
+</div>
+</body></html>

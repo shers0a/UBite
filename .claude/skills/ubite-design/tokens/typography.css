@@ -1,0 +1,37 @@
+/* UBite type scale — fixed steps, no arbitrary sizes.
+   Body never below 16px (iOS input zoom + WCAG). The crowding figure is the largest
+   text in the application and is the only place --text-display-* is allowed. */
+
+:root{
+  --text-2xs:12px;   /* legal/footnote only, never a sentence */
+  --text-xs:13px;    /* metadata, timestamps */
+  --text-sm:14px;    /* chips, tags, table cells */
+  --text-base:16px;  /* body minimum */
+  --text-md:18px;    /* dish names, list primary */
+  --text-lg:20px;    /* section headers */
+  --text-xl:24px;    /* screen titles, kiosk body minimum */
+  --text-2xl:30px;
+  --text-3xl:38px;
+  --text-display-sm:48px;   /* crowding figure, compact */
+  --text-display:64px;      /* crowding figure, home hero */
+  --text-display-kiosk:132px; /* crowding figure at three metres */
+
+  --leading-tight:1.04;
+  --leading-snug:1.2;
+  --leading-normal:1.45;
+  --leading-relaxed:1.6;
+
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+
+  --tracking-display:-.03em;
+  --tracking-tight:-.015em;
+  --tracking-normal:0;
+  --tracking-label:.08em;  /* uppercase eyebrows only */
+
+  /* Romanian runs 15–20% longer than English: these are ceilings, not targets */
+  --measure-short:28ch;
+  --measure-body:62ch;
+}

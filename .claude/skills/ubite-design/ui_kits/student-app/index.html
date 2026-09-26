@@ -1,0 +1,92 @@
+<!-- @dsCard group="Student app" viewport="1000x820" name="Student app" subtitle="Home, dish detail, account, add a visit — with live state switches" -->
+<!DOCTYPE html><html lang="ro" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — aplicația studentului</title>
+<link rel="icon" href="../../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../assets/image-slot.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="../assets.js"></script>
+<style>
+body{background:var(--surface-sunken);display:grid;place-items:center;min-height:100vh;padding:24px}
+.ub-stage{display:flex;gap:28px;align-items:flex-start}
+.ub-toolbar{width:216px;background:var(--surface);border-radius:var(--radius-md);padding:18px;position:sticky;top:24px}
+.ub-phone-wrap{display:flex;flex-direction:column;gap:10px;align-items:center}
+.ub-phone{position:relative;width:400px;height:760px;background:var(--surface-page);border-radius:28px;overflow:hidden;box-shadow:var(--shadow-overlay)}
+.ub-statusbar{display:flex;justify-content:space-between;padding:8px 20px 0;font-size:12px;color:var(--text-muted)}
+.ub-scroll{position:absolute;inset:0;padding-top:24px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.ub-scroll::-webkit-scrollbar{width:0}
+.ub-chiprow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.ub-chiprow::-webkit-scrollbar{display:none}
+/* Sticky mini answer bar — pops in once the hero scrolls away */
+.ub-mini{position:sticky;top:0;z-index:25;display:flex;align-items:center;gap:10px;margin:0 12px -56px;padding:10px 14px;border-radius:var(--radius-pill);background:var(--surface-raised);box-shadow:var(--shadow-overlay);font-size:15px;transform:translateY(-140%);opacity:0;transition:transform var(--motion-slow) var(--ease-out),opacity var(--motion-base) var(--ease-out);pointer-events:none}
+.ub-mini[data-in="true"]{transform:none;opacity:1;pointer-events:auto}
+.ub-mini strong{font-weight:600}
+.ub-mini .ub-numeric{margin-left:auto;color:var(--text-secondary)}
+.ub-mini button{width:32px;height:32px;min-height:32px;display:grid;place-items:center;border:0;background:var(--surface);border-radius:50%;color:var(--text-secondary);cursor:pointer}
+.ub-mini-dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--crowd-moderate-fill)}
+.ub-mini-dot[data-level="low"]{background:var(--crowd-low-fill)}
+.ub-mini-dot[data-level="high"]{background:var(--crowd-high-fill)}
+.ub-mini-dot[data-level="closed"]{background:var(--crowd-closed-fill)}
+/* Horizontal picks rail */
+.ub-rail{display:flex;gap:12px;overflow-x:auto;padding:2px var(--gutter) 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.ub-rail::-webkit-scrollbar{display:none}
+.ub-pick{flex:none;width:152px;scroll-snap-align:start;background:var(--surface);border:0;border-radius:var(--radius-md);padding:8px;display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer;color:var(--text-primary);font:inherit;transition:transform var(--motion-fast) var(--ease-out),background var(--motion-fast) var(--ease-out)}
+.ub-pick:hover{background:var(--surface-raised);transform:translateY(-2px)}
+.ub-pick:active{transform:translateY(0)}
+.ub-pick-photo{position:relative;display:block;height:104px;border-radius:12px;overflow:hidden;background:var(--surface-sunken)}
+.ub-pick-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ub-pick-price{position:absolute;left:8px;bottom:8px;background:var(--surface-raised);color:var(--text-primary);font-size:13px;font-weight:700;padding:3px 8px;border-radius:var(--radius-pill)}
+.ub-pick-name{font-size:15px;font-weight:600;line-height:1.25}
+.ub-pick-rating{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text-secondary)}
+/* Spotlight rail — feature cards with characters, one per swipe */
+.ub-spotrail{display:flex;gap:12px;overflow-x:auto;padding:2px var(--gutter) 4px;scroll-snap-type:x mandatory;scroll-padding:0 var(--gutter);scrollbar-width:none}
+.ub-spotrail::-webkit-scrollbar{display:none}
+.ub-dots{display:flex;justify-content:center;gap:6px;margin-top:8px}
+.ub-dots button{width:24px;height:24px;min-height:24px;padding:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.ub-dots button::before{content:"";width:6px;height:6px;border-radius:999px;background:var(--border-strong);transition:width var(--motion-base) var(--ease-out),background var(--motion-base) var(--ease-out)}
+.ub-dots button[data-on="true"]::before{width:18px;background:var(--text-primary)}
+/* Onboarding — first open only */
+.ub-onb{position:absolute;inset:0;z-index:60;background:var(--surface-page);display:flex;flex-direction:column;overflow:hidden}
+.ub-onb-art{position:relative;margin:40px var(--gutter) 0;height:330px;border-radius:40% 60% 46% 54% / 52% 44% 56% 48%;background:var(--accent-quiet);display:grid;place-items:center;overflow:hidden}
+.ub-onb-slide{animation:ub-onb-in var(--motion-slow) var(--ease-out)}
+@keyframes ub-onb-in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ub-onb-slide{animation:none}.ub-dots button::before{transition:none}}
+/* Category pills */
+.ub-pillrow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.ub-pillrow::-webkit-scrollbar{display:none}
+.ub-pill{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;padding:8px 4px;border:0;background:transparent;color:var(--text-secondary);font:inherit;font-size:12px;cursor:pointer;border-radius:var(--radius-md)}
+.ub-pill:hover{background:var(--hover-wash)}
+.ub-pill-ico{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--surface);transition:background var(--motion-fast) var(--ease-out),color var(--motion-fast) var(--ease-out)}
+.ub-pill[data-on="true"]{color:var(--text-primary)}
+.ub-pill[data-on="true"] .ub-pill-ico{background:var(--accent);color:var(--text-on-accent)}
+/* Floating bottom nav */
+.ub-nav{position:absolute;left:14px;right:14px;bottom:12px;z-index:28;display:flex;gap:4px;padding:6px;background:var(--surface-raised);border-radius:var(--radius-pill);box-shadow:var(--shadow-overlay)}
+.ub-nav button{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:var(--text-muted);font:inherit;font-size:11px;font-weight:600;border-radius:var(--radius-pill);cursor:pointer;transition:background var(--motion-fast) var(--ease-out),color var(--motion-fast) var(--ease-out)}
+.ub-nav button[data-on="true"]{background:var(--accent-quiet);color:var(--accent-quiet-text)}
+.ub-nav button:hover{color:var(--text-primary)}
+/* Entrance */
+.ub-rise{animation:ub-rise var(--motion-slow) var(--ease-out) backwards}
+.ub-rise:nth-of-type(2){animation-delay:60ms}
+@keyframes ub-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.ub-screen{animation:ub-screen-in var(--motion-slow) var(--ease-out)}
+@keyframes ub-screen-in{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ub-rise,.ub-screen{animation:none}.ub-mini,.ub-pick{transition:none}}
+.ub-caption{font-size:12px;color:var(--text-muted);margin:0}
+/* ?embed — only the phone, for screenshots. ?fit — the phone is the whole screen, for phones. */
+body.ub-embed{padding:0;min-height:0;display:block;background:transparent}
+body.ub-embed .ub-stage{display:inline-flex}
+body.ub-fit{padding:0;min-height:0;display:block;background:var(--surface-page)}
+body.ub-fit .ub-stage,body.ub-fit .ub-phone-wrap{display:block}
+body.ub-fit .ub-phone{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
+body.ub-fit .ub-statusbar{visibility:hidden}
+@media (max-width:900px){.ub-stage{flex-direction:column;align-items:center}.ub-toolbar{width:min(400px,100%);position:static}}
+@media (max-width:460px){body{padding:12px}.ub-phone{width:calc(100vw - 24px)}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="HomeScreen.jsx"></script>
+<script type="text/babel" src="Screens.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body></html>

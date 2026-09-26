@@ -1,0 +1,21 @@
+{
+  "_readme": "Every image in assets/ needs a row here: what it is, where it came from, the prompt or search that produced it, and its licence. scripts/check-assets.js fails CI if anything is unrecorded. The Lucide icon set (assets/icons/) is recorded once, below, rather than file by file.",
+  "sets": [
+    {
+      "path": "assets/icons/",
+      "name": "Lucide outline icon set (59 glyphs)",
+      "source": "https://github.com/lucide-icons/lucide",
+      "licence": "ISC",
+      "added": "2026-09-21",
+      "note": "48 glyphs added 2026-09-21; wheat-off, milk-off, sprout, ban, log-out, mail, gift, megaphone, scan-line, image-plus and share added 2026-09-25 (lucide-static 0.542.0) for the docs/05 dietary tags and the sign-in, install and staff screens."
+    },
+    {
+      "path": "assets/logo/",
+      "name": "UBite mark — four candidate variants (A tray, B signal, C bite, F plate) plus favicon-simplified versions",
+      "source": "drawn in-house as SVG geometry from guidelines/logo-brief.md — no generator, no third-party artwork",
+      "licence": "own work",
+      "added": "2026-09-22"
+    }
+  ],
+  "assets": []
+}

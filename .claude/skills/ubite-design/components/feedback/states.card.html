@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x420" name="States" subtitle="Empty, offline, stale, error, wait report, hourly pattern" -->
+<!DOCTYPE html><html lang="ro"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:18px;background:var(--surface-page)}.lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--text-muted);margin:0 0 8px}.sec{margin-bottom:18px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { EmptyState, OfflineBanner, WaitReport, CrowdingByHour } = window.UBiteDesignSystem_40c8c2;
+function Card(){return (<>
+  <div className="sec" style={{display:'flex',flexDirection:'column',gap:10}}>
+    <OfflineBanner variant="offline" updatedLabel="Actualizat la 12:04" queued={1} />
+    <OfflineBanner variant="stale" updatedLabel="acum 40 de minute" />
+    <OfflineBanner variant="error" onRetry={()=>{}} />
+  </div>
+  <div className="sec" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+    <EmptyState icon="utensils" title="Meniul de azi nu e publicat încă" body="De obicei apare până la 10:30. Până atunci îți arătăm meniul de ieri." action="Vezi meniul de ieri" />
+    <WaitReport />
+  </div>
+  <div className="sec"><p className="lbl">Tipar orar · ascuns în prima săptămână</p>
+    <CrowdingByHour nowIndex={5} data={[
+      {label:'11:30',value:2},{label:'12:00',value:4},{label:'12:30',value:7},
+      {label:'13:00',value:12},{label:'13:30',value:9},{label:'14:00',value:5},
+      {label:'14:30',value:3},{label:'15:00',value:2}]} />
+  </div></>);}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card/>);
+</script></body></html>

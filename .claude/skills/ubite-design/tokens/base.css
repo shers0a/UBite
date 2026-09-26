@@ -1,0 +1,25 @@
+/* Element defaults. Components carry their own styling; this file only makes the
+   bare document correct — typography, focus, links, and the touch-target floor. */
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-page);color:var(--text-primary);font-family:var(--font-sans);font-size:var(--text-base);line-height:var(--leading-normal);font-weight:var(--weight-regular);-webkit-font-smoothing:antialiased;text-wrap:pretty}
+h1,h2,h3,h4{margin:0;line-height:var(--leading-snug);letter-spacing:var(--tracking-tight);font-weight:var(--weight-semibold);text-wrap:balance}
+p{margin:0;max-width:var(--measure-body)}
+a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;transition:color var(--motion-fast) var(--ease-out)}
+a:hover{color:var(--accent-hover)}
+a:active{color:var(--accent-active)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{min-height:var(--min-target)}
+img{display:block;max-width:100%}
+::selection{background:var(--accent-quiet);color:var(--accent-quiet-text)}
+
+/* One focus indicator for the whole system: a 3px accent ring with a contrasting
+   inner halo so it survives both themes and any surface underneath it. */
+:focus{outline:none}
+:focus-visible{outline:var(--focus-width) solid var(--focus-ring);outline-offset:var(--focus-offset);box-shadow:0 0 0 calc(var(--focus-offset)) var(--focus-ring-contrast);border-radius:var(--radius-sm)}
+
+/* Numerals that tick (wait minutes, clocks, prices) must not jitter */
+.ub-numeric{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:var(--numeric-features)}
+.ub-eyebrow{font-size:var(--text-xs);letter-spacing:var(--tracking-label);text-transform:uppercase;font-weight:var(--weight-semibold);color:var(--text-muted)}
+.ub-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}

@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Direction C — Campus Card</title><style>
+:root{--bg:#F5F6F8;--surface:#FFFFFF;--raised:#FFFFFF;--border:#DDE1E7;--ink:#151A21;--ink-2:#4E5762;--ink-3:#79828E;--accent:#1F4FD8;--low:#0F7A52;--mod:#8A5A00;--high:#B32218;--r:10px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);display:flex;justify-content:center;padding:24px}
+.phone{width:400px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;justify-content:space-between}
+.wm{font-size:21px;font-weight:700;letter-spacing:-.02em}.wm span{color:var(--accent)}
+.meta{font-size:13px;color:var(--ink-3)}
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 20px;box-shadow:0 1px 2px rgba(21,26,33,.05)}
+.eyebrow{font-size:13px;color:var(--ink-3);font-weight:600}
+.lvlrow{display:flex;align-items:center;gap:10px;margin:10px 0 4px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:#FFF3DA;color:var(--mod);border:1px solid #E9CB8D;border-radius:99px;padding:5px 12px;font-size:14px;font-weight:700}
+.chip i{width:9px;height:9px;border-radius:2px;background:var(--mod);display:block;transform:rotate(45deg)}
+.level{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.wait{font-size:20px;color:var(--ink-2);margin-top:4px}
+.wait b{color:var(--ink);font-weight:700}
+.meter{display:flex;height:10px;border-radius:99px;overflow:hidden;background:#E7EAEF;margin-top:18px}
+.meter i{display:block;width:55%;background:var(--mod)}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-top:7px;font-weight:600}
+.scale b{color:var(--mod)}
+.fresh{margin-top:14px;font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:7px;border-top:1px solid var(--border);padding-top:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--low)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.thumb{width:54px;height:54px;border-radius:8px;background:#E7EAEF;flex:none}
+.name{font-size:16px;font-weight:600}.price{margin-left:auto;font-size:16px;font-weight:700}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:5px;background:#EEF1F6;color:var(--ink-2);margin-top:5px}
+.sw{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border)}.sw div{height:40px;flex:1}
+.btn{display:inline-block;background:var(--accent);color:#fff;font-weight:600;font-size:16px;padding:12px 18px;border-radius:8px;margin-top:12px}
+</style></head><body><div class="phone">
+<div class="top"><div class="wm">U<span>Bite</span></div><div class="meta">Campus card</div></div>
+<div class="hero"><div class="eyebrow">Queue right now</div>
+<div class="lvlrow"><div class="level">Moderate</div><span class="chip"><i></i>6 min</span></div>
+<div class="wait">You'll wait <b>about 6 minutes</b></div>
+<div class="meter"><i></i></div>
+<div class="scale"><span>Low</span><b>Moderate</b><span>High</span></div>
+<div class="fresh"><span class="dot"></span>Updated 40s ago · live</div></div>
+<div class="card"><div class="eyebrow" style="margin-bottom:4px">Today · Main course</div>
+<div class="row"><div class="thumb"></div><div><div class="name">Ciorbă de perișoare</div><div class="tag">Contains gluten</div></div><div class="price">9 lei</div></div>
+<div class="row" style="border:0"><div class="thumb"></div><div><div class="name">Pui la cuptor cu cartofi</div><div class="tag">High protein</div></div><div class="price">17 lei</div></div>
+<span class="btn">See full menu</span></div>
+<div class="sw"><div style="background:var(--bg)"></div><div style="background:var(--surface)"></div><div style="background:var(--accent)"></div><div style="background:var(--low)"></div><div style="background:var(--mod)"></div><div style="background:var(--high)"></div><div style="background:var(--ink)"></div></div>
+</div></body></html>

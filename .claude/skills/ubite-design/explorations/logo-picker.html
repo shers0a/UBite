@@ -1,0 +1,341 @@
+<!DOCTYPE html><html lang="ro" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — alege marca</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:32px var(--gutter-wide) 120px;max-width:1320px;margin:0 auto}
+.intro{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+.intro h1{font-size:var(--text-3xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-display);line-height:var(--leading-tight)}
+.intro p{font-size:var(--text-md);color:var(--text-secondary);margin-top:10px;max-width:62ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{min-height:40px;padding:0 14px;border:0;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--text-secondary);font:inherit;font-size:var(--text-sm);font-weight:var(--weight-medium);cursor:pointer;box-shadow:inset 0 0 0 1px var(--border-subtle)}
+.tool[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);box-shadow:none}
+.tool:hover{background:var(--hover-wash)}.tool[aria-pressed="true"]:hover{background:var(--accent-hover)}
+.section-h{display:flex;align-items:baseline;gap:12px;margin:36px 0 14px}
+.section-h h2{font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-tight)}
+.section-h span{font-size:var(--text-sm);color:var(--text-muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:16px}
+.card{background:var(--surface);border-radius:var(--radius-md);padding:18px;display:flex;flex-direction:column;gap:16px;position:relative;transition:background var(--motion-fast) var(--ease-out)}
+.card[data-chosen="true"]{background:var(--accent-quiet)}
+.card[hidden]{display:none}
+.hd{display:flex;align-items:baseline;gap:10px}
+.code{font-size:var(--text-xs);font-weight:var(--weight-bold);letter-spacing:var(--tracking-label);color:var(--text-muted);min-width:28px}
+.name{font-size:var(--text-lg);font-weight:var(--weight-bold);letter-spacing:var(--tracking-tight)}
+.src{margin-left:auto;font-size:var(--text-2xs);font-weight:var(--weight-semibold);letter-spacing:.04em;padding:3px 8px;border-radius:var(--radius-xs);background:var(--surface-sunken);color:var(--text-secondary);white-space:nowrap}
+.src[data-kind="new"]{background:var(--accent-quiet);color:var(--accent-quiet-text)}
+.src[data-kind="ai"]{background:var(--crowd-moderate-quiet);color:var(--crowd-moderate-text)}
+.hero{display:grid;grid-template-columns:132px 1fr;gap:18px;align-items:center}
+.stage{width:132px;height:132px;border-radius:var(--radius-md);background:var(--surface-raised);display:grid;place-items:center;color:var(--accent)}
+.concept{font-size:var(--text-base);color:var(--text-secondary);line-height:var(--leading-normal)}
+.row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sizes{color:var(--accent)}
+.sizes figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sizes figcaption{font-size:var(--text-2xs);color:var(--text-muted)}
+.app{width:56px;height:56px;border-radius:13px;background:var(--accent);display:grid;place-items:center;color:var(--text-on-accent)}
+.ink{width:56px;height:56px;border-radius:13px;background:var(--surface-inverse);display:grid;place-items:center;color:var(--text-inverse)}
+.levels{display:flex;gap:6px}
+.levels span{display:grid;place-items:center;width:44px;height:44px;border-radius:var(--radius-sm);background:var(--surface-raised);color:var(--text-primary)}
+.lock{display:flex;align-items:center;gap:10px;color:var(--accent)}
+.lock b{font-size:28px;font-weight:var(--weight-bold);letter-spacing:-.035em;color:var(--text-primary);line-height:1}
+.traits{display:flex;gap:6px;flex-wrap:wrap}
+.trait{font-size:var(--text-xs);font-weight:var(--weight-semibold);padding:3px 8px;border-radius:var(--radius-xs);display:inline-flex;gap:5px;align-items:center}
+.trait[data-ok="true"]{background:var(--status-success-quiet);color:var(--status-success-text)}
+.trait[data-ok="false"]{background:var(--surface-sunken);color:var(--text-muted)}
+.actions{display:flex;gap:8px;margin-top:auto}
+.btn{min-height:44px;padding:0 16px;border:0;border-radius:var(--radius-sm);font:inherit;font-weight:var(--weight-semibold);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-fav{background:var(--surface-raised);color:var(--text-secondary);box-shadow:inset 0 0 0 1px var(--border-subtle)}
+.btn-fav[aria-pressed="true"]{color:var(--status-danger-text);background:var(--status-danger-quiet);box-shadow:none}
+.btn-fav[aria-pressed="true"] svg{fill:currentColor}
+.btn-pick{background:var(--accent);color:var(--text-on-accent);flex:1;justify-content:center}
+.btn-pick:hover{background:var(--accent-hover)}
+.card[data-chosen="true"] .btn-pick{background:var(--accent-active)}
+.ai-shot{width:100%;aspect-ratio:1;border-radius:var(--radius-sm);object-fit:cover;background:#fff}
+#grid-ai{grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
+#grid-ai .card{padding:12px;gap:10px}
+#grid-ai .name{font-size:var(--text-base)}
+#grid-ai .concept{font-size:var(--text-sm)}
+#grid-ai .btn{min-height:44px;padding:0 10px;font-size:var(--text-sm)}
+#grid-ai .btn-fav{font-size:0;gap:0}
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(760px,calc(100% - 32px));background:var(--surface-raised);border-radius:var(--radius-lg);box-shadow:var(--shadow-overlay);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;z-index:10}
+.dock p{flex:1;min-width:24ch;font-size:var(--text-base)}
+.dock p small{display:block;font-size:var(--text-sm);color:var(--text-muted);margin-top:2px}
+.toast{font-size:var(--text-sm);color:var(--status-success-text);font-weight:var(--weight-semibold)}
+.ub-c{transition:fill var(--motion-slow) var(--ease-out),stroke var(--motion-slow) var(--ease-out)}
+</style></head><body>
+
+<div class="intro">
+  <div>
+    <h1>Alege marca UBite</h1>
+    <p>Șaisprezece mărci: cele șase din runda întâi și zece noi, toate desenate ca geometrie, nu generate. Unde are sens, marca e <strong>vie</strong> și se umple cu nivelul cozii. Mai jos sunt și 22 de schițe AI pentru aceleași idei. Pune inimă pe ce-ți place și apasă „Aleg asta” pe una singură.</p>
+  </div>
+  <div class="tools">
+    <button class="tool" id="t-theme" aria-pressed="false">Noapte</button>
+    <button class="tool" id="t-anim" aria-pressed="false">Animează nivelul</button>
+    <button class="tool" id="t-favs" aria-pressed="false">Doar favoritele</button>
+  </div>
+</div>
+
+<div class="section-h"><h2>Runda 2 — concepte noi</h2><span>desenate acum, din brief și din inspirație</span></div>
+<div class="grid" id="grid-new"></div>
+<div class="section-h"><h2>Runda 1 — din Claude Design</h2><span>A, B, C, F erau deja pe lista scurtă</span></div>
+<div class="grid" id="grid-old"></div>
+<div id="ai-wrap" hidden>
+  <div class="section-h"><h2>Explorare AI</h2><span>22 de schițe (GPT-Image și FLUX) pentru conceptele de mai sus. Dacă una câștigă, o redesenez ca vector, nu o livrez așa.</span></div>
+  <div class="grid" id="grid-ai"></div>
+</div>
+
+<div class="dock" role="status">
+  <p style="margin:0 0 12px;padding:10px 14px;border-radius:10px;background:var(--accent-quiet);color:var(--accent-quiet-text)">Decis 22 sep 2026: <b>A (Tava-U)</b>, cu „Bite” lipit de U. Favorite păstrate: N5, N7, N8, B.</p>
+  <p id="summary">Nimic ales încă.<small>Inimile marchează favoritele. „Aleg asta” fixează o singură marcă.</small></p>
+  <span class="toast" id="toast" hidden>Copiat. Lipește-l în chat.</span>
+  <button class="btn btn-pick" id="copy" style="flex:none">Copiază pentru Claude</button>
+</div>
+
+<script src="logo-ai.js"></script>
+<script>
+/* ---------- geometry ---------- */
+let uid = 0;
+const LEVELS = ['low', 'moderate', 'high'];
+const FILL = { closed: 0, low: 1, moderate: 2, high: 3 };
+const TONE = { low: 'var(--crowd-low-fill)', moderate: 'var(--crowd-moderate-fill)', high: 'var(--crowd-high-fill)', closed: 'var(--crowd-closed-fill)' };
+
+function counters(n, fav, tone, items) {
+  // items: [{shape:'circle'|'rect', ...attrs}] — the first n are filled
+  return items.map((it, i) => {
+    const on = i < n;
+    const common = `class="ub-c" fill="${on ? tone : 'none'}" stroke="${on ? 'none' : 'currentColor'}" stroke-width="${fav ? 4 : 3}"`;
+    if (it.shape === 'circle') return `<circle cx="${it.cx}" cy="${it.cy}" r="${fav ? it.r + 1 : it.r}" ${common}/>`;
+    return `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" rx="${it.rx || 2}" ${common}/>`;
+  }).join('');
+}
+
+function sector(cx, cy, r, deg) {
+  if (deg >= 359) return `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+  if (deg <= 0) return '';
+  const a = (deg - 90) * Math.PI / 180;
+  const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+  return `<path d="M${cx} ${cy}V${cy - r}A${r} ${r} 0 ${deg > 180 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z"/>`;
+}
+
+const MARKS = [
+  /* ---- round 2 ---- */
+  { id: 'N1', name: 'Nivelul din bol', src: 'new', live: true,
+    concept: 'Un bol în secțiune care se umple exact cât e de plină cantina. Cea mai directă imagine a întrebării „cât de aglomerat e?”.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => { const k = `k${++uid}`; const lvl = [0, 36, 31, 25][n];
+      return `<defs><clipPath id="${k}"><path d="M17.5 25.5h29v1.5a14.5 14.5 0 0 1-29 0z"/></clipPath></defs>
+      <path d="M13 22v5a19 19 0 0 0 38 0v-5" stroke-width="${fav ? 7 : 5}"/><path d="M8 22h48M25 55h14" stroke-width="${fav ? 7 : 5}"/>
+      ${n ? `<rect class="ub-c" x="10" y="${lvl}" width="44" height="30" fill="${tone}" stroke="none" clip-path="url(#${k})"/>` : ''}`; } },
+
+  { id: 'N2', name: 'Tava cu compartimente', src: 'new', live: true,
+    concept: 'Tava de cantină văzută de sus, cu trei compartimente care se umplu pe rând cu nivelul cozii. Obiectul pe care îl ține în mână fiecare student.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<rect x="8" y="12" width="48" height="40" rx="10" stroke-width="${fav ? 7 : 5}"/>
+      <path d="M8 31h48M32 12v19" stroke-width="${fav ? 6 : 4}"/>
+      ${[{x:13.5,y:17,w:13,h:9.5,rx:3},{x:37.5,y:17,w:13,h:9.5,rx:3},{x:13.5,y:36,w:37,h:11,rx:4}].map((r,i)=>i<n?`<rect class="ub-c" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${r.rx}" fill="${tone}" stroke="none"/>`:'').join('')}` },
+
+  { id: 'N3', name: 'Farfuria-ceas', src: 'new', live: true,
+    concept: 'O farfurie care e și cadran: felia plină arată cât aștepți. Mâncare și timp într-o singură formă.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<circle cx="32" cy="32" r="24" stroke-width="${fav ? 7 : 5}"/>
+      <g class="ub-c" fill="${tone}" stroke="none">${sector(32, 32, fav ? 13 : 15, [0, 120, 240, 360][n])}</g>
+      ${n === 0 ? '<circle cx="32" cy="32" r="3" fill="currentColor" stroke="none"/>' : ''}` },
+
+  { id: 'N4', name: 'Monograma UB', src: 'new', live: false,
+    concept: 'U și B unite printr-o singură bară. Institutional, se citește ca inițiale, dar rămâne o marcă proprie, nu sigla universității.',
+    traits: { px16: false, mono: true, queue: false },
+    draw: ({ fav }) => `<g stroke-width="${fav ? 7 : 5}"><path d="M12 14v18a10 10 0 0 0 20 0"/><path d="M32 14v36"/><path d="M32 14h8a8 8 0 0 1 0 16h-8"/><path d="M32 30h10a10 10 0 0 1 0 20h-10"/></g>` },
+
+  { id: 'N5', name: 'U-ul mușcat', src: 'new', live: false,
+    concept: 'Litera U, groasă, cu o mușcătură rotundă din brațul drept. Jocul de cuvinte din nume, redus la o literă.',
+    traits: { px16: true, mono: true, queue: false },
+    draw: ({ fav }) => { const m = `m${++uid}`;
+      return `<defs><mask id="${m}" stroke="none"><rect width="64" height="64" fill="#fff"/><circle cx="49" cy="9" r="${fav ? 11 : 12}" fill="#000"/></mask></defs>
+      <path d="M18 8v23a14 14 0 0 0 28 0V8" stroke-width="${fav ? 14 : 12}" stroke-linecap="butt" stroke-linejoin="round" mask="url(#${m})"/>`; } },
+
+  { id: 'N6', name: 'Perișoarele', src: 'new', live: true,
+    concept: 'Un bol cu trei perișoare, care sunt și cele trei trepte ale cozii. Cea mai caldă variantă, cu o glumă pentru cine știe meniul.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<path d="M12 22v5a20 20 0 0 0 40 0v-5" stroke-width="${fav ? 7 : 5}"/><path d="M8 22h48M25 55h14" stroke-width="${fav ? 7 : 5}"/>
+      ${counters(n, fav, tone, [{shape:'circle',cx:22,cy:31,r:4.5},{shape:'circle',cx:32,cy:31,r:4.5},{shape:'circle',cx:42,cy:31,r:4.5}])}` },
+
+  { id: 'N7', name: 'Semnal în bol', src: 'new', live: true,
+    concept: 'Trei bare care cresc, în interiorul unui U. Varianta B, dar cu barele în tavă: se citește ca un indicator de nivel.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<path d="M12 14v18a20 20 0 0 0 40 0V14" stroke-width="${fav ? 7 : 5}"/>
+      ${counters(n, fav, tone, [{shape:'rect',x:20,y:32,w:6.5,h:9},{shape:'rect',x:28.75,y:27,w:6.5,h:14},{shape:'rect',x:37.5,y:22,w:6.5,h:19}])}` },
+
+  { id: 'N8', name: 'Paleta de afișaj', src: 'new', live: false,
+    concept: 'O paletă de panou de plecări, cu U-ul tăiat de linia de balama. Leagă marca de direcția „departure board” aleasă pentru sistem.',
+    traits: { px16: true, mono: true, queue: false },
+    draw: ({ fav, bg }) => `<rect x="6" y="6" width="52" height="52" rx="12" fill="currentColor" stroke="none"/>
+      <path d="M22 18v14a10 10 0 0 0 20 0V18" stroke="${bg}" stroke-width="${fav ? 9 : 7}"/>
+      <path d="M6 32.5h52" stroke="${bg}" stroke-width="${fav ? 3 : 2.5}" stroke-linecap="butt"/>
+      <circle cx="6" cy="32.5" r="3" fill="${bg}" stroke="none"/><circle cx="58" cy="32.5" r="3" fill="${bg}" stroke="none"/>` },
+
+  { id: 'N9', name: 'Placa cu contoare', src: 'new', live: true,
+    concept: 'Pătratul mușcat din F, dar cu cele trei contoare ale cozii în loc de „UB”. Gata făcut pentru iconul de aplicație.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone, bg }) => { const m = `m${++uid}`; const fg = bg;
+      return `<defs><mask id="${m}" stroke="none"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs>
+      <rect x="6" y="6" width="52" height="52" rx="14" fill="currentColor" stroke="none" mask="url(#${m})"/>
+      ${[19, 31, 43].map((cx, i) => `<circle class="ub-c" cx="${cx}" cy="38" r="${fav ? 5.5 : 5}" fill="${i < n ? (tone === 'currentColor' ? fg : tone) : 'none'}" stroke="${i < n ? 'none' : fg}" stroke-width="${fav ? 3.5 : 3}"/>`).join('')}`; } },
+
+  { id: 'N10', name: 'Lingura-U', src: 'new', live: false,
+    concept: 'Un U al cărui braț drept se termină într-o lingură. Litera și tacâmul dintr-o linie.',
+    traits: { px16: false, mono: true, queue: false },
+    draw: ({ fav }) => `<path d="M18 14v17a14 14 0 0 0 28 0v-5" stroke-width="${fav ? 7 : 5}"/><ellipse cx="46" cy="15" rx="${fav ? 7 : 6}" ry="${fav ? 10 : 9}" fill="currentColor" stroke="none"/>` },
+
+  /* ---- round 1 (Claude Design logo-lab) ---- */
+  { id: 'A', name: 'Tava-U', src: 'old', live: true, shortlisted: true,
+    concept: 'Tavă în secțiune și trei capete la coadă. Litera U și tava sunt aceeași formă.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<path d="M12 22v14a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V22" stroke-width="${fav ? 7 : 5}"/>
+      ${counters(n, fav, tone, [{shape:'circle',cx:21,cy:12,r:4},{shape:'circle',cx:32,cy:12,r:4},{shape:'circle',cx:43,cy:12,r:4}])}` },
+
+  { id: 'B', name: 'Semnal', src: 'old', live: true, shortlisted: true,
+    concept: 'Tava-U cu trei bare crescătoare deasupra. Mai tehnic, aproape de un panou de sosiri.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<path d="M12 24v12a8 8 0 0 0 8 8h24a8 8 0 0 0 8-8V24" stroke-width="${fav ? 7 : 5}"/>
+      ${counters(n, fav, tone, [{shape:'rect',x:17,y:10,w:8,h:8},{shape:'rect',x:28,y:6,w:8,h:12},{shape:'rect',x:39,y:2,w:8,h:16}])}` },
+
+  { id: 'C', name: 'Mușcătura', src: 'old', live: false, shortlisted: true,
+    concept: 'Disc plin cu o mușcătură. Imposibil de citit greșit la 16px, dar spune mâncare, nu coadă.',
+    traits: { px16: true, mono: true, queue: false },
+    draw: ({ fav }) => { const m = `m${++uid}`;
+      return `<defs><mask id="${m}" stroke="none"><rect width="64" height="64" fill="#fff"/><circle cx="50" cy="14" r="13" fill="#000"/></mask></defs>
+      <circle cx="32" cy="32" r="24" fill="currentColor" stroke="none" mask="url(#${m})"/>${fav ? '' : '<circle cx="50" cy="14" r="5" fill="currentColor" stroke="none"/>'}`; } },
+
+  { id: 'D', name: 'Castron cu abur', src: 'old', live: true,
+    concept: 'Bol plin și trei picături de abur. Cel mai cald din runda 1, dar seamănă cu multe siglele de restaurant.',
+    traits: { px16: true, mono: true, queue: true },
+    draw: ({ n, fav, tone }) => `<path d="M10 28h44a22 22 0 0 1-22 20A22 22 0 0 1 10 28Z" fill="currentColor" stroke="none"/>
+      ${counters(n, fav, tone, [{shape:'circle',cx:22,cy:16,r:3.5},{shape:'circle',cx:32,cy:10,r:3.5},{shape:'circle',cx:42,cy:16,r:3.5}])}` },
+
+  { id: 'E', name: 'Coada care intră', src: 'old', live: false,
+    concept: 'Trei chevroane spre fanta tăvii. Cel mai dinamic, cel mai greu de citit mic.',
+    traits: { px16: false, mono: false, queue: true },
+    draw: ({ fav }) => `<g stroke-width="${fav ? 7 : 5}"><path d="M8 20l8 12-8 12" opacity=".35"/><path d="M24 20l8 12-8 12" opacity=".7"/><path d="M40 14h8a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8h-8"/></g>` },
+
+  { id: 'F', name: 'Placa UB', src: 'old', live: false, shortlisted: true,
+    concept: 'Placa „UB” din wordmark, cu un colț mușcat. Cea mai mică schimbare față de ce există.',
+    traits: { px16: true, mono: true, queue: false },
+    draw: ({ fav, bg }) => { const m = `m${++uid}`;
+      return `<defs><mask id="${m}" stroke="none"><rect width="64" height="64" fill="#fff"/><circle cx="56" cy="8" r="11" fill="#000"/></mask></defs>
+      <rect x="6" y="6" width="52" height="52" rx="${fav ? 10 : 14}" fill="currentColor" stroke="none" mask="url(#${m})"/>
+      <text x="30" y="${fav ? 45 : 43}" text-anchor="middle" font-family="var(--font-sans)" font-size="${fav ? 32 : 28}" font-weight="800" fill="${bg}" stroke="none">UB</text>`; } },
+];
+
+/* AI concept sketches are appended here by the generator (see assets/_raw). */
+const AI = window.UBITE_AI_CONCEPTS || [];
+
+function svg(mark, { size = 64, level = 'moderate', tone = 'accent', fav = false, bg = 'var(--surface-raised)' } = {}) {
+  const n = mark.live ? FILL[level] ?? 2 : 0;
+  const fill = tone === 'level' ? TONE[level] : 'currentColor';
+  return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="UBite ${mark.id}">${mark.draw({ n, fav, tone: fill, bg })}</svg>`;
+}
+
+/* ---------- state ---------- */
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('ubite-logo-pick') || '{}'); } catch { return {}; } },
+  set(v) { try { localStorage.setItem('ubite-logo-pick', JSON.stringify(v)); } catch {} },
+};
+const state = Object.assign({ favs: [], chosen: null }, store.get());
+let level = 'moderate';
+
+const ICON_HEART = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>';
+const TRAIT_LABEL = { px16: 'clar la 16px', mono: 'merge monocrom', queue: 'arată coada' };
+
+function card(mark) {
+  const el = document.createElement('article');
+  el.className = 'card';
+  el.dataset.id = mark.id;
+  const src = { new: 'nou', old: mark.shortlisted ? 'lista scurtă' : 'runda 1', ai: 'schiță AI' }[mark.src];
+  el.innerHTML = `
+    <div class="hd"><span class="code">${mark.id}</span><span class="name">${mark.name}</span><span class="src" data-kind="${mark.src}">${src}</span></div>
+    <div class="hero"><div class="stage" data-slot="hero"></div><p class="concept">${mark.concept}</p></div>
+    <div class="row sizes" data-slot="sizes"></div>
+    <div class="row" data-slot="contexts"></div>
+    <div class="lock" data-slot="lock"></div>
+    <div class="traits">${Object.entries(mark.traits).map(([k, v]) => `<span class="trait" data-ok="${v}">${v ? '' : 'nu '}${TRAIT_LABEL[k]}</span>`).join('')}</div>
+    <div class="actions">
+      <button class="btn btn-fav" aria-pressed="false" aria-label="Favorit ${mark.id}">${ICON_HEART}Favorit</button>
+      <button class="btn btn-pick">Aleg asta</button>
+    </div>`;
+  el.querySelector('.btn-fav').onclick = () => { const f = new Set(state.favs); f.has(mark.id) ? f.delete(mark.id) : f.add(mark.id); state.favs = [...f]; sync(); };
+  el.querySelector('.btn-pick').onclick = () => { state.chosen = state.chosen === mark.id ? null : mark.id; sync(); };
+  return el;
+}
+
+function paint(el, mark) {
+  const q = (s) => el.querySelector(`[data-slot="${s}"]`);
+  q('hero').innerHTML = svg(mark, { size: 104, level });
+  q('sizes').innerHTML = [[64, false], [32, false], [20, true], [16, true]]
+    .map(([s, fav]) => `<figure>${svg(mark, { size: s, level, fav })}<figcaption>${s}px</figcaption></figure>`).join('');
+  q('contexts').innerHTML = `<span class="app" title="icon de aplicație">${svg(mark, { size: 36, level, bg: 'var(--accent)' })}</span>
+    <span class="ink" title="monocrom pe închis">${svg(mark, { size: 36, level, bg: 'var(--surface-inverse)' })}</span>
+    ${mark.live ? `<span class="levels" title="nivelul cozii în culoare">${LEVELS.map((l) => `<span>${svg(mark, { size: 30, level: l, tone: 'level' })}</span>`).join('')}</span>` : ''}`;
+  q('lock').innerHTML = `${svg(mark, { size: 36, level })}<b>${mark.id === 'F' ? 'ite' : 'UBite'}</b>`;
+}
+
+const cards = new Map();
+function build() {
+  const put = (list, host) => list.forEach((m) => { const el = card(m); cards.set(m.id, { el, mark: m }); document.getElementById(host).appendChild(el); paint(el, m); });
+  put(MARKS.filter((m) => m.src === 'new'), 'grid-new');
+  put(MARKS.filter((m) => m.src === 'old'), 'grid-old');
+  if (AI.length) {
+    document.getElementById('ai-wrap').hidden = false;
+    AI.forEach((a) => {
+      const el = document.createElement('article');
+      el.className = 'card'; el.dataset.id = a.id;
+      el.innerHTML = `<div class="hd"><span class="code">${a.id}</span><span class="name">${a.name}</span><span class="src" data-kind="ai">schiță AI</span></div>
+        <img class="ai-shot" src="${a.src}" alt="${a.name}" loading="lazy"><p class="concept">${a.concept || ''}</p>
+        <div class="actions"><button class="btn btn-fav" aria-pressed="false">${ICON_HEART}Favorit</button><button class="btn btn-pick">Redesenează asta</button></div>`;
+      el.querySelector('.btn-fav').onclick = () => { const f = new Set(state.favs); f.has(a.id) ? f.delete(a.id) : f.add(a.id); state.favs = [...f]; sync(); };
+      el.querySelector('.btn-pick').onclick = () => { state.chosen = state.chosen === a.id ? null : a.id; sync(); };
+      cards.set(a.id, { el, mark: null });
+      document.getElementById('grid-ai').appendChild(el);
+    });
+  }
+}
+
+function sync() {
+  store.set({ favs: state.favs, chosen: state.chosen });
+  const onlyFavs = document.getElementById('t-favs').getAttribute('aria-pressed') === 'true';
+  for (const [id, { el }] of cards) {
+    el.querySelector('.btn-fav').setAttribute('aria-pressed', state.favs.includes(id));
+    el.dataset.chosen = state.chosen === id;
+    el.querySelector('.btn-pick').textContent = state.chosen === id ? 'Aleasă' : (el.querySelector('.ai-shot') ? 'Redesenează asta' : 'Aleg asta');
+    el.hidden = onlyFavs && !state.favs.includes(id) && state.chosen !== id;
+  }
+  const name = (id) => { const c = cards.get(id); return c?.mark ? `${id} (${c.mark.name})` : id; };
+  const s = document.getElementById('summary');
+  if (!state.favs.length && !state.chosen) { s.innerHTML = 'Nimic ales încă.<small>Inimile marchează favoritele. „Aleg asta” fixează o singură marcă.</small>'; return; }
+  s.innerHTML = `${state.chosen ? `Aleasă: <strong>${name(state.chosen)}</strong>` : 'Nicio alegere finală'}<small>Favorite: ${state.favs.length ? state.favs.map(name).join(', ') : '—'}</small>`;
+}
+
+function repaint() { for (const { el, mark } of cards.values()) if (mark) paint(el, mark); }
+
+document.getElementById('t-theme').onclick = (e) => {
+  const dark = document.documentElement.dataset.theme !== 'dark';
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  e.currentTarget.setAttribute('aria-pressed', dark);
+};
+let timer = null;
+document.getElementById('t-anim').onclick = (e) => {
+  const on = !timer;
+  e.currentTarget.setAttribute('aria-pressed', on);
+  if (on) { const seq = ['low', 'moderate', 'high', 'closed']; let i = 0; timer = setInterval(() => { level = seq[++i % 4]; repaint(); }, 1400); }
+  else { clearInterval(timer); timer = null; level = 'moderate'; repaint(); }
+};
+document.getElementById('t-favs').onclick = (e) => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); sync(); };
+document.getElementById('copy').onclick = async () => {
+  const c = cards.get(state.chosen);
+  const text = `Logo UBite — aleg: ${state.chosen ? `${state.chosen}${c?.mark ? ` (${c.mark.name})` : ''}` : 'încă nimic'}. Favorite: ${state.favs.join(', ') || '—'}.`;
+  try { await navigator.clipboard.writeText(text); } catch { prompt('Copiază:', text); }
+  const t = document.getElementById('toast'); t.hidden = false; setTimeout(() => (t.hidden = true), 2200);
+};
+
+build(); sync();
+</script>
+</body></html>

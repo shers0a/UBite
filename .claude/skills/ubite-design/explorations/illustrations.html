@@ -1,0 +1,179 @@
+<!DOCTYPE html><html lang="ro" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — stratul de ilustrații</title>
+<link rel="icon" href="../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../_ds_bundle.js"></script>
+<style>
+/* Review page for the brand illustration layer: everything generated on 22 Sep 2026, shown the
+   way the product uses it. Mark each piece "păstrez" or "refă", add a note, and copy the list
+   back to Claude. Choices stay in this browser (localStorage). */
+body{background:var(--surface-page);color:var(--text-primary);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:var(--text-2xl);font-weight:var(--weight-bold);letter-spacing:-.02em;margin:18px 0 4px}
+.lead{font-size:var(--text-base);color:var(--text-secondary);max-width:70ch}
+h2{font-size:var(--text-xl);font-weight:var(--weight-bold);margin:44px 0 6px}
+.sub{color:var(--text-muted);font-size:var(--text-sm);margin:0 0 16px;max-width:80ch}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.tile{background:var(--surface);border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;gap:10px;position:relative}
+.tile[data-v="redo"]{box-shadow:inset 0 0 0 3px var(--crowd-high-fill)}
+.tile[data-v="keep"]{box-shadow:inset 0 0 0 3px var(--crowd-low-fill)}
+.tile .name{font-weight:var(--weight-semibold)}
+.tile .why{font-size:var(--text-sm);color:var(--text-muted)}
+.vote{display:flex;gap:6px;flex-wrap:wrap}
+.vote button{min-height:36px;padding:0 12px;border-radius:999px;border:0;background:var(--surface-raised);color:var(--text-primary);font:inherit;font-size:var(--text-sm);cursor:pointer}
+.vote button[data-on="true"]{background:var(--text-primary);color:var(--surface-page)}
+.note{width:100%;box-sizing:border-box;min-height:40px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);background:var(--surface-raised);color:var(--text-primary);font:inherit;font-size:var(--text-sm);padding:8px 10px}
+.stage{border-radius:var(--radius-md);background:var(--surface-raised);display:grid;place-items:center;overflow:hidden;position:relative}
+.bar{position:sticky;top:0;z-index:10;background:var(--surface-page);padding:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border-subtle)}
+.pill{min-height:40px;padding:0 16px;border-radius:999px;border:0;font:inherit;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text-primary)}
+.pill.primary{background:var(--accent);color:var(--text-on-accent)}
+video{width:100%;border-radius:var(--radius-md);display:block;background:#000}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+@media (max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Logo, Wordmark, Illustration, Pattern, Spotlight } = window.UBiteDesignSystem_40c8c2;
+const base = '../../../../assets/';
+const KEY = 'ubite-illustration-review';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } };
+const save = (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} };
+
+const SPOTS = [
+  ['run', 'Aleargă cu tava', 'Banner „Sfat pentru marți”, bucla kioskului, clipul logo-ului.'],
+  ['queue', 'Trei la coadă', 'Banner „Spune cât ai stat”. Rimează cu cele trei capete din logo.'],
+  ['cook', 'Bucătăreasa', 'Banner „Meniul de mâine”.'],
+  ['phone', 'Pe telefon', 'Onboarding pasul 3 și scena QR din kiosk.'],
+  ['friends', 'Doi la masă', 'Cardul de fidelitate din cont.'],
+  ['balance', 'Tava și cărțile', 'Liber, pentru un banner viitor.'],
+  ['nap', 'Cantina e închisă', 'Gemini. Primul banner când cantina e închisă.'],
+  ['offline', 'Fără semnal', 'Gemini. Bannerul „Fără internet”.'],
+  ['reward', 'Masa gratuită', 'Gemini. Bannerul de fidelitate, la o vizită de masa gratuită.'],
+  ['cashier', 'Casiera', 'Gemini. Ecranul „Adaugă o vizită”.'],
+];
+const PICTOS = [['soup', 'Ciorbă'], ['main', 'Fel principal'], ['sides', 'Garnituri'], ['dessert', 'Desert (papanași, desenat de mână)'], ['drink', 'Băuturi'], ['bread', 'Pâine'], ['salad', 'Salată'], ['fish', 'Pește'], ['sarmale', 'Sarmale'], ['covrig', 'Covrig']];
+const SCENES = [['campus', 'Campusul', 'Onboarding pasul 1.'], ['counter', 'Linia de servire', 'Onboarding pasul 2.'], ['phone', 'Telefonul', 'Gemini. Onboarding pasul 3.'], ['hall', 'Sala de mese', 'Gemini. Pagina de prezentare.']];
+
+function Vote({ id, label, why, children, state, set }) {
+  const v = state[id] || {};
+  const put = (patch) => set({ ...state, [id]: { ...v, ...patch } });
+  return (
+    <div className="tile" data-v={v.v || ''}>
+      {children}
+      <div className="name">{label}</div>
+      {why && <div className="why">{why}</div>}
+      <div className="vote">
+        <button data-on={v.v === 'keep'} onClick={() => put({ v: v.v === 'keep' ? '' : 'keep' })}>Păstrez</button>
+        <button data-on={v.v === 'redo'} onClick={() => put({ v: v.v === 'redo' ? '' : 'redo' })}>Refă</button>
+      </div>
+      {v.v === 'redo' && <textarea className="note" placeholder="Ce să schimb?" value={v.note || ''} onChange={(e) => put({ note: e.target.value })} />}
+    </div>
+  );
+}
+
+function App() {
+  const [state, setRaw] = React.useState(load);
+  const set = (s) => { setRaw(s); save(s); };
+  const [theme, setTheme] = React.useState('light');
+  const [boil, setBoil] = React.useState(true);
+  const [copied, setCopied] = React.useState(false);
+  React.useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+  const summary = () => {
+    const lines = Object.entries(state).filter(([, v]) => v.v).map(([k, v]) => `- ${k}: ${v.v === 'keep' ? 'păstrez' : 'refă'}${v.note ? ` — ${v.note}` : ''}`);
+    return `Ilustrații UBite — review:\n${lines.join('\n') || '- (nimic marcat)'}`;
+  };
+  const copy = async () => { try { await navigator.clipboard.writeText(summary()); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch {} };
+  const p = { state, set };
+  return (
+    <div className="wrap">
+      <header className="top"><Logo variant="tray" size={34} withText /></header>
+      <h1>Stratul de ilustrații</h1>
+      <p className="lead">Tot ce face site-ul să arate ca UBite și nu ca un șablon: logo-ul, personajele, scenele, pictogramele, tapetul și clipurile. Marchează fiecare bucată, apoi copiază lista pentru Claude.</p>
+      <div className="bar">
+        <button className="pill" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>{theme === 'light' ? 'Vezi noaptea' : 'Vezi ziua'}</button>
+        <button className="pill" onClick={() => setBoil(!boil)}>{boil ? 'Oprește tremuratul' : 'Pornește tremuratul'}</button>
+        <button className="pill primary" onClick={copy}>{copied ? 'Copiat' : 'Copiază pentru Claude'}</button>
+      </div>
+
+      <h2>Logo</h2>
+      <p className="sub">Varianta A, cu „Bite” lipit de U. În iconița aplicației apare tot lockup-ul; în tab-ul browserului rămâne doar U-ul, pentru că la 16 px cinci litere nu se mai citesc.</p>
+      <div className="grid">
+        <Vote id="logo-lockup" label="Lockup" why="Header, onboarding, kiosk." {...p}>
+          <div className="stage" style={{ height: 150 }}><Logo variant="tray" size={70} withText /></div>
+        </Vote>
+        <Vote id="logo-icon" label="Iconița aplicației" why="Lockup alb pe accent. PNG 192/512, maskable, apple-touch." {...p}>
+          <div className="stage" style={{ height: 150, gap: 14, gridAutoFlow: 'column' }}>
+            <img src={`${base}brand/icon-512.png`} alt="" style={{ width: 96, borderRadius: 22 }} />
+            <img src={`${base}brand/icon-512.png`} alt="" style={{ width: 48, borderRadius: 11 }} />
+            <img src={`${base}brand/favicon.svg`} alt="" style={{ width: 24 }} />
+          </div>
+        </Vote>
+        <Vote id="logo-motion" label="Intro animat" why="U-ul se desenează, „Bite” iese din el, capetele se umplu. Splash-ul aplicației face la fel." {...p}>
+          <video src={`${base}motion/logo-intro${theme === 'light' ? '-light' : ''}.mp4`} autoPlay muted loop playsInline />
+        </Vote>
+      </div>
+
+      <h2>Personaje</h2>
+      <p className="sub">Desenate cu pensula, o singură cerneală, vectorizate. Iau culoarea din temă: albe pe albastru în bannere, albastre pe suprafețe.</p>
+      <div className="grid">
+        {SPOTS.map(([k, label, why]) => (
+          <Vote key={k} id={`spot-${k}`} label={label} why={why} {...p}>
+            <Spotlight eyebrow="Exemplu" title="Așa arată într-un banner." art={`${base}illustrations/spots/${k}.svg`} boil={boil} style={{ minHeight: 160 }} />
+            <div className="stage" style={{ height: 140 }}><Illustration src={`${base}illustrations/spots/${k}.svg`} tone="accent" boil={boil} width={130} height={130} /></div>
+          </Vote>
+        ))}
+      </div>
+
+      <h2>Scene pentru onboarding</h2>
+      <p className="sub">Plate, tăiate la paleta UBite. Fiecare formă e colorată direct cu un token, deci scena se schimbă singură noaptea.</p>
+      <div className="grid">
+        {SCENES.map(([k, label, why]) => (
+          <Vote key={k} id={`scene-${k}`} label={label} why={why} {...p}>
+            <div className="stage" style={{ height: 260, background: 'var(--accent-quiet)', borderRadius: '40% 60% 46% 54% / 52% 44% 56% 48%' }}>
+              <Illustration kind="scene" src={`${base}illustrations/scenes/${k}.svg`} width={230} height={210} />
+            </div>
+          </Vote>
+        ))}
+      </div>
+
+      <h2>Pictograme pentru meniu</h2>
+      <p className="sub">Contur în culoarea textului, umplere în accent. Apar în categoriile meniului.</p>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(170px,1fr))' }}>
+        {PICTOS.map(([k, label]) => (
+          <Vote key={k} id={`picto-${k}`} label={label} {...p}>
+            <div className="stage" style={{ height: 120 }}><Illustration kind="picto" src={`${base}illustrations/picto/picto-${k}.svg`} tone="ink" width={72} height={72} /></div>
+          </Vote>
+        ))}
+      </div>
+
+      <h2>Tapet și schiță</h2>
+      <div className="grid">
+        <Vote id="pattern" label="Tapetul de doodle-uri" why="32 de obiecte de cantină și de student, într-o plăcuță care se repetă fără cusătură. Splash, onboarding, kiosk." {...p}>
+          <div className="stage" style={{ height: 220 }}><Pattern src={`${base}patterns/canteen.svg`} opacity={0.5} size={325} /></div>
+        </Vote>
+        <Vote id="sketch" label="Schița orașului" why="Semnează pagina, deasupra subsolului." {...p}>
+          <div className="stage" style={{ height: 220 }}>
+            <span style={{ position: 'absolute', inset: 16, background: 'var(--text-muted)', WebkitMask: `url(${base}illustrations/sketch-city.png) center / contain no-repeat`, mask: `url(${base}illustrations/sketch-city.png) center / contain no-repeat` }} />
+          </div>
+        </Vote>
+      </div>
+
+      <h2>Video</h2>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(420px,1fr))' }}>
+        <Vote id="spot-run-video" label="Studentul care aleargă, animat" why="Veo, din desenul nostru. Buclă de 3,3 s, ia culoarea bannerului în ambele teme." {...p}>
+          <Spotlight eyebrow="Sfat pentru marți" title="La 11:30 aștepți cam 2 minute. La 13:00, cam 12." action="Vezi orele"
+            art={`${base}illustrations/spots/run.svg`} video={`${base}motion/spot-run`} style={{ minHeight: 190 }} />
+        </Vote>
+        <Vote id="kiosk-attract" label="Bucla kioskului" why="Randată din componentele reale: logo, coada, meniul, codul QR, cu personajele și tapetul." {...p}>
+          <video src={`${base}motion/kiosk-attract.mp4`} autoPlay muted loop playsInline />
+        </Vote>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script></body></html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="ro" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — kiosk, bucla de atracție</title>
+<link rel="icon" href="../../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../assets/image-slot.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="../assets.js"></script>
+<style>
+/* The attract loop: one 11-second story for someone walking past at three metres —
+   who we are, how long the queue is, what is cooking, how to get the app. It is the one
+   surface where motion is allowed to invite rather than only confirm, and it is still
+   slow: 400ms rises and fades, nothing bounces, reduced-motion gets hard cuts. */
+body{background:#000;display:grid;place-items:center;min-height:100vh;margin:0}
+.stage{width:1280px;height:800px;position:relative;overflow:hidden;background:var(--surface-page);color:var(--text-primary)}
+.scene{position:absolute;inset:0;display:grid;place-items:center;padding:64px}
+.in{animation:rise 300ms var(--ease-out) both}
+.in-2{animation-delay:80ms}.in-3{animation-delay:160ms}.in-4{animation-delay:240ms}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.out{animation:fade 320ms var(--ease-out) both}
+@keyframes fade{to{opacity:0;transform:translateY(-10px)}}
+.brand{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.brand h1{font-size:96px;font-weight:var(--weight-bold);letter-spacing:-.04em;line-height:1}
+.brand p{font-size:30px;color:var(--text-secondary)}
+.dishes{width:100%;display:flex;flex-direction:column;gap:36px}
+.dishes h2{font-size:56px;font-weight:var(--weight-bold);letter-spacing:var(--tracking-display)}
+.dishes h2 span{color:var(--text-muted);font-weight:var(--weight-medium);font-size:32px;margin-left:16px;letter-spacing:0}
+.plates{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.plate{background:var(--surface);border-radius:var(--radius-lg);padding:24px;display:flex;flex-direction:column;gap:14px}
+.plate-img{height:260px;display:grid;place-items:center;border-radius:var(--radius-md);background:var(--surface-sunken);overflow:hidden}
+.plate-img img{max-height:100%;max-width:100%;object-fit:contain}
+.plate b{font-size:32px;font-weight:var(--weight-semibold);line-height:1.15}
+.plate span{font-size:30px;font-weight:var(--weight-bold)}
+.qr{display:flex;align-items:center;justify-content:space-between;gap:64px;width:100%}
+.qr h2{font-size:84px;font-weight:var(--weight-bold);letter-spacing:-.035em;line-height:1.02;max-width:12ch}
+.qr p{font-size:32px;color:var(--text-secondary);margin-top:22px;max-width:22ch}
+.qr .url{font-size:34px;color:var(--accent);font-weight:var(--weight-semibold);margin-top:24px}
+.qr-box{background:#fff;border-radius:var(--radius-lg);padding:26px;flex:none}
+.progress{position:absolute;left:64px;right:64px;bottom:36px;display:flex;gap:10px}
+.progress i{flex:1;height:6px;border-radius:3px;background:var(--border-subtle);overflow:hidden;position:relative}
+.progress i b{position:absolute;inset:0;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+.progress i[data-state="done"] b{transform:scaleX(1)}
+.progress i[data-state="now"] b{animation:fill var(--d) linear forwards}
+@keyframes fill{to{transform:scaleX(1)}}
+.corner{position:absolute;top:36px;left:64px;display:flex;align-items:center;gap:14px;font-size:24px;color:var(--text-muted)}
+/* The brand layer: the doodle wallpaper drifting behind everything, a character running
+   across the opening scene, and one standing by the QR code. */
+.runner{position:absolute;bottom:40px;left:0;animation:run 2000ms linear both}
+@keyframes run{from{transform:translateX(-340px)}to{transform:translateX(1320px)}}
+.qr-left{display:flex;flex-direction:column;align-self:stretch;padding-top:56px}
+.qr-spot{margin-top:auto;margin-left:-20px}
+@media (prefers-reduced-motion:reduce){.in,.out,.runner{animation:none}.runner{display:none}.progress i[data-state="now"] b{animation:none;transform:scaleX(1)}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const UB = window.UBiteDesignSystem_40c8c2;
+const params = new URLSearchParams(location.search);
+const MARK = params.get('mark') || 'tray';
+const LEVEL = params.get('level') || 'moderate';
+const WAIT = { low: 2, moderate: 6, high: 13 }[LEVEL] || 6;
+// Generated assets live at the repo root; the kit is served from the repo root in preview.
+const A = window.UBITE_ASSETS;
+// ?scene=dishes&hold=1 freezes one scene — for review and for frame capture.
+const HOLD = params.has('hold');
+// ?armed waits for a 'ubite:start' event, so a recorder can begin exactly on the first frame.
+const ARMED = params.has('armed');
+
+const SCENES = [
+  // Faster on request (22 Sep 2026): 11.2 s for the whole story instead of 17.2 s.
+  { id: 'brand', ms: 2000 },
+  { id: 'queue', ms: 3000 },
+  { id: 'dishes', ms: 3200 },
+  { id: 'qr', ms: 3000 },
+];
+
+const TODAY = [
+  { name: 'Ciorbă de perișoare', price: 9, id: 'ciorba-perisoare', glyph: 'soup' },
+  { name: 'Pui la cuptor cu cartofi', price: 17, id: 'pui-cartofi', glyph: 'utensils' },
+  { name: 'Papanași cu smântână', price: 12, id: 'papanasi', glyph: 'cookie' },
+];
+
+function DishImage({ dish }) {
+  const { Icon } = UB;
+  const [ok, setOk] = React.useState(true);
+  return ok
+    ? <img src={A ? A.cutout(dish.id) : ''} alt="" onError={() => setOk(false)} />
+    : <span style={{ color: 'var(--text-muted)' }}><Icon name={dish.glyph} size={96} stroke={1.75} /></span>;
+}
+
+function Scene({ id }) {
+  const { Logo, CrowdingIndicator, Illustration } = UB;
+  if (id === 'brand') return (
+    <div className="scene"><div className="brand">
+      {MARK === 'tray'
+        ? <Logo variant="tray" size={190} level={LEVEL} intro withText />
+        : <><Logo variant={MARK} size={220} level={LEVEL} intro /><h1 className="in in-2">UBite</h1></>}
+      <p className="in in-3">Cantina Mihail Kogălniceanu · L–V 11:30–17:00</p>
+    </div>
+    {A && Illustration && <span className="runner"><Illustration src={A.spot('run')} tone="accent" boil width={260} height={260} /></span>}
+    </div>
+  );
+  if (id === 'queue') return (
+    <div className="scene"><div className="in" style={{ width: 900 }}>
+      <CrowdingIndicator size="kiosk" level={LEVEL} waitMinutes={WAIT} quality="live" updatedSecondsAgo={30} />
+    </div></div>
+  );
+  if (id === 'dishes') return (
+    <div className="scene"><div className="dishes">
+      <h2 className="in">Azi la prânz<span>marți, 21 octombrie</span></h2>
+      <div className="plates">
+        {TODAY.map((d, i) => (
+          <div key={d.name} className={`plate in in-${i + 2}`}>
+            <div className="plate-img"><DishImage dish={d} /></div>
+            <b>{d.name}</b><span className="ub-numeric">{d.price} lei</span>
+          </div>
+        ))}
+      </div>
+    </div></div>
+  );
+  return (
+    <div className="scene"><div className="qr">
+      <div className="qr-left">
+        <h2 className="in">Vezi coada înainte să vii</h2>
+        <p className="in in-2">Scanează și pui UBite pe telefon. Nu trebuie cont.</p>
+        <p className="url ub-numeric in in-3">ubite.unibuc.ro</p>
+        {A && Illustration && <span className="qr-spot in in-4"><Illustration src={A.spot('phone')} tone="accent" boil width={250} height={250} /></span>}
+      </div>
+      <div className="qr-box in in-2">
+        {A ? <img src={A.qr} alt="Cod QR către ubite.unibuc.ro" style={{ width: 320, height: 320, display: 'block' }} />
+          : <image-slot id="kiosk-qr" shape="rounded" radius="12" placeholder="Cod QR către ubite.unibuc.ro" style={{ width: 320, height: 320 }}></image-slot>}
+      </div>
+    </div></div>
+  );
+}
+
+function Attract() {
+  const { Logo, Pattern } = UB;
+  const [i, setI] = React.useState(Math.max(0, SCENES.findIndex((s) => s.id === params.get('scene'))));
+  const [started, setStarted] = React.useState(!ARMED);
+  const scene = SCENES[i % SCENES.length];
+  React.useEffect(() => {
+    if (started) return undefined;
+    const go = () => setStarted(true);
+    window.addEventListener('ubite:start', go);
+    return () => window.removeEventListener('ubite:start', go);
+  }, [started]);
+  React.useEffect(() => {
+    if (HOLD || !started) return undefined;
+    const t = setTimeout(() => setI((n) => n + 1), scene.ms);
+    return () => clearTimeout(t);
+  }, [i, started]);
+  if (!started) return <div className="stage" />;
+  return (
+    <div className="stage">
+      {A && Pattern && <Pattern src={A.pattern} opacity={0.07} size={450} drift />}
+      {scene.id !== 'brand' && (
+        <div className="corner in"><Logo variant={MARK} size={40} level={LEVEL} withText /></div>
+      )}
+      <Scene key={i} id={scene.id} />
+      <div className="progress" aria-hidden="true">
+        {SCENES.map((s, n) => (
+          <i key={s.id} data-state={n < i % SCENES.length ? 'done' : n === i % SCENES.length ? 'now' : 'next'}
+            style={{ '--d': `${s.ms}ms` }}><b key={i} /></i>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Attract />);
+</script></body></html>

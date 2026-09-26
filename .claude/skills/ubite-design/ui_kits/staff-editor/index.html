@@ -1,0 +1,31 @@
+<!-- @dsCard group="Staff" viewport="1100x760" name="Menu editor" subtitle="Yesterday preloaded, catalogue checklist, one action to publish — under two minutes" -->
+<!DOCTYPE html><html lang="ro" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UBite — editor meniu</title>
+<link rel="icon" href="../../../../../assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{background:var(--surface-page);padding:0}
+.ub-staff{max-width:1100px;margin:0 auto;padding:20px}
+.ub-staff-head{display:flex;align-items:center;gap:12px;padding:10px 4px 20px;flex-wrap:wrap}
+.ub-staff-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start}
+.ub-staff-grid>section{background:var(--surface);border-radius:var(--radius-md);padding:18px}
+.ub-staff-section-title{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.ub-staff-section-title h2{font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:var(--tracking-tight)}
+.ub-staff-row{display:flex;align-items:center;gap:10px;background:var(--surface-raised);border-radius:var(--radius-sm);padding:10px 12px;flex-wrap:wrap}
+.ub-staff-publish{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap}
+.ub-catalog{max-height:520px;overflow:auto}
+.ub-check{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 8px;border-radius:var(--radius-sm);cursor:pointer}
+.ub-check:hover{background:var(--hover-wash)}
+.ub-box{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 2px var(--border-strong);color:var(--text-on-accent);transition:background var(--motion-fast) var(--ease-out)}
+.ub-box[data-on="true"]{background:var(--accent);box-shadow:none}
+.ub-addnew{display:flex;align-items:center;gap:8px;min-height:44px;width:100%;margin-top:12px;background:transparent;border:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:0 8px;border-radius:var(--radius-sm)}
+.ub-addnew:hover{background:var(--hover-wash)}
+@media (max-width:900px){.ub-staff-grid{grid-template-columns:1fr}}
+</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="app.jsx"></script>
+</body></html>
