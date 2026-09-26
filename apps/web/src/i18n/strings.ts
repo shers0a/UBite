@@ -303,6 +303,7 @@ export const ro = {
   'about.s2.body': 'Se publică de obicei până la 10:30. Îl găsești și fără internet.',
   'about.s3.title': 'Știi cât aștepți, în minute',
   'about.s3.body': 'Estimarea vine din rapoartele colegilor și îți arată mereu cât e de proaspătă.',
+  'about.credit': 'Desenul Universității de pe prima pagină e făcut după o fotografie de Joe Mabel (CC BY 3.0).',
 
   // Offline banner
   'offline.updated': 'Actualizat la {time}',
@@ -592,6 +593,7 @@ export const en: Record<StringKey, string> = {
   'about.s2.body': 'It is usually out by 10:30. You can see it offline too.',
   'about.s3.title': 'Know how long you will wait, in minutes',
   'about.s3.body': 'The estimate comes from other students’ reports and always shows how fresh it is.',
+  'about.credit': 'The drawing of the University on the home page is after a photo by Joe Mabel (CC BY 3.0).',
 
   'offline.updated': 'Updated at {time}',
 };

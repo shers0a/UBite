@@ -51,7 +51,7 @@ The kiosk is `/kiosk` (rotation) and `/kiosk/attract` (the 11-second loop).
 ```bash
 npm run typecheck
 npm run lint          # oxlint + no raw colours or fonts outside the design-system tokens
-npm test              # shared (9) · api (91: fusion, simulated service day, ledger, receipts, HTTP) · web (6)
+npm test              # shared (11) · api (92: fusion, simulated service day, ledger, receipts, HTTP) · web (6)
 npm run build
 npm run assets:check  # the locked style and the asset manifest
 npm run screens       # screenshots of every surface into dist/screens (R1/R2 evidence)

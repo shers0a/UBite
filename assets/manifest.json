@@ -687,16 +687,16 @@
       "url": ""
     },
     {
-      "added": "2026-09-22",
+      "added": "2026-09-26",
       "file": "assets/illustrations/sketch-city.png",
       "source": "generated",
       "status": "final",
-      "provider": "pollinations",
-      "model": "pollinations:gptimage",
-      "seed": 101,
-      "prompt": "A wide panoramic pen-and-ink sketch of a Bucharest street: a neoclassical university palace with columns and a small clock, old apartment buildings with balconies, a tram under its overhead wires, a few trees. Loose single-weight black fineliner lines on plain white paper, an architect's sketchbook drawing, light and airy with lots of open white space, no shading, no hatching, no people, no text.",
-      "derivedFrom": "assets/_raw/sketch-city/sketch-city-s101.jpg",
-      "licence": "GPT-Image output via Pollinations — OpenAI terms: output owned by the requester",
+      "provider": "comfy",
+      "model": "comfy:flux-2-klein-4b-fp8+photo-ref",
+      "seed": 504,
+      "prompt": "A wide panoramic pen-and-ink sketch of the University of Bucharest palace on Piața Universității, simplified to a few confident outlines: the domed corner pavilion, the long facade with its rows of tall windows and the mansard roof, two or three trees and a street lamp in front; windows as simple strokes, no ornament, drawn on a single sheet. Loose single-weight black fineliner lines on plain white paper, an architect's sketchbook drawing, light and airy with lots of open white space, no shading, no hatching, no people, no text.",
+      "derivedFrom": "assets/_raw/sketch-city/sketch-city-s504.jpg",
+      "licence": "FLUX.2 [klein] 4B, run locally in ComfyUI — Apache-2.0 model, outputs free for commercial use; drawn after \"Bucharest - Dec 2014 - B-dul Regina Elisabeta 04\" by Joe Mabel, CC BY 3.0, commons.wikimedia.org",
       "note": "alpha mask (lines opaque) — used as a CSS mask over a token colour"
     },
     {

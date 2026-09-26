@@ -183,7 +183,7 @@ through `Illustration` / `Pattern` so it takes token colours and follows the the
 | Flat scenes (`scenes/`) | `flat` — five flat colours | onboarding | `asset.mjs flatten` → one traced layer per colour, each filled with `var(--token)` |
 | Pictograms (`picto/`) | `picto` — outline + one fill | menu category pills | `asset.mjs picto` → outline in `currentColor`, fill in `--accent` |
 | Doodle wallpaper (`patterns/canteen.svg`) | `doodles` — sheets of small doodles | splash, onboarding, kiosk | `asset.mjs pattern` → seamless tile, CSS mask at 6–8% |
-| City sketch (`sketch-city.png`) | `sketch` | above the footer | 4-colour alpha PNG, CSS mask at 35% in `--text-muted` |
+| City sketch (`sketch-city.png`) | `sketch` + `--photo` — the University palace, drawn after a real photo | above the footer | `asset.mjs inkmask` → 4-colour alpha PNG, CSS mask at 35% in `--text-muted`; the photo is credited on the About page |
 
 Characters are people, drawn — never photographs of people. Illustrations never carry
 information: the level, the wait and the menu are always in words and figures beside them.

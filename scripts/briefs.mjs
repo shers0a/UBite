@@ -74,8 +74,13 @@ export const BRIEFS = [
   // Z-Image returned an unrelated photo for all three on 22 Sep — flat scenes stay on GPT-Image.)
   ].map(([k, s]) => ({ slug: `flat-${k}`, style: 'flat', subject: s, n: 1, seed: 101, size: '1024x1024', provider: 'pollinations' })),
 
-  { slug: 'sketch-city', style: 'sketch', n: 1, seed: 101, provider: 'pollinations',
-    subject: 'a Bucharest street: a neoclassical university palace with columns and a small clock, old apartment buildings with balconies, a tram under its overhead wires, a few trees' },
+  /* Redrawn on 26 Sep 2026 from a real photo of the University palace: the first, text-only
+     version read as Berlin or Warsaw (a tram and blocks no one at UB would recognise). Seed 504 was
+     chosen; it ships through `asset.mjs inkmask` with the credit below, also on the About page. */
+  { slug: 'sketch-city', style: 'sketch', n: 1, seed: 504, provider: 'comfy',
+    photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Bucharest_-_Dec_2014_-_B-dul_Regina_Elisabeta_04.jpg/1280px-Bucharest_-_Dec_2014_-_B-dul_Regina_Elisabeta_04.jpg',
+    credit: 'drawn after "Bucharest - Dec 2014 - B-dul Regina Elisabeta 04" by Joe Mabel, CC BY 3.0, commons.wikimedia.org',
+    subject: 'the University of Bucharest palace on Piața Universității, simplified to a few confident outlines: the domed corner pavilion, the long facade with its rows of tall windows and the mansard roof, two or three trees and a street lamp in front; windows as simple strokes, no ornament, drawn on a single sheet' },
 
   /* Logo exploration — sketches only, redrawn as vector if one wins. */
   mark('tray-queue', 'the letter U shaped like a canteen tray seen from the side, with three small solid circles in a row above it like heads waiting in a queue'),

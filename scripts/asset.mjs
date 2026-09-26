@@ -4,6 +4,7 @@
    node scripts/asset.mjs gen <slug> "<subject>" [--style food] [--n 4] [--seed 1] [--size 1024x1024] [--steps 8] [--provider auto]
                                      [--pmodel gpt-image-2] [--hmodel Z-Image-Turbo]   pick the model on Pollinations / AI Horde
                                      [--provider comfy] [--quality high] [--ref none|a.png,b.png]   local FLUX.2 klein (unlimited)
+                                     [--photo place.jpg|https://…]   redraw a real place from a photo (comfy; a URL also on Pollinations)
    node scripts/asset.mjs batch [--only dish-,cut-] [--parallel 3]   every brief in scripts/briefs.mjs
    node scripts/asset.mjs video <slug> "<subject>" [--model nova-reel] [--duration 6]   text-to-video (Pollinations key)
    node scripts/asset.mjs i2v <slug> <image.jpg> "<motion>" [--duration 4]   image-to-video (free ZeroGPU Space)
@@ -15,6 +16,8 @@
    node scripts/asset.mjs pattern <out.svg> <doodle-sheet.jpg…> [--tile 640] [--preview]   seamless doodle wallpaper
    node scripts/asset.mjs flatten <flat.jpg> <out.svg>     flat scene → one traced layer per token colour
    node scripts/asset.mjs picto <sheet.jpg> <dir> --names a,b,…   pictogram sheet → single two-layer SVGs
+   node scripts/asset.mjs inkmask <sketch.jpg> <out.png> [--width 1280] [--paper 225] [--ink 110] [--credit "…"]
+                                                           pen sketch → 4-colour alpha PNG for a CSS mask
 
    Raw generations land in assets/_raw/<slug>/ (gitignored) with an index.json of prompts and
    seeds. Only what is promoted enters assets/ and assets/manifest.json. Keys come from .env
@@ -136,12 +139,16 @@ const PROVIDERS = {
   /* Pollinations: one free key (enter.pollinations.ai, GitHub login) and a daily pollen
      allowance that covers FLUX.1-schnell, Z-Image, FLUX.2 klein and the GPT-Image models.
      GPT-Image draws clean line art and marks; FLUX keeps the food set consistent. */
-  async pollinations({ prompt, seed, width, height, style, pmodel }) {
+  async pollinations({ prompt, seed, width, height, style, pmodel, photo }) {
     const key = process.env.POLLINATIONS_KEY;
     if (!key) throw new ProviderError('pollinations: POLLINATIONS_KEY missing in .env (free at enter.pollinations.ai)');
     const drawn = ['mark', 'line', 'spot', 'doodles', 'picto', 'flat', 'sketch'];
     const model = pmodel || process.env.POLLINATIONS_MODEL || (drawn.includes(style) ? 'gptimage' : 'flux');
     const q = new URLSearchParams({ model, width: String(width), height: String(height), seed: String(seed), nologo: 'true', safe: 'true' });
+    if (photo) {
+      if (!/^https?:\/\//.test(photo)) throw new ProviderError('pollinations: --photo must be a public URL here');
+      q.set('image', photo);
+    }
     const res = await fetch(`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?${q}`, { headers: { Authorization: `Bearer ${key}` } });
     const type = res.headers.get('content-type') || '';
     if (!res.ok || !type.startsWith('image/')) {
@@ -192,8 +199,9 @@ const PROVIDERS = {
   /* Local and unlimited: FLUX.2 [klein] 4B (Apache-2.0) in ComfyUI on this laptop's GPU
      (`npm run ai:start`, see scripts/local-ai.mjs). The locked brand styles get their reference
      sheet from assets/style/ attached as a reference image, so the drawing comes out in the
-     approved hand; `--ref none` turns that off, `--ref a.png,b.png` picks others. */
-  async comfy({ prompt, seed, width, height, style, refs, quality }) {
+     approved hand; `--ref none` turns that off, `--ref a.png,b.png` picks others. `--photo` goes
+     first as the subject: the model redraws that real place rather than inventing one. */
+  async comfy({ prompt, seed, width, height, style, refs, quality, photo }) {
     const url = process.env.COMFY_URL || 'http://127.0.0.1:8188';
     const up = await fetch(`${url}/system_stats`).then((r) => r.ok).catch(() => false);
     if (!up) throw new ProviderError('comfy: ComfyUI is not running (npm run ai:start)');
@@ -201,10 +209,12 @@ const PROVIDERS = {
     const unet = process.env.COMFY_MODEL || (base ? 'flux-2-klein-base-4b-fp8.safetensors' : 'flux-2-klein-4b-fp8.safetensors');
     const REF = { spot: 'characters.png', picto: 'pictograms.png', flat: 'scenes.png', doodles: 'wallpaper.png' };
     const refFiles = refs === 'none' ? [] : refs ? String(refs).split(',') : REF[style] ? [path.join(ROOT, 'assets', 'style', REF[style])] : [];
+    if (photo) refFiles.unshift(photo);
     const names = [];
     for (const f of refFiles) {
+      const bytes = /^https?:\/\//.test(f) ? Buffer.from(await (await fetch(f, { headers: { 'User-Agent': 'UBite-assets/1.0' } })).arrayBuffer()) : fs.readFileSync(f);
       const form = new FormData();
-      form.append('image', new Blob([fs.readFileSync(f)]), `ubite-ref-${path.basename(f)}`);
+      form.append('image', new Blob([bytes]), `ubite-ref-${path.basename(f).replace(/[?#].*$/, '')}`);
       form.append('overwrite', 'true');
       const r = await fetch(`${url}/upload/image`, { method: 'POST', body: form });
       if (!r.ok) throw new ProviderError(`comfy: reference upload HTTP ${r.status}`);
@@ -212,7 +222,10 @@ const PROVIDERS = {
     }
     const side = (v) => Math.round(v / 16) * 16;
     const W = side(width), H = side(height);
-    const text = names.length ? `Use the reference image only for its drawing style — same line, same ink, same palette — never copy its figures or layout. ${prompt}` : prompt;
+    const lead = photo
+      ? `Redraw the place in the first reference image faithfully — the same buildings, proportions and viewpoint — leaving out people, cars, signs, banners and text.${names.length > 1 ? ' Use the other reference images only for their drawing style.' : ''} `
+      : names.length ? 'Use the reference image only for its drawing style — same line, same ink, same palette — never copy its figures or layout. ' : '';
+    const text = lead + prompt;
     // API-format graph, the same nodes as ComfyUI's own FLUX.2 klein templates.
     const g = {
       unet: { class_type: 'UNETLoader', inputs: { unet_name: unet, weight_dtype: 'default' } },
@@ -256,7 +269,7 @@ const PROVIDERS = {
       if (!img) continue;
       const q = new URLSearchParams({ filename: img.filename, subfolder: img.subfolder, type: img.type });
       const buffer = Buffer.from(await (await fetch(`${url}/view?${q}`)).arrayBuffer());
-      return { buffer, model: `comfy:${unet.replace(/\.safetensors$/, '')}${names.length ? '+style-ref' : ''}` };
+      return { buffer, model: `comfy:${unet.replace(/\.safetensors$/, '')}${photo ? '+photo-ref' : ''}${names.length > (photo ? 1 : 0) ? '+style-ref' : ''}` };
     }
     throw new ProviderError('comfy: timed out');
   },
@@ -287,6 +300,8 @@ async function generate(args) {
   for (const name of order) {
     const fn = PROVIDERS[name];
     if (!fn) { errors.push(`${name}: unknown provider`); continue; }
+    // Without the photo the model would invent the place again, which is what --photo is there to stop.
+    if (args.photo && !['comfy', 'pollinations'].includes(name)) { errors.push(`${name}: cannot take a reference photo`); continue; }
     try {
       const out = await fn(args);
       return { ...out, provider: name };
@@ -347,7 +362,7 @@ async function cmdGen(pos, opt) {
   for (let i = 0; i < n; i++) {
     const seed = seed0 + i;
     const t0 = Date.now();
-    const { buffer, provider, model } = await generate({ prompt, seed, steps, width: w, height: h, style, provider: opt.provider, model: opt.model, pmodel: opt.pmodel, hmodel: opt.hmodel, refs: opt.ref, quality: opt.quality });
+    const { buffer, provider, model } = await generate({ prompt, seed, steps, width: w, height: h, style, provider: opt.provider, model: opt.model, pmodel: opt.pmodel, hmodel: opt.hmodel, refs: opt.ref, quality: opt.quality, photo: opt.photo });
     // Normalise to the requested frame: providers without width/height return a square.
     const img = sharp(buffer);
     const meta = await img.metadata();
@@ -358,7 +373,7 @@ async function cmdGen(pos, opt) {
     const pipeline = meta.width === w && meta.height === h ? img
       : drawn ? img.resize(w, h, { fit: 'contain', background: '#FFFFFF' }) : img.resize(w, h, { fit: 'cover', position: 'attention' });
     await pipeline.jpeg({ quality: 92 }).toFile(out);
-    index.push({ file: rel(out), slug, style, subject, prompt, seed, steps, provider, model, width: w, height: h, date: today() });
+    index.push({ file: rel(out), slug, style, subject, prompt, seed, steps, provider, model, width: w, height: h, ...(opt.photo && { photo: opt.photo }), date: today() });
     fs.writeFileSync(indexPath(slug), JSON.stringify(index, null, 2) + '\n');
     console.log(`→ ${rel(out)}  ${provider} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
@@ -444,7 +459,7 @@ async function cmdBatch(pos, opt) {
     if (n <= 0 && !opt.force) return console.log(`· ${b.slug} — ${have} already, skipped`);
     const seed = (b.seed || hash(b.slug)) + have;
     try {
-      await cmdGen([b.slug, b.subject], { style: b.style, n: Math.max(n, 1), seed, size: b.size, model: b.model, pmodel: b.pmodel, hmodel: b.hmodel, ref: b.ref, quality: opt.quality || b.quality, provider: opt.provider || b.provider });
+      await cmdGen([b.slug, b.subject], { style: b.style, n: Math.max(n, 1), seed, size: b.size, model: b.model, pmodel: b.pmodel, hmodel: b.hmodel, ref: b.ref, photo: b.photo, quality: opt.quality || b.quality, provider: opt.provider || b.provider });
     } catch (e) { console.error(`✗ ${b.slug}: ${e.message}`); }
   });
   const workers = Array.from({ length: Number(opt.parallel || 3) }, async () => { while (queue.length) await queue.shift()(); });
@@ -815,12 +830,34 @@ async function cmdPicto(pos, opt) {
   }
 }
 
+/* A pen sketch → the 4-colour alpha PNG the footer draws as a CSS mask (the city sketch). Paper,
+   grain and a notebook's gutter are lighter than --paper and vanish; ink reaches full alpha at
+   --ink. The defaults give the approved stroke width (~1.4 px at 1280 wide, measured the way
+   match-ink.mjs does). --credit adds the reference photo's attribution to the licence. */
+async function cmdInkmask(pos, opt) {
+  const [input, output] = pos;
+  if (!input || !output) die('usage: asset.mjs inkmask <sketch.jpg> <out.png> [--width 1280] [--paper 225] [--ink 110] [--credit "…"]');
+  const paper = Number(opt.paper || 225), ink = Number(opt.ink || 110);
+  const { data, info } = await sharp(input).resize({ width: Number(opt.width || 1280) }).greyscale().raw().toBuffer({ resolveWithObject: true });
+  const px = Buffer.alloc(info.width * info.height * 4);
+  for (let i = 0; i < info.width * info.height; i++) {
+    px[i * 4 + 3] = data[i] >= paper ? 0 : Math.round(255 * Math.min(1, (paper - data[i]) / (paper - ink)));
+  }
+  await sharp(px, { raw: { width: info.width, height: info.height, channels: 4 } }).png({ palette: true, colours: 4, compressionLevel: 9 }).toFile(output);
+  const e = findRawEntry(input) || {};
+  recordAsset({ file: rel(output), source: 'generated', status: opt.status || 'final', provider: e.provider || '', model: e.model || '',
+    seed: e.seed ?? null, prompt: e.prompt || '', derivedFrom: rel(input),
+    licence: [licenceFor(e.model || ''), opt.credit].filter((x) => x && x !== true).join('; '),
+    note: 'alpha mask (lines opaque) — used as a CSS mask over a token colour' });
+  console.log(`✓ ${rel(output)}  ${info.width}×${info.height}  ${(fs.statSync(output).size / 1024).toFixed(1)} KB`);
+}
+
 /* ---------- main ---------- */
 
 loadEnv();
 const [cmd, ...rest] = process.argv.slice(2);
 const { pos, opt } = parseArgs(rest);
-const COMMANDS = { gen: cmdGen, batch: cmdBatch, video: cmdVideo, i2v: cmdI2v, sheet: cmdSheet, cutout: cmdCutout, vectorize: cmdVectorize, promote: cmdPromote, record: cmdRecord, pattern: cmdPattern, flatten: cmdFlatten, picto: cmdPicto };
+const COMMANDS = { gen: cmdGen, batch: cmdBatch, video: cmdVideo, i2v: cmdI2v, sheet: cmdSheet, cutout: cmdCutout, vectorize: cmdVectorize, promote: cmdPromote, record: cmdRecord, pattern: cmdPattern, flatten: cmdFlatten, picto: cmdPicto, inkmask: cmdInkmask };
 if (!COMMANDS[cmd]) {
   console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/\/\*([\s\S]*?)\*\//)[1].trim());
   process.exit(cmd ? 1 : 0);
