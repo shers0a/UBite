@@ -4,3 +4,5 @@
 *.sh text eol=lf
 Dockerfile text eol=lf
 deploy/Caddyfile text eol=lf
+# Approved assets are fingerprinted byte for byte (assets/style/lock.json), so git stores them exactly.
+assets/** -text
