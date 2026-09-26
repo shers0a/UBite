@@ -11,7 +11,11 @@ export function AppHeader({ title, onBack, right, lang = 'ro', sticky = true, br
       position: sticky ? 'sticky' : 'static', top: 0, zIndex: 20,
       display: 'flex', alignItems: 'center', gap: 10, minHeight: 56,
       // transparent: over a photo (the home hall), which then shows behind the brand and buttons.
-      padding: '8px 16px', background: transparent ? 'transparent' : 'var(--surface-page)',
+      // Installed on a phone with a notch or an island, the page runs under the status bar: the
+      // header starts below it (the insets are 0 everywhere else), and a sticky header's own
+      // background covers the status bar as the page scrolls under it.
+      padding: 'calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left))',
+      background: transparent ? 'transparent' : 'var(--surface-page)',
     }}>
       {onBack ? (
         <button type="button" onClick={onBack} aria-label={lang === 'ro' ? 'Înapoi' : 'Back'} className="ub-hbtn"
@@ -81,7 +85,8 @@ export function Sheet({ open = true, title, children, onClose, lang = 'ro', fixe
         position: pos, left: 0, right: 0, bottom: 0, zIndex: 41,
         margin: fixed ? '0 auto' : undefined, maxWidth: fixed ? 'var(--max-phone)' : undefined,
         background: 'var(--surface-raised)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
-        padding: 20, boxShadow: 'var(--shadow-overlay)', maxHeight: '86%', overflowY: 'auto',
+        // The last button stays clear of the home indicator on phones without a home button.
+        padding: '20px 20px calc(20px + env(safe-area-inset-bottom))', boxShadow: 'var(--shadow-overlay)', maxHeight: '86%', overflowY: 'auto',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-semibold)', flex: 1 }}>{title}</h2>

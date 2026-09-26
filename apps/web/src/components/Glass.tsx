@@ -12,14 +12,16 @@
    Measured in a real Chromium: the glass only sees what lies behind it if no ancestor between
    them is a stacking context — so these never sit inside a z-index or `isolation`.
 
-   Where the refraction cannot run it is not faked: Safari and Firefox do not bend a backdrop
-   through an SVG filter, and on a slow phone a filter re-evaluated on every scroll frame costs
-   more than it gives. Those get frosted glass in plain CSS — the same shape and blur. */
+   Phones with Chrome get the library's lighter fork (vendor/liquid-glass-lite.tsx): the same
+   look, a quarter of the work per scroll frame. Where the refraction cannot run it is not faked:
+   Safari and Firefox do not bend a backdrop through an SVG filter, so iPhones and Firefox get
+   frosted glass in plain CSS, the same shape and blur. */
 import React from 'react';
 import { useApp } from '../state/app';
 
-// Loaded only where it will refract: iPhones and slower phones never download it.
+// Loaded only where it will refract, and only the one this device draws.
 const LiquidGlass = React.lazy(() => import('liquid-glass-react'));
+const LiteGlass = React.lazy(() => import('../../vendor/liquid-glass-lite'));
 
 /** The repo's button template, verbatim. */
 export const GLASS_BUTTON = {
@@ -32,18 +34,39 @@ export const GLASS_BUTTON = {
   mode: 'standard' as const,
 };
 
-/** Chromium on a device with some headroom, and nobody asking for less transparency. */
-function canRefract() {
-  if (typeof window === 'undefined') return false;
+/** Which glass this device draws: the library on a desktop Chromium, its lighter fork on a phone
+ *  with Chrome (scrolling Home on an emulated Pixel 5, the library dropped 17–24 frames and the
+ *  fork 1–2, as many as frosted glass; measured 26 Sep 2026), frosted glass everywhere else —
+ *  Safari and Firefox, a phone without the headroom, or someone asking for less transparency. */
+function glassMode(): 'liquid' | 'lite' | 'frost' {
+  if (typeof window === 'undefined') return 'frost';
   const ua = navigator.userAgent;
   const chromium = /Chrome\/|Chromium\/|Edg\//.test(ua) && !/Firefox\//.test(ua);
-  const iosWebKit = /iPhone|iPad|iPod/.test(ua); // every iOS browser is WebKit underneath
+  const phone = /Android|iPhone|iPad|iPod|Mobile/.test(ua) || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
   const cores = navigator.hardwareConcurrency ?? 8;
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
   const lessTransparency = window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches;
-  return chromium && !iosWebKit && cores >= 6 && memory >= 4 && !lessTransparency;
+  if (!chromium || cores < 6 || memory < 4 || lessTransparency) return 'frost';
+  return phone ? 'lite' : 'liquid';
 }
-export const REFRACT = canRefract();
+const GLASS = glassMode();
+const REFRACT = GLASS !== 'frost';
+const LIBRARY = GLASS === 'liquid';
+
+interface RefractProps {
+  children?: React.ReactNode;
+  overLight: boolean;
+  padding: string;
+  className: string;
+  style: React.CSSProperties;
+  cornerRadius?: number;
+  mouseContainer?: React.RefObject<HTMLElement | null>;
+}
+/** The refracting pill for this device: the library, or its lighter fork. */
+function Refract(p: RefractProps) {
+  if (LIBRARY) return <LiquidGlass {...GLASS_BUTTON} {...p}>{p.children}</LiquidGlass>;
+  return <LiteGlass {...GLASS_BUTTON} {...p} className={`${p.className} ub-lg-lite`} />;
+}
 
 function useLightTheme() {
   const { theme } = useApp();
@@ -62,7 +85,7 @@ function useLightTheme() {
  *  not a ref: the library loads lazily, so the element it wraps is replaced once it arrives. */
 function useRemeasure(el: HTMLElement | null) {
   React.useEffect(() => {
-    if (!el || typeof ResizeObserver === 'undefined' || !REFRACT) return;
+    if (!el || typeof ResizeObserver === 'undefined' || !LIBRARY) return;
     let first = true;
     const ro = new ResizeObserver(() => {
       if (first) { first = false; return; }
@@ -77,7 +100,7 @@ function useRemeasure(el: HTMLElement | null) {
 
 export interface GlassFloatProps {
   children: React.ReactNode;
-  /** Where the pill's centre sits: position fixed, top, left (and zIndex). */
+  /** Where the pill's centre sits: position fixed, top or bottom, left (and zIndex). */
   style: React.CSSProperties;
   padding?: string;
   className?: string;
@@ -90,18 +113,26 @@ export function GlassFloat({ children, style, padding = '8px 16px', className = 
   const [inner, setInner] = React.useState<HTMLDivElement | null>(null);
   useRemeasure(inner);
   const content = <div ref={setInner} className="ub-lg-content" aria-hidden={hidden || undefined} inert={hidden || undefined}>{children}</div>;
+  /* A pill held by `bottom` stays glued to the bottom edge while a phone browser's address bar
+     slides in and out: the compositor moves it with the bar. Held by `top: calc(100% - …)`, it
+     is laid out again only once the bar has settled, and then trails behind it. */
+  const fromBottom = style.bottom !== undefined;
   const frosted = (
-    <div className={`ub-lg-frost ${className}`} style={{ ...style, padding, transform: 'translate(-50%, -50%)', pointerEvents: hidden ? 'none' : undefined }}>
+    <div className={`ub-lg-frost ${className}`} style={{ ...style, padding, transform: fromBottom ? 'translate(-50%, 50%)' : 'translate(-50%, -50%)', pointerEvents: hidden ? 'none' : undefined }}>
       {content}
     </div>
   );
   if (!REFRACT) return frosted;
+  // The library places the pill by its centre from the top only; the fork can hold it by the bottom.
+  const { bottom, ...rest } = style;
+  const placed = !fromBottom ? style
+    : LIBRARY ? { ...rest, top: `calc(100% - (${bottom}))` } : { ...style, transform: 'translate(-50%, 50%)' };
   return (
     <React.Suspense fallback={frosted}>
-      <LiquidGlass {...GLASS_BUTTON} overLight={light} padding={padding} className={`ub-lg ${className}`}
-        style={{ ...style, pointerEvents: hidden ? 'none' : undefined }}>
+      <Refract overLight={light} padding={padding} className={`ub-lg ${className}`}
+        style={{ ...placed, pointerEvents: hidden ? 'none' : undefined }}>
         {content}
-      </LiquidGlass>
+      </Refract>
     </React.Suspense>
   );
 }
@@ -114,13 +145,13 @@ export function GlassIcon({ children, size = 48 }: { children: React.ReactNode; 
   const box = { position: 'relative' as const, display: 'inline-block', width: size, height: size, flex: 'none' };
   const frosted = <span style={box}><span className="ub-lg-frost ub-lg-frost--icon">{children}</span></span>;
   if (!REFRACT) return frosted;
+  const pill = <span className="ub-lg-frost ub-lg-frost--icon">{children}</span>;
   return (
     <span style={box}>
-      <React.Suspense fallback={<span className="ub-lg-frost ub-lg-frost--icon">{children}</span>}>
-        <LiquidGlass {...GLASS_BUTTON} overLight={light} padding="2px" className="ub-lg ub-lg--icon"
-          style={{ position: 'absolute', top: '50%', left: '50%' }}>
+      <React.Suspense fallback={pill}>
+        <Refract overLight={light} padding="2px" className="ub-lg ub-lg--icon" style={{ position: 'absolute', top: '50%', left: '50%' }}>
           {children}
-        </LiquidGlass>
+        </Refract>
       </React.Suspense>
     </span>
   );
@@ -146,10 +177,8 @@ export function GlassLayer({ box, radius }: GlassLayerProps) {
   return (
     <React.Suspense fallback={frosted}>
       <span className="ub-glass ub-glass--liquid" aria-hidden="true">
-        <LiquidGlass {...GLASS_BUTTON} cornerRadius={r} overLight={light} mouseContainer={box} padding="0"
-          style={{ position: 'absolute', top: '50%', left: '50%', width: '100%', height: '100%' }}>
-          {null}
-        </LiquidGlass>
+        <Refract cornerRadius={r} overLight={light} mouseContainer={box} padding="0" className=""
+          style={{ position: 'absolute', top: '50%', left: '50%', width: '100%', height: '100%' }} />
       </span>
     </React.Suspense>
   );

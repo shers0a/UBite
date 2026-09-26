@@ -28,13 +28,18 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
 .ub-lg .glass > div { font: inherit !important; }
 .ub-lg .glass { color: var(--text-primary); }
 .ub-lg--icon .glass > div { text-shadow: none !important; }
+/* The header buttons sit over the bright hall windows: a mostly opaque pill, so the icon reads. */
+.ub-lg--icon .glass { background: color-mix(in srgb, var(--surface-raised) 72%, transparent); }
 /* Where the refraction cannot run: the same pill, frosted in CSS. */
 .ub-lg-frost { border-radius: var(--radius-pill); color: var(--text-primary);
   -webkit-backdrop-filter: blur(10px) saturate(130%); backdrop-filter: blur(10px) saturate(130%);
   background: color-mix(in srgb, var(--surface-raised) 30%, transparent);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-primary) 22%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent), var(--shadow-overlay);
   transition: top var(--motion-slow) var(--ease-out); }
-.ub-lg-frost--icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 2px; display: grid; place-items: center; }
+/* The lighter fork (vendor/liquid-glass-lite.tsx) drops in like the library does. */
+.ub-lg-lite { transition: top var(--motion-slow) var(--ease-out); }
+.ub-lg-frost--icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 2px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--surface-raised) 72%, transparent); }
 
 /* Glass as a layer filling its box (the crowding card), under content lifted to z-index 1. */
 /* No z-index here: a stacking context on the wrapper cuts the library's backdrop off from the page. */
@@ -63,9 +68,11 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
 .ub-mini-dot[data-level="closed"], .ub-mini-dot[data-level="none"] { background: var(--crowd-closed-fill); }
 
 /* Zone 1: the hall photo behind the hero, drifting at 40% of scroll. */
-.ub-hall { position: relative; height: 208px; overflow: hidden; }
+/* Installed on a phone with a notch, the photo also runs under the status bar: it grows by the
+   inset, so the header moves below the notch and the photo keeps its height under it. */
+.ub-hall { position: relative; height: calc(208px + env(safe-area-inset-top)); overflow: hidden; }
 .ub-hall-photo { position: absolute; inset: -40px 0 0; transform-origin: center top; will-change: transform; }
-.ub-hall-photo img { width: 100%; height: 260px; object-fit: cover; display: block; }
+.ub-hall-photo img { width: 100%; height: calc(260px + env(safe-area-inset-top)); object-fit: cover; display: block; }
 .ub-hall-scrim { position: absolute; inset: 0; background: var(--scrim); pointer-events: none; }
 /* The seam between the photo and the wallpaper: the photo dissolves into a frosted band, then
    into the page. The band sits across the edge and blurs both: the photo's last rows and the
@@ -140,9 +147,20 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
 .ub-install { position: fixed; left: 0; right: 0; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 30; width: calc(100% - 24px); max-width: calc(var(--max-phone) - 24px); margin: 0 auto;
   background: var(--surface-raised); border-radius: var(--radius-lg); padding: var(--space-4); box-shadow: var(--shadow-overlay); animation: ub-rise var(--motion-slow) var(--ease-out); }
 .ub-install-art { width: 64px; height: 64px; flex: none; background: var(--accent); }
-.ub-steps { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.ub-steps li { display: flex; gap: var(--space-3); align-items: flex-start; font-size: var(--text-base); }
-.ub-steps li svg { color: var(--accent); margin-top: 2px; }
+/* Getting the app: numbered steps on a thin rail, with the button to look for drawn inline. */
+.ub-howto { list-style: none; margin: 0; padding: 0; }
+.ub-howto li { position: relative; display: grid; grid-template-columns: 32px 1fr; gap: var(--space-3); padding-bottom: var(--space-4); }
+.ub-howto li:last-child { padding-bottom: 0; }
+.ub-howto li:not(:last-child)::before { content: ""; position: absolute; left: 15px; top: 36px; bottom: 4px; width: 2px; border-radius: var(--radius-pill); background: var(--border-subtle); }
+.ub-howto-n { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-quiet); color: var(--accent-quiet-text); font-size: var(--text-sm); font-weight: var(--weight-bold); }
+.ub-howto-title { font-size: var(--text-base); font-weight: var(--weight-semibold); line-height: 24px; padding-top: 4px; }
+.ub-howto-note { font-size: var(--text-sm); color: var(--text-secondary); line-height: 20px; margin-top: 4px; }
+/* The keys overhang the line a little (negative margins), so a wrapped step keeps its rhythm. */
+.ub-key { display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -3px 2px; vertical-align: middle; border-radius: var(--radius-sm);
+  background: var(--surface-raised); color: var(--accent); box-shadow: inset 0 0 0 1px var(--border-subtle); }
+.ub-howto-note .ub-key { width: 24px; height: 24px; }
+.ub-key-app { display: inline-block; width: 26px; height: 26px; margin: -3px 2px; vertical-align: middle; border-radius: 22%; }
+.ub-seg { display: flex; gap: var(--space-2); }
 
 /* Entrance */
 .ub-rise { animation: ub-rise var(--motion-slow) var(--ease-out) backwards; }
@@ -179,7 +197,7 @@ html[data-nav] .ub-screen { animation: none; }
 .ub-fadeimg-on img { transition: opacity var(--motion-slow) var(--ease-out); }
 
 /* Loading: a thin bar along the top while a screen's code arrives. */
-.ub-topbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 90; overflow: hidden; }
+.ub-topbar { position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; height: 3px; z-index: 90; overflow: hidden; }
 .ub-topbar::before { content: ""; position: absolute; inset: 0 60% 0 0; background: var(--accent); border-radius: var(--radius-pill); animation: ub-topbar 900ms var(--ease-in-out) infinite; }
 @keyframes ub-topbar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 

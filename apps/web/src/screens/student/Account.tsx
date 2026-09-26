@@ -12,7 +12,7 @@ import { useApp, type Theme } from '../../state/app';
 import { useNotifications } from '../../state/notifications';
 import { pushSupport } from '../../pwa';
 import { A } from '../../assets';
-import { Switch, InstallPrompt } from '../../components/Chrome';
+import { GetTheApp, Switch, InstallPrompt } from '../../components/Chrome';
 import { dishName, glyphFor } from '../../components/Menu';
 
 export function Account() {
@@ -46,6 +46,7 @@ export function Account() {
         <main id="main" style={{ padding: '0 var(--gutter) 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <EmptyState art={A.art.install} icon="user" title={t('account.signedOut.title')} body={t('account.signedOut.body')}
             action={t('signin.title')} onAction={() => requireSignIn('account')} />
+          <GetTheApp />
           {appearance}
           <div className="ub-nav-space" />
         </main>
@@ -72,6 +73,8 @@ export function Account() {
             </div>
           </div>
         )}
+
+        <GetTheApp />
 
         {isStudent && <History />}
         {isStudent && <Favourites />}

@@ -26,7 +26,7 @@ export function About() {
   return (
     <main id="main" className="ub-onb" aria-label={t('about.title')}>
       <Pattern src={A.pattern} opacity={0.06} size={375} />
-      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '34px var(--gutter) 0' }}>
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'max(34px, calc(8px + env(safe-area-inset-top))) var(--gutter) 0' }}>
         <Logo variant="tray" size={26} withText />
         {!last && <Button size="sm" variant="quiet" onClick={done}>{t('about.skip')}</Button>}
       </div>
@@ -39,7 +39,7 @@ export function About() {
           <p style={{ marginTop: 8, fontSize: 'var(--text-base)', color: 'var(--text-secondary)', marginInline: 'auto' }}>{s.body}</p>
         </div>
       </div>
-      <div style={{ position: 'relative', padding: '0 var(--gutter) 28px' }}>
+      <div style={{ position: 'relative', padding: '0 var(--gutter) calc(28px + env(safe-area-inset-bottom))' }}>
         <div className="ub-dots" style={{ marginBottom: 14 }}>
           {slides.map((_, k) => (
             <button key={k} type="button" aria-label={t('about.step', { n: k + 1, total: slides.length })} aria-current={k === i ? 'step' : undefined}

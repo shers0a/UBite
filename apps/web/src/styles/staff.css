@@ -1,7 +1,7 @@
 /* Staff tools, DCCAS dashboard and admin — the rules of ui_kits/staff-editor/index.html and
    ui_kits/dccas-dashboard/index.html. Tokens only. */
 
-.ub-staff { max-width: 1100px; margin: 0 auto; padding: var(--space-5); min-height: 100vh; }
+.ub-staff { max-width: 1100px; margin: 0 auto; padding: var(--space-5); padding-top: calc(var(--space-5) + env(safe-area-inset-top)); min-height: 100vh; }
 .ub-staff-head { display: flex; align-items: center; gap: var(--space-3); padding: 10px 4px var(--space-5); flex-wrap: wrap; }
 .ub-staff-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; margin: 0 0 var(--space-5); }
 .ub-staff-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--space-5); align-items: start; }
@@ -34,7 +34,7 @@
 .ub-gate { max-width: 480px; margin: 12vh auto 0; padding: var(--space-5); }
 
 /* DCCAS dashboard */
-.ub-dash { max-width: 1200px; margin: 0 auto; padding: 22px; min-height: 100vh; }
+.ub-dash { max-width: 1200px; margin: 0 auto; padding: 22px; padding-top: calc(22px + env(safe-area-inset-top)); min-height: 100vh; }
 .ub-dash-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: var(--space-4); }
 .ub-dash-lede { font-size: var(--text-md); color: var(--text-secondary); max-width: 70ch; margin-bottom: 18px; }
 .ub-dash-lede strong { color: var(--text-primary); }

@@ -2,10 +2,11 @@
    and the contextual install prompt — all as drawn in the student-app UI kit. */
 import React from 'react';
 import { useLocation } from 'wouter';
-import { Button, Icon, Pattern, Sheet, Skeleton, Toast, Wordmark } from '@ds';
+import { Button, Icon, Illustration, Pattern, Sheet, Skeleton, Toast, Wordmark } from '@ds';
 import { useI18n } from '../i18n';
 import { useApp } from '../state/app';
-import { useInstall, useUpdateReady } from '../pwa';
+import { isIos, useInstall, useUpdateReady } from '../pwa';
+import type { StringKey } from '../i18n/strings';
 import { track, usageDays } from '../analytics';
 import { A } from '../assets';
 import { reducedMotion, useScrollFold } from '../motion';
@@ -34,7 +35,7 @@ export function BottomNav() {
     <nav aria-label={t('nav.label')}>
       {/* The glass pill's centre sits 44 px above the bottom edge (safe area included). */}
       <GlassFloat padding="6px" className="ub-navglass"
-        style={{ position: 'fixed', top: 'calc(100% - 44px - env(safe-area-inset-bottom))', left: '50%', zIndex: 28 }}>
+        style={{ position: 'fixed', bottom: 'calc(44px + env(safe-area-inset-bottom))', left: '50%', zIndex: 28 }}>
         <div className="ub-nav" data-folded={folded} style={{ '--nav-items': items.length } as React.CSSProperties}>
           {items.map(([path, icon, label, needsAccount]) => (
             // Links, so a long press or a middle click opens the page like any other link.
@@ -167,15 +168,102 @@ export function InstallPrompt({ force = false, onClose }: { force?: boolean; onC
       )}
       {iosHelp && (
         <Sheet open fixed title={t('install.ios.title')} onClose={() => { setIosHelp(false); later(); }} lang={lang}>
-          <ol className="ub-steps">
-            <li><Icon name="share" size={20} /><span>{t('install.ios.step1')}</span></li>
-            <li><Icon name="plus" size={20} /><span>{t('install.ios.step2')}</span></li>
-            <li><Icon name="bell" size={20} /><span>{t('install.ios.step3')}</span></li>
-          </ol>
-          <Button fullWidth onClick={() => { setIosHelp(false); later(); }}>{t('install.ios.ok')}</Button>
+          <InstallSteps platform="ios" />
+          <Button fullWidth onClick={() => { setIosHelp(false); later(); }} style={{ marginTop: 'var(--space-5)' }}>{t('install.ios.ok')}</Button>
         </Sheet>
       )}
     </>
+  );
+}
+
+/* ── Getting the app: the same steps everywhere the student is asked to install ─────────── */
+
+export type InstallPlatform = 'android' | 'ios';
+
+/** What the student looks for on the phone, drawn inline in the step's sentence: the browser's
+ *  button as a small key, and the app's own icon for the last step. */
+const KEYS: Record<string, string> = { share: 'share', more: 'ellipsis', add: 'square-plus', menu: 'ellipsis-vertical', install: 'smartphone' };
+function withKeys(text: string) {
+  return text.split(/\{(\w+)\}/).map((part, i) => {
+    if (i % 2 === 0) return part;
+    if (part === 'app') return <img key={i} className="ub-key-app" src="/icons/icon-192.png" alt="" width={26} height={26} />;
+    return KEYS[part] ? <span key={i} className="ub-key"><Icon name={KEYS[part]} size={16} /></span> : null;
+  });
+}
+
+const STEPS: Record<InstallPlatform, Array<[StringKey, StringKey | null]>> = {
+  ios: [['getapp.ios.1', 'getapp.ios.1note'], ['getapp.ios.2', 'getapp.ios.2note'], ['getapp.ios.3', null], ['getapp.ios.4', 'getapp.ios.4note']],
+  android: [['getapp.android.1', 'getapp.android.1note'], ['getapp.android.2', 'getapp.android.2note'], ['getapp.android.3', null], ['getapp.android.4', 'getapp.android.4note']],
+};
+
+export function InstallSteps({ platform }: { platform: InstallPlatform }) {
+  const { t } = useI18n();
+  return (
+    <ol className="ub-howto">
+      {STEPS[platform].map(([step, note], i) => (
+        <li key={step}>
+          <span className="ub-howto-n ub-numeric" aria-hidden="true">{i + 1}</span>
+          <div>
+            <div className="ub-howto-title">{withKeys(t(step))}</div>
+            {note && <p className="ub-howto-note">{withKeys(t(note))}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Pages opened inside Instagram, Facebook, TikTok and the like cannot be installed from there. */
+const inAppBrowser = () => /FBAN|FBAV|FB_IAB|Instagram|Line\/|TikTok|musical_ly|Snapchat|GSA\/|; wv\)/i.test(navigator.userAgent);
+
+/** Account: "Vrei UBite ca aplicație?" — one tap where the browser can install it, and the steps
+ *  for the phone in the student's hand (the other one a tap away). Gone once it is installed. */
+export function GetTheApp() {
+  const { t } = useI18n();
+  const install = useInstall();
+  const [platform, setPlatform] = React.useState<InstallPlatform>(() => (isIos() ? 'ios' : 'android'));
+  const [done, setDone] = React.useState(false);
+  if (install.installed) return null;
+  return (
+    <section className="ub-panel-s" aria-labelledby="getapp-title">
+      <div className="ub-eyebrow" style={{ marginBottom: 10 }}>{t('getapp.eyebrow')}</div>
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 id="getapp-title" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--weight-semibold)', lineHeight: 'var(--leading-snug)' }}>{t('getapp.title')}</h2>
+          <p style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', marginTop: 'var(--space-1)' }}>{t('getapp.body')}</p>
+        </div>
+        {/* The student on the phone, not the phone and bowl the signed-out card above already shows. */}
+        <Illustration src={A.spot('phone')} tone="accent" boil width={96} height={96} style={{ flex: 'none', margin: '-6px -6px 0 0' }} />
+      </div>
+
+      {done ? (
+        <p role="status" style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', marginTop: 'var(--space-4)', fontSize: 'var(--text-base)', color: 'var(--status-success-text)', fontWeight: 'var(--weight-semibold)' }}>
+          <Icon name="circle-check" size={18} />{t('getapp.done')}
+        </p>
+      ) : (
+        <>
+          {install.canPrompt && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              <Button fullWidth iconLeft="download" onClick={async () => { if (await install.prompt()) setDone(true); }}>{t('getapp.install')}</Button>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-4)' }}>{t('getapp.orSteps')}</p>
+            </div>
+          )}
+          <div className="ub-seg" role="group" aria-label={t('getapp.phone')} style={{ marginTop: install.canPrompt ? 'var(--space-2)' : 'var(--space-4)' }}>
+            {(['android', 'ios'] as const).map((p) => (
+              <button key={p} type="button" className="ub-scale" data-on={platform === p} aria-pressed={platform === p} onClick={() => setPlatform(p)}>
+                {p === 'ios' ? 'iPhone' : 'Android'}
+              </button>
+            ))}
+          </div>
+          {inAppBrowser() && (
+            <p style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              <Icon name="info" size={16} style={{ marginTop: 3 }} />{t('getapp.inApp')}
+            </p>
+          )}
+          <div style={{ marginTop: 'var(--space-4)' }}><InstallSteps platform={platform} /></div>
+        </>
+      )}
+    </section>
   );
 }
 

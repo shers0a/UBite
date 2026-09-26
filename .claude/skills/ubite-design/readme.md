@@ -223,7 +223,7 @@ photography is the only gradient in the system, and everything above turns off e
 
 ## ICONOGRAPHY
 
-- **Lucide outline**, 24px grid, 2px stroke, round caps — 59 glyphs, copied into
+- **Lucide outline**, 24px grid, 2px stroke, round caps — 63 glyphs, copied into
   [`assets/icons/`](assets/icons) and inlined in [`components/icons/Icon.jsx`](components/icons/Icon.jsx)
   so a glyph inherits `currentColor` and costs no request.
   *Substitution flagged:* the source repository contains no icon set of its own, so Lucide was
