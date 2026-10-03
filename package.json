@@ -41,7 +41,7 @@
     "sharp": "^0.34.3",
     "concurrently": "^10.0.5",
     "oxlint": "^1.85.0",
-    "typescript": "~5.9.3"
+    "typescript": "~7.0.2"
   },
   "engines": {
     "node": ">=20"
