@@ -27,9 +27,6 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
    font on what it holds; the design system's type wins. */
 .ub-lg .glass > div { font: inherit !important; }
 .ub-lg .glass { color: var(--text-primary); }
-.ub-lg--icon .glass > div { text-shadow: none !important; }
-/* The header buttons sit over the bright hall windows: a mostly opaque pill, so the icon reads. */
-.ub-lg--icon .glass { background: color-mix(in srgb, var(--surface-raised) 72%, transparent); }
 /* Where the refraction cannot run: the same pill, frosted in CSS. */
 .ub-lg-frost { border-radius: var(--radius-pill); color: var(--text-primary);
   -webkit-backdrop-filter: blur(10px) saturate(130%); backdrop-filter: blur(10px) saturate(130%);
@@ -38,8 +35,17 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
   transition: top var(--motion-slow) var(--ease-out); }
 /* The lighter fork (vendor/liquid-glass-lite.tsx) drops in like the library does. */
 .ub-lg-lite { transition: top var(--motion-slow) var(--ease-out); }
-.ub-lg-frost--icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 2px; display: grid; place-items: center;
-  background: color-mix(in srgb, var(--surface-raised) 72%, transparent); }
+/* The header buttons over the hall photo: white lines on heavily frosted black glass, in both
+   themes. The backdrop is blurred and dimmed under the overlay, so the hall's colours glow through
+   as smoke. The ink is the offline banner's: the one light-on-dark pair that holds in both themes. */
+.ub-glass-icon { --ub-glass-ink: var(--status-offline-text);
+  display: inline-grid; place-items: center; flex: none; border-radius: 50%; color: var(--ub-glass-ink);
+  -webkit-backdrop-filter: blur(28px) saturate(140%) brightness(50%); backdrop-filter: blur(28px) saturate(140%) brightness(50%);
+  background: var(--surface-overlay);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ub-glass-ink) 26%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--ub-glass-ink) 14%, transparent); }
+/* IconButton paints its colour and corners inline. */
+.ub-glass-icon .ub-btn { color: inherit !important; border-radius: 50% !important; }
+.ub-glass-icon .ub-btn:not(:disabled):hover { background: color-mix(in srgb, var(--ub-glass-ink) 10%, transparent) !important; }
 
 /* Glass as a layer filling its box (the crowding card), under content lifted to z-index 1. */
 /* No z-index here: a stacking context on the wrapper cuts the library's backdrop off from the page. */
@@ -73,7 +79,10 @@ body { min-height: 100vh; min-height: 100dvh; overscroll-behavior-y: none; }
 .ub-hall { position: relative; height: calc(208px + env(safe-area-inset-top)); overflow: hidden; }
 .ub-hall-photo { position: absolute; inset: -40px 0 0; transform-origin: center top; will-change: transform; }
 .ub-hall-photo img { width: 100%; height: calc(260px + env(safe-area-inset-top)); object-fit: cover; display: block; }
-.ub-hall-scrim { position: absolute; inset: 0; background: var(--scrim); pointer-events: none; }
+/* The scrim also shades the top, under the header: the hall's ceiling and blinds are nearly white,
+   and the logo's word is the page's text colour. */
+.ub-hall-scrim { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--surface-page) 72%, transparent), transparent calc(96px + env(safe-area-inset-top))), var(--scrim); }
 /* The seam between the photo and the wallpaper: the photo dissolves into a frosted band, then
    into the page. The band sits across the edge and blurs both: the photo's last rows and the
    doodles under them. */

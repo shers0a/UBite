@@ -1,13 +1,13 @@
 /* Liquid glass, exactly as liquid-glass-react's own "Log Out" button template
    (rdev/liquid-glass-react, liquid-glass-example/src/pages/index.tsx): displacement 64, blur 0.1,
    saturation 130 %, chromatic aberration 2, elasticity 0.35, fully round corners, standard
-   refraction. The same template is used everywhere — the buttons, the bars and the crowding card.
+   refraction. The same template holds the bars and the crowding card.
 
-   Three ways to hold it, because the library draws a pill positioned by its centre:
+   Two ways to hold it, because the library draws a pill positioned by its centre:
    - GlassFloat: the library as designed — a fixed pill with its content inside, so the content
      stretches with the glass (the bottom nav, the mini answer).
-   - GlassIcon: an icon button inside a pill, in a box of its own size (the header buttons).
    - GlassLayer: a layer under content that keeps its own layout (the crowding card).
+   The header buttons are not liquid: GlassIcon is frosted black glass with white lines.
 
    Measured in a real Chromium: the glass only sees what lies behind it if no ancestor between
    them is a stacking context — so these never sit inside a z-index or `isolation`.
@@ -137,24 +137,12 @@ export function GlassFloat({ children, style, padding = '8px 16px', className = 
   );
 }
 
-/* ── An icon button in a pill ─────────────────────────────────────────────────────────── */
+/* ── An icon button on frosted black glass ────────────────────────────────────────────── */
 
-/** The box keeps the button's place in the row; the pill is centred in it. */
+/** White lines on heavily frosted black glass, the same on every device and in both themes. The
+ *  refracting pill read as a soap bubble over the bright hall windows (Marius, 3 Oct 2026). */
 export function GlassIcon({ children, size = 48 }: { children: React.ReactNode; size?: number }) {
-  const light = useLightTheme();
-  const box = { position: 'relative' as const, display: 'inline-block', width: size, height: size, flex: 'none' };
-  const frosted = <span style={box}><span className="ub-lg-frost ub-lg-frost--icon">{children}</span></span>;
-  if (!REFRACT) return frosted;
-  const pill = <span className="ub-lg-frost ub-lg-frost--icon">{children}</span>;
-  return (
-    <span style={box}>
-      <React.Suspense fallback={pill}>
-        <Refract overLight={light} padding="2px" className="ub-lg ub-lg--icon" style={{ position: 'absolute', top: '50%', left: '50%' }}>
-          {children}
-        </Refract>
-      </React.Suspense>
-    </span>
-  );
+  return <span className="ub-glass-icon" style={{ width: size, height: size }}>{children}</span>;
 }
 
 /* ── A layer under content that keeps its own layout ──────────────────────────────────── */

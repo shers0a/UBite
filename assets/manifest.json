@@ -1024,16 +1024,14 @@
       "licence": "FLUX.2 output via Cloudflare Workers AI — see model licence"
     },
     {
-      "added": "2026-09-22",
+      "added": "2026-10-03",
       "file": "assets/photos/hall.webp",
-      "source": "generated",
-      "status": "placeholder",
-      "provider": "space",
-      "model": "space:black-forest-labs/FLUX.1-schnell",
-      "seed": 52300,
-      "prompt": "A quiet documentary photograph: an empty university canteen dining hall with long pale tables and simple chairs in rows, a stack of grey plastic trays in the foreground. Late-morning daylight through tall windows, muted palette of cool greys and deep blue with a single warm accent, lots of negative space, calm and still, shallow depth of field, 35mm film with fine grain, slightly desaturated, honest and unstaged.",
-      "derivedFrom": "assets/_raw/amb-hall/amb-hall-s52300.jpg",
-      "licence": "FLUX.1 [schnell] output — Apache-2.0 model, outputs free for commercial use"
+      "source": "unibuc.ro, media 'Cantina UB, interior' (540x360), upscaled 4x with Real-ESRGAN x4plus (BSD-3) on the laptop GPU, resized to 1440x960; raw in assets/_raw/ub-hall/",
+      "status": "final",
+      "author": "Universitatea din București (probably Mircea Popa, reopening shoot of 1 Apr 2019)",
+      "prompt": "",
+      "licence": "© Universitatea din București. UB's own photo of its canteen, used in UB's canteen app and credited on the About page; UB communications' written OK still to get",
+      "url": "https://unibuc.ro/wp-content/uploads/2022/06/19.jpg"
     },
     {
       "added": "2026-09-22",

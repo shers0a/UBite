@@ -10,6 +10,7 @@ import { A } from '../../assets';
 /* The city sketch above the home footer is drawn after this photo, CC BY 3.0: the licence asks
    for the credit (assets/manifest.json has the full record). */
 const SKETCH_PHOTO = 'https://commons.wikimedia.org/wiki/File:Bucharest_-_Dec_2014_-_B-dul_Regina_Elisabeta_04.jpg';
+const HALL_PHOTO = 'https://unibuc.ro/student-ub/campus/cantina-ub/';
 
 export function About() {
   const { t } = useI18n();
@@ -48,7 +49,8 @@ export function About() {
         </div>
         <Button fullWidth size="lg" onClick={() => (last ? done() : setI(i + 1))}>{last ? t('about.start') : t('about.next')}</Button>
         <p style={{ marginTop: 12, fontSize: 'var(--text-sm)', color: 'var(--text-muted)', textAlign: 'center' }}>
-          <a href={SKETCH_PHOTO} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>{t('about.credit')}</a>
+          <a href={SKETCH_PHOTO} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>{t('about.credit')}</a>{' '}
+          <a href={HALL_PHOTO} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>{t('about.photoCredit')}</a>
         </p>
       </div>
     </main>

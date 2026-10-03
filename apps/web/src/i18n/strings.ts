@@ -326,6 +326,7 @@ export const ro = {
   'about.s3.title': 'Știi cât aștepți, în minute',
   'about.s3.body': 'Estimarea vine din rapoartele colegilor și îți arată mereu cât e de proaspătă.',
   'about.credit': 'Desenul Universității de pe prima pagină e făcut după o fotografie de Joe Mabel (CC BY 3.0).',
+  'about.photoCredit': 'Fotografia sălii de mese: Universitatea din București.',
 
   // Offline banner
   'offline.updated': 'Actualizat la {time}',
@@ -636,6 +637,7 @@ export const en: Record<StringKey, string> = {
   'about.s3.title': 'Know how long you will wait, in minutes',
   'about.s3.body': 'The estimate comes from other students’ reports and always shows how fresh it is.',
   'about.credit': 'The drawing of the University on the home page is after a photo by Joe Mabel (CC BY 3.0).',
+  'about.photoCredit': 'Photo of the dining hall: University of Bucharest.',
 
   'offline.updated': 'Updated at {time}',
 };
