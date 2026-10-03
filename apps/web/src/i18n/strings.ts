@@ -102,6 +102,8 @@ export const ro = {
   // Typical by hour
   'typical.title': 'De obicei {weekday}',
   'typical.busy': 'aglomerat la {busy}, liber la {quiet}',
+  'typical.today': 'Azi, de obicei',
+  'typical.none': 'Încă nu avem destule date ca să-ți arătăm orele aglomerate.',
 
   // Announcements
   'announce.until': 'până {date}',
@@ -426,6 +428,8 @@ export const en: Record<StringKey, string> = {
 
   'typical.title': 'Usually on {weekday}',
   'typical.busy': 'busy at {busy}, quiet at {quiet}',
+  'typical.today': 'Usually today',
+  'typical.none': 'Not enough data yet to show you the busy hours.',
 
   'announce.until': 'until {date}',
 

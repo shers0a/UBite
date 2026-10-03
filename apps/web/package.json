@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sw.json --noEmit"
   },
   "dependencies": {
+    "@number-flow/react": "^0.6.2",
     "liquid-glass-react": "^1.1.1",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",

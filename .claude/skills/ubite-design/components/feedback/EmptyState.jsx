@@ -102,30 +102,42 @@ export function WaitReport({ options = [2, 5, 10, 15], lang = 'ro', onSubmit, st
 }
 
 /* Zone 5: typical crowding by hour. Hidden entirely in pilot week one —
-   a flat, wrong chart costs more trust than an absent section. */
-export function CrowdingByHour({ data = [], nowIndex, lang = 'ro', height = 72, labelEvery }) {
+   a flat, wrong chart costs more trust than an absent section.
+   `coloured` (the crowding card's strip): every bar takes its own level's colour — by the
+   estimate's `thresholds` in minutes when given — the hours still to come are dimmer, and the
+   current one is ringed. The height carries the minutes, the colour only repeats them, and
+   `summary` says it in words for a screen reader. */
+export function CrowdingByHour({ data = [], nowIndex, lang = 'ro', height = 72, labelEvery, coloured = false, thresholds, summary }) {
   const max = Math.max(1, ...data.map((d) => d.value));
   // A whole opening day is ten or eleven half-hours: at 400px only every other label fits. The
   // current slot always keeps its label; its neighbours give way so the two never touch.
   const every = labelEvery || (data.length > 8 ? 2 : 1);
   const showLabel = (i) => i === nowIndex || (i % every === 0 && (nowIndex == null || Math.abs(i - nowIndex) >= every));
+  const levelOf = (v) => (thresholds
+    ? (v >= thresholds.high ? 'high' : v >= thresholds.low ? 'moderate' : 'low')
+    : (v / max > 0.66 ? 'high' : v / max > 0.33 ? 'moderate' : 'low'));
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height }}>
+    <div role={summary ? 'img' : undefined} aria-label={summary}>
+      <div aria-hidden={summary ? true : undefined} style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height }}>
         {data.map((d, i) => {
-          const level = d.value / max;
-          const tone = level > 0.66 ? 'var(--crowd-high-fill)' : level > 0.33 ? 'var(--crowd-moderate-fill)' : 'var(--crowd-low-fill)';
+          const share = d.value / max;
+          const tone = `var(--crowd-${levelOf(d.value)}-fill)`;
+          const now = i === nowIndex;
+          const later = nowIndex != null && i > nowIndex;
           return (
             <div key={d.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
-              <div title={`${d.label} · ${d.value} min`} style={{
-                height: `${Math.max(8, level * 100)}%`, background: i === nowIndex ? tone : 'var(--border-strong)',
-                opacity: i === nowIndex ? 1 : 0.55, borderRadius: 'var(--radius-xs)',
+              <div title={`${d.label} · ${d.value} min`} style={coloured ? {
+                height: `${Math.max(10, share * 100)}%`, background: tone, opacity: later ? 0.45 : 1, borderRadius: 'var(--radius-xs)',
+                outline: now ? 'var(--focus-width) solid var(--text-primary)' : undefined, outlineOffset: now ? 2 : undefined,
+              } : {
+                height: `${Math.max(8, share * 100)}%`, background: now ? tone : 'var(--border-strong)',
+                opacity: now ? 1 : 0.55, borderRadius: 'var(--radius-xs)',
               }} />
             </div>
           );
         })}
       </div>
-      <div className="ub-numeric" style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+      <div className="ub-numeric" aria-hidden={summary ? true : undefined} style={{ display: 'flex', gap: 4, marginTop: 6 }}>
         {data.map((d, i) => (
           <span key={d.label} style={{
             flex: 1, textAlign: 'center', fontSize: 'var(--text-2xs)',

@@ -25,6 +25,14 @@ export interface CrowdingIndicatorProps {
   surface?: 'raised' | 'glass';
   /** With surface="glass": the glass layer, drawn between the colour field and the words. */
   underlay?: import('react').ReactNode;
+  /** Draws each number in the copy (the wait, the countdown) from `value`; plain text by default. */
+  numberAs?: import('react').ComponentType<{ value: number }>;
+  /** Drawn under the answer, inside the card: the hour strip. */
+  footer?: import('react').ReactNode;
+  /** When closed: minutes to the next opening, shown as "în 1 zi 18 h". */
+  opensInMinutes?: number;
+  /** Changes when a new estimate arrives; the card's edge catches the light once to confirm it. */
+  pulseKey?: string | number | null;
 }
 export declare function CrowdingIndicator(props: CrowdingIndicatorProps): JSX.Element;
 

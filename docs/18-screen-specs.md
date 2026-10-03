@@ -61,12 +61,15 @@ fifty enrolled students.
 Shown only during opening hours, and suppressed for an hour after a report is accepted. One
 interaction, then straight back to where the user was.
 
-### Zone 5 — Typical crowding today *(denser)*
+### Zone 5 — Typical crowding today *(inside the Zone 1 card since 3 Oct 2026)*
 
-The hourly pattern: "usually busy at 13:00, quiet at 11:45."
+The hourly pattern: "usually busy at 13:00, quiet at 11:45." It is drawn as a strip at the foot of
+the crowding card, every half-hour in its level's colour, rather than as a section of its own lower
+down, which showed the same numbers twice. Open, it is today's, with the current half-hour ringed.
+Closed, it is the next opening day's ("De obicei lunea"), under a countdown to the opening.
 
-Hidden entirely during the first week of the pilot while data accumulates — a flat, wrong chart
-costs more trust than an absent section.
+Hidden during the first week of the pilot while data accumulates — a flat, wrong chart costs more
+trust than an absent one. When closed with no history, the card says so in one line instead.
 
 ### Zone 6 — Announcements *(dense, only when present)*
 

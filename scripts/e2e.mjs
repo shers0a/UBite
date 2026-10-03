@@ -164,10 +164,11 @@ console.log('Student without an account');
   await check('F3 crowding: a level word, minutes and the age — or says there is no data', async () => {
     if (!(await heroShowsEstimate())) await see(p, /Nu avem date acum|Închis/);
   });
-  await check('F8 typical crowding by hour, shown once the history covers today’s hours', async () => {
+  await check('F8 typical crowding by hour, in the crowding card once the history covers the day', async () => {
     const r = JSON.parse((await api(p, 'GET', '/crowding/typical')).body);
-    if (r.available) await see(p, /De obicei (lunea|marțea|miercurea|joia|vinerea|sâmbăta|duminica)/);
-    else if (/De obicei/.test(await text(p))) throw new Error('chart shown while the API says unavailable');
+    const strip = /Azi, de obicei|De obicei (lunea|marțea|miercurea|joia|vinerea|sâmbăta|duminica)/;
+    if (r.available) await see(p, strip);
+    else if (strip.test(await text(p))) throw new Error('chart shown while the API says unavailable');
     else console.log('      (hidden today: the history does not cover today’s opening hours)');
   });
   await check('F11 dietary filters narrow the menu and clear again', async () => {

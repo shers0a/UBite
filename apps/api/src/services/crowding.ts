@@ -1,7 +1,7 @@
 /* The database side of docs/07: gather the three sources, fuse, apply hysteresis, publish one
    row to crowd_estimates every 30 seconds; nightly calibration and baseline; weekly thresholds. */
 import type { CrowdingCurrent, CrowdingTypical, CrowdLevel, WaitReportResponse } from '@ubite/shared';
-import { formatHHMM, hoursOn, localDate, localMinutes, parseHHMM, weekdayOf, zonedParts } from '@ubite/shared';
+import { formatHHMM, hoursOn, localDate, localMinutes, nextOpening, parseHHMM, weekdayOf, zonedParts } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import { isUniqueViolation, type Queryable } from '../db/index';
@@ -185,11 +185,17 @@ export async function submitReport(
 
 /* ── Typical crowding by hour (docs/03 F8) ────────────────────────────────────────────── */
 
+/** Today's typical day while the canteen is open or still to open today; once it has closed, or on
+ *  a closed day, the next opening day's — the closed card shows what that day usually looks like. */
 export async function typicalToday(ctx: Ctx): Promise<CrowdingTypical> {
   const now = ctx.now();
-  const date = localDate(now);
-  const weekday = weekdayOf(date);
   const schedule = await loadSchedule(ctx.db);
+  const today = localDate(now);
+  const todayHours = hoursOn(today, schedule.days, schedule.exceptions);
+  const laterToday = todayHours && localMinutes(now) < parseHHMM(todayHours.closesAt);
+  const next = laterToday ? null : nextOpening(now, schedule.days, schedule.exceptions);
+  const date = next ? localDate(next) : today;
+  const weekday = weekdayOf(date);
   const hours = hoursOn(date, schedule.days, schedule.exceptions);
   const empty: CrowdingTypical = { available: false, date, weekday, slots: [] };
   if (!ctx.cfg.FEATURE_PREDICTION || !hours) return empty;

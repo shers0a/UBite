@@ -44,6 +44,12 @@ export interface CrowdingByHourProps {
   /** Label every n-th slot. Defaults to every other one past eight slots, so 400px never overflows. */
   labelEvery?: number;
   lang?: 'ro' | 'en';
+  /** Every bar in its own level's colour, later hours dimmer, the current one ringed (the card strip). */
+  coloured?: boolean;
+  /** The estimate's level thresholds in minutes; without them the levels are thirds of the busiest slot. */
+  thresholds?: { low: number; high: number };
+  /** The chart in words, for screen readers ("aglomerat la 13:00, liber la 11:30"). */
+  summary?: string;
 }
 /** Hide this section entirely while data is thin. A flat, wrong chart costs more trust than no chart. */
 export declare function CrowdingByHour(props: CrowdingByHourProps): JSX.Element;

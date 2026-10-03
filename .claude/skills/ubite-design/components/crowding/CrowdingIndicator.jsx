@@ -7,9 +7,14 @@ import { Skeleton } from '../core/Input.jsx';
    2. the estimate carries its age
    3. a quality badge appears ONLY when the estimate is degraded, so it means something
 
-   The aura behind the card is the fourth, redundant carrier: a colour field that GROWS and
-   warms as the queue grows. It is decorative reinforcement of information that is already
-   spelled out in words — never the carrier itself. */
+   The field behind the card is the fourth, redundant carrier: a still, grainy wash of the
+   level's colour (grey when closed). It is decorative reinforcement of information that is
+   already spelled out in words — never the carrier itself.
+
+   The caller can hand in `numberAs`, a component drawing a number from `value` (the app's rolls
+   its digits); `footer`, drawn under the answer (the hour strip); `opensInMinutes`, the time to
+   the next opening when closed; and `pulseKey`, which changes when a new estimate arrives — the
+   card's edge catches the light once, to confirm it. */
 
 const LEVELS = ['low', 'moderate', 'high'];
 
@@ -17,18 +22,20 @@ const COPY = {
   ro: {
     eyebrow: 'Coada acum', low: 'Mică', moderate: 'Medie', high: 'Mare',
     // Romanian counts: un minut · 2–19 minute · 20 de minute and up.
-    wait: (m) => (m <= 1 ? 'Aștepți cam un minut' : m >= 20 ? `Aștepți cam ${m} de minute` : `Aștepți cam ${m} minute`), waitShort: (m) => `~${m} min`,
+    wait: (m) => (m <= 1 ? ['Aștepți cam un minut'] : ['Aștepți cam ', m, m >= 20 ? ' de minute' : ' minute']), waitShort: (m) => `~${m} min`,
     updated: (s) => (s < 60 ? `actualizat acum ${s}s` : `actualizat acum ${Math.round(s / 60)} min`),
     degraded: 'aproximativ', estimated: 'obișnuit la ora asta',
     closedTitle: 'Închis', closedNext: (t) => `Se deschide ${t}`, hours: 'L–V 11:30–17:00',
+    opensIn: (d, h, m) => (d ? ['în ', d, d === 1 ? ' zi ' : ' zile ', h, ' h'] : h ? ['în ', h, ' h ', m, ' min'] : ['în ', m, ' min']),
     noData: 'Nu avem date acum', report: 'Cât ai așteptat?',
   },
   en: {
     eyebrow: 'Queue right now', low: 'Low', moderate: 'Moderate', high: 'High',
-    wait: (m) => (m <= 1 ? "You'll wait about a minute" : `You'll wait about ${m} minutes`), waitShort: (m) => `~${m} min`,
+    wait: (m) => (m <= 1 ? ["You'll wait about a minute"] : ["You'll wait about ", m, ' minutes']), waitShort: (m) => `~${m} min`,
     updated: (s) => (s < 60 ? `updated ${s}s ago` : `updated ${Math.round(s / 60)} min ago`),
     degraded: 'approximate', estimated: 'usual for this time',
     closedTitle: 'Closed', closedNext: (t) => `Opens ${t}`, hours: 'Mon–Fri 11:30–17:00',
+    opensIn: (d, h, m) => (d ? ['in ', d, d === 1 ? ' day ' : ' days ', h, ' h'] : h ? ['in ', h, ' h ', m, ' min'] : ['in ', m, ' min']),
     noData: 'No estimate right now', report: 'How long did you wait?',
   },
 };
@@ -39,7 +46,35 @@ const SIZES = {
   kiosk:   { pad: 56, word: 'var(--text-display-kiosk)', wait: 'var(--text-3xl)', meta: 'var(--text-xl)', glyph: 104, radius: 'var(--radius-lg)' },
 };
 
-const AURA = { low: 0.52, moderate: 0.82, high: 1.18, closed: 0.4 };
+function PlainNumber({ value }) { return value; }
+
+/* A line of copy whose numbers the caller may draw (see numberAs). */
+function Parts({ parts, Num }) {
+  return parts.map((p, i) => (typeof p === 'number' ? <Num key={i} value={p} /> : <React.Fragment key={i}>{p}</React.Fragment>));
+}
+
+/* Fine grain over the colour field: SVG noise, drawn once, no colour of its own. */
+const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E\")";
+
+const CARD_CSS = `
+  .ub-field{opacity:.22;transition:background var(--motion-slow) var(--ease-out)}
+  :root[data-theme="dark"] .ub-field{opacity:.34}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-field{opacity:.34}}
+  .ub-field.ub-field--glass{opacity:.62}
+  :root[data-theme="dark"] .ub-field.ub-field--glass{opacity:.8}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-field.ub-field--glass{opacity:.8}}
+  .ub-grain{background-image:${GRAIN};background-size:180px;mix-blend-mode:overlay;opacity:.32}
+  .ub-shine{position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;padding:2px;
+    background:linear-gradient(105deg,transparent 41%,var(--text-primary) 50%,transparent 59%) 100% 0/300% 100% no-repeat;
+    -webkit-mask:linear-gradient(var(--text-primary) 0 0) content-box,linear-gradient(var(--text-primary) 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(var(--text-primary) 0 0) content-box exclude,linear-gradient(var(--text-primary) 0 0);
+    animation:ub-shine var(--motion-slow) var(--ease-out) forwards}
+  @keyframes ub-shine{0%{background-position:100% 0;opacity:1}70%{opacity:1}100%{background-position:0 0;opacity:0}}
+  .ub-crowd-word{animation:ub-crowd-in var(--motion-slow) var(--ease-out)}
+  @keyframes ub-crowd-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+  .ub-crowd-report:hover{text-decoration:underline;text-underline-offset:3px}
+  @media (prefers-reduced-motion:reduce){.ub-crowd-word{animation:none}.ub-field{transition:none}.ub-shine{display:none}}
+`;
 
 function tone(level) {
   const l = LEVELS.includes(level) ? level : 'closed';
@@ -125,10 +160,20 @@ export function FreshnessStamp({ seconds = 0, quality = 'live', stale = false, l
 export function CrowdingIndicator({
   level = 'moderate', waitMinutes = 6, quality = 'live', updatedSecondsAgo = 40,
   size = 'hero', lang = 'ro', opensAtLabel = 'mâine la 11:30', hoursLabel, loading = false, error = false, onReport,
-  surface = 'raised', underlay = null,
+  surface = 'raised', underlay = null, numberAs, footer = null, opensInMinutes, pulseKey,
 }) {
   const s = SIZES[size] || SIZES.hero;
   const c = COPY[lang] || COPY.ro;
+  const Num = numberAs || PlainNumber;
+  // A new estimate (not the first one) runs the edge's light once.
+  const [shine, setShine] = React.useState(0);
+  const lastPulse = React.useRef(pulseKey);
+  React.useEffect(() => {
+    if (pulseKey === lastPulse.current) return;
+    const first = lastPulse.current == null;
+    lastPulse.current = pulseKey;
+    if (!first) setShine((n) => n + 1);
+  }, [pulseKey]);
   // The schedule is configurable without a deploy (docs/05 canteen_schedule): the real hours
   // come in from the caller; the copy above is only the confirmed default.
   const hours = hoursLabel || c.hours;
@@ -147,14 +192,20 @@ export function CrowdingIndicator({
     position: 'relative', overflow: 'hidden', isolation: glass ? 'auto' : 'isolate',
   };
 
+  // The colour field sits under the glass (which softens it); the grain sits over the glass, so
+  // it stays crisp, and under the words. On a raised card both stay under the words. The colour
+  // pours in from the top and is gone by the bottom corners: liquid glass bends the dark page in
+  // at its corners, and over a coloured corner that reads as a smudge.
   const aura = hero && (
-    <span aria-hidden="true" className={glass ? 'ub-aura ub-aura--glass' : 'ub-aura'} style={{
-      position: 'absolute', left: '50%', top: size === 'kiosk' ? '46%' : '38%',
-      width: size === 'kiosk' ? 900 : 420, height: size === 'kiosk' ? 900 : 420,
-      marginLeft: size === 'kiosk' ? -450 : -210, marginTop: size === 'kiosk' ? -450 : -210,
-      borderRadius: '50%', background: t.fill, zIndex: -1,
-      transform: `scale(${AURA[LEVELS.includes(level) ? level : 'closed']})`,
-    }} />
+    <>
+      <span aria-hidden="true" className={glass ? 'ub-field ub-field--glass' : 'ub-field'} style={{
+        position: 'absolute', inset: 0, borderRadius: 'inherit', zIndex: -1, pointerEvents: 'none',
+        background: `radial-gradient(120% 85% at 100% 0%, ${t.fill}, transparent 64%), radial-gradient(110% 70% at 10% 0%, color-mix(in srgb, ${t.fill} 50%, transparent), transparent 72%)`,
+      }} />
+      <span aria-hidden="true" className="ub-grain" style={{ position: 'absolute', inset: 0, borderRadius: 'inherit', zIndex: glass ? 1 : -1, pointerEvents: 'none' }} />
+      {shine > 0 && <span key={shine} aria-hidden="true" className="ub-shine" />}
+      <style>{CARD_CSS}</style>
+    </>
   );
 
   if (loading) {
@@ -199,8 +250,14 @@ export function CrowdingIndicator({
             {c.closedTitle}
           </div>
           <div style={{ fontSize: s.wait, color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)', marginTop: 6 }}>{c.closedNext(opensAtLabel)}</div>
+          {opensInMinutes != null && opensInMinutes > 0 && (
+            <div className="ub-numeric" style={{ fontSize: s.meta, color: 'var(--text-secondary)', fontWeight: 'var(--weight-medium)', marginTop: 4 }}>
+              <Parts Num={Num} parts={c.opensIn(Math.floor(opensInMinutes / 1440), Math.floor((opensInMinutes % 1440) / 60), opensInMinutes % 60)} />
+            </div>
+          )}
           <div className="ub-numeric" style={{ fontSize: s.meta, color: 'var(--text-muted)', marginTop: 10 }}>{hours}</div>
-        </div></>)}
+        </div>
+        {footer && <div style={{ marginTop: hero ? 22 : 12 }}>{footer}</div>}</>)}
       </div>
     );
   }
@@ -239,9 +296,11 @@ export function CrowdingIndicator({
           fontWeight: 'var(--weight-bold)', color: t.text, marginTop: size === 'kiosk' ? 16 : 8,
         }}>{c[level]}</div>
         <div className="ub-numeric" style={{ fontSize: s.wait, color: 'var(--text-primary)', fontWeight: 'var(--weight-medium)', marginTop: 4 }}>
-          {c.wait(waitMinutes)}
+          <Parts Num={Num} parts={c.wait(waitMinutes)} />
         </div>
       </div>
+
+      {footer && <div style={{ marginTop: size === 'kiosk' ? 28 : 20 }}>{footer}</div>}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: size === 'kiosk' ? 28 : 18 }}>
         <FreshnessStamp seconds={updatedSecondsAgo} quality={quality} lang={lang} size={s.meta} />
@@ -252,19 +311,6 @@ export function CrowdingIndicator({
           }}>{c.report}</button>
         )}
       </div></>)}
-
-      <style>{`
-        .ub-aura{opacity:.16;filter:blur(46px);transition:transform var(--motion-slow) var(--ease-out),background var(--motion-slow) var(--ease-out)}
-        :root[data-theme="dark"] .ub-aura{opacity:.3}
-        @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-aura{opacity:.3}}
-        .ub-aura.ub-aura--glass{opacity:.42;filter:blur(34px)}
-        :root[data-theme="dark"] .ub-aura.ub-aura--glass{opacity:.62}
-        @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-aura.ub-aura--glass{opacity:.62}}
-        .ub-crowd-word{animation:ub-crowd-in var(--motion-slow) var(--ease-out)}
-        @keyframes ub-crowd-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
-        .ub-crowd-report:hover{text-decoration:underline;text-underline-offset:3px}
-        @media (prefers-reduced-motion:reduce){.ub-crowd-word{animation:none}.ub-aura{transition:none}}
-      `}</style>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":4,"namespace":"UBiteDesignSystem_40c8c2","components":[{"name":"Logo","sourcePath":"components/brand/Logo.jsx"},{"name":"LogoSplash","sourcePath":"components/brand/Logo.jsx"},{"name":"Wordmark","sourcePath":"components/brand/Wordmark.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"IconButton","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"SectionHeader","sourcePath":"components/core/Card.jsx"},{"name":"Chip","sourcePath":"components/core/Chip.jsx"},{"name":"Badge","sourcePath":"components/core/Chip.jsx"},{"name":"DietaryTag","sourcePath":"components/core/Chip.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"Skeleton","sourcePath":"components/core/Input.jsx"},{"name":"PersonMeter","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"QualityBadge","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"FreshnessStamp","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"CrowdingIndicator","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"EmptyState","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"OfflineBanner","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"WaitReport","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"CrowdingByHour","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"GLYPHS","sourcePath":"components/icons/Icon.jsx"},{"name":"Icon","sourcePath":"components/icons/Icon.jsx"},{"name":"AppHeader","sourcePath":"components/layout/AppShell.jsx"},{"name":"AppFooter","sourcePath":"components/layout/AppShell.jsx"},{"name":"Announcement","sourcePath":"components/layout/AppShell.jsx"},{"name":"Sheet","sourcePath":"components/layout/AppShell.jsx"},{"name":"Toast","sourcePath":"components/layout/AppShell.jsx"},{"name":"AppShell","sourcePath":"components/layout/AppShell.jsx"},{"name":"DishDetailHeader","sourcePath":"components/menu/DishDetailHeader.jsx"},{"name":"DishPhoto","sourcePath":"components/menu/DishRow.jsx"},{"name":"DishRow","sourcePath":"components/menu/DishRow.jsx"},{"name":"CategoryHeader","sourcePath":"components/menu/DishRow.jsx"},{"name":"RatingStars","sourcePath":"components/menu/RatingStars.jsx"},{"name":"LoyaltyDots","sourcePath":"components/menu/RatingStars.jsx"},{"name":"useReducedMotion","sourcePath":"components/brand/Illustration.jsx"},{"name":"Illustration","sourcePath":"components/brand/Illustration.jsx"},{"name":"Pattern","sourcePath":"components/brand/Illustration.jsx"},{"name":"Spotlight","sourcePath":"components/core/Spotlight.jsx"}],"sourceHashes":{"assets/image-slot.js":"fff26d081c8d","components/brand/Logo.jsx":"754a66b33ae0","components/brand/Wordmark.jsx":"499b29ed92d7","components/core/Button.jsx":"a82db1751f66","components/core/Card.jsx":"1cec087e68b5","components/core/Chip.jsx":"3d0499ddcafe","components/core/Input.jsx":"f5a7e1d273b0","components/crowding/CrowdingIndicator.jsx":"a78eed1dc1bf","components/feedback/EmptyState.jsx":"d4597d0a9da0","components/icons/Icon.jsx":"ecd9ef31efba","components/layout/AppShell.jsx":"d62cdfa78962","components/menu/DishDetailHeader.jsx":"607763d0a762","components/menu/DishRow.jsx":"822d4f8144ec","components/menu/RatingStars.jsx":"7b2688afd848","scripts/check-assets.cjs":"8a357cb6db53","scripts/manifest-add.cjs":"6decf0b6ebbb","ui_kits/dccas-dashboard/app.jsx":"1bea2b241d0c","ui_kits/kiosk/app.jsx":"8e82d80597dc","ui_kits/staff-editor/app.jsx":"030880d6ce5f","ui_kits/student-app/HomeScreen.jsx":"9d17af0eddbb","ui_kits/student-app/Screens.jsx":"a6cc0a35ce12","ui_kits/student-app/app.jsx":"062554706e10","components/brand/Illustration.jsx":"016a03ad8ccf","components/core/Spotlight.jsx":"b638fc5691df"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"UBiteDesignSystem_40c8c2","components":[{"name":"Logo","sourcePath":"components/brand/Logo.jsx"},{"name":"LogoSplash","sourcePath":"components/brand/Logo.jsx"},{"name":"Wordmark","sourcePath":"components/brand/Wordmark.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"IconButton","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"SectionHeader","sourcePath":"components/core/Card.jsx"},{"name":"Chip","sourcePath":"components/core/Chip.jsx"},{"name":"Badge","sourcePath":"components/core/Chip.jsx"},{"name":"DietaryTag","sourcePath":"components/core/Chip.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"Skeleton","sourcePath":"components/core/Input.jsx"},{"name":"PersonMeter","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"QualityBadge","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"FreshnessStamp","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"CrowdingIndicator","sourcePath":"components/crowding/CrowdingIndicator.jsx"},{"name":"EmptyState","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"OfflineBanner","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"WaitReport","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"CrowdingByHour","sourcePath":"components/feedback/EmptyState.jsx"},{"name":"GLYPHS","sourcePath":"components/icons/Icon.jsx"},{"name":"Icon","sourcePath":"components/icons/Icon.jsx"},{"name":"AppHeader","sourcePath":"components/layout/AppShell.jsx"},{"name":"AppFooter","sourcePath":"components/layout/AppShell.jsx"},{"name":"Announcement","sourcePath":"components/layout/AppShell.jsx"},{"name":"Sheet","sourcePath":"components/layout/AppShell.jsx"},{"name":"Toast","sourcePath":"components/layout/AppShell.jsx"},{"name":"AppShell","sourcePath":"components/layout/AppShell.jsx"},{"name":"DishDetailHeader","sourcePath":"components/menu/DishDetailHeader.jsx"},{"name":"DishPhoto","sourcePath":"components/menu/DishRow.jsx"},{"name":"DishRow","sourcePath":"components/menu/DishRow.jsx"},{"name":"CategoryHeader","sourcePath":"components/menu/DishRow.jsx"},{"name":"RatingStars","sourcePath":"components/menu/RatingStars.jsx"},{"name":"LoyaltyDots","sourcePath":"components/menu/RatingStars.jsx"},{"name":"useReducedMotion","sourcePath":"components/brand/Illustration.jsx"},{"name":"Illustration","sourcePath":"components/brand/Illustration.jsx"},{"name":"Pattern","sourcePath":"components/brand/Illustration.jsx"},{"name":"Spotlight","sourcePath":"components/core/Spotlight.jsx"}],"sourceHashes":{"assets/image-slot.js":"fff26d081c8d","components/brand/Logo.jsx":"754a66b33ae0","components/brand/Wordmark.jsx":"499b29ed92d7","components/core/Button.jsx":"a82db1751f66","components/core/Card.jsx":"1cec087e68b5","components/core/Chip.jsx":"3d0499ddcafe","components/core/Input.jsx":"f5a7e1d273b0","components/crowding/CrowdingIndicator.jsx":"45b1a571caf8","components/feedback/EmptyState.jsx":"2e9cba183f3d","components/icons/Icon.jsx":"ecd9ef31efba","components/layout/AppShell.jsx":"d62cdfa78962","components/menu/DishDetailHeader.jsx":"607763d0a762","components/menu/DishRow.jsx":"822d4f8144ec","components/menu/RatingStars.jsx":"7b2688afd848","scripts/check-assets.cjs":"8a357cb6db53","scripts/manifest-add.cjs":"6decf0b6ebbb","ui_kits/dccas-dashboard/app.jsx":"1bea2b241d0c","ui_kits/kiosk/app.jsx":"8e82d80597dc","ui_kits/staff-editor/app.jsx":"030880d6ce5f","ui_kits/student-app/HomeScreen.jsx":"9d17af0eddbb","ui_kits/student-app/Screens.jsx":"a6cc0a35ce12","ui_kits/student-app/app.jsx":"062554706e10","components/brand/Illustration.jsx":"016a03ad8ccf","components/core/Spotlight.jsx":"b638fc5691df"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
@@ -2311,9 +2311,14 @@ try { (() => {
    2. the estimate carries its age
    3. a quality badge appears ONLY when the estimate is degraded, so it means something
 
-   The aura behind the card is the fourth, redundant carrier: a colour field that GROWS and
-   warms as the queue grows. It is decorative reinforcement of information that is already
-   spelled out in words — never the carrier itself. */
+   The field behind the card is the fourth, redundant carrier: a still, grainy wash of the
+   level's colour (grey when closed). It is decorative reinforcement of information that is
+   already spelled out in words — never the carrier itself.
+
+   The caller can hand in `numberAs`, a component drawing a number from `value` (the app's rolls
+   its digits); `footer`, drawn under the answer (the hour strip); `opensInMinutes`, the time to
+   the next opening when closed; and `pulseKey`, which changes when a new estimate arrives — the
+   card's edge catches the light once, to confirm it. */
 
 const LEVELS = ['low', 'moderate', 'high'];
 const COPY = {
@@ -2323,7 +2328,7 @@ const COPY = {
     moderate: 'Medie',
     high: 'Mare',
     // Romanian counts: un minut · 2–19 minute · 20 de minute and up.
-    wait: m => m <= 1 ? 'Aștepți cam un minut' : m >= 20 ? `Aștepți cam ${m} de minute` : `Aștepți cam ${m} minute`,
+    wait: m => m <= 1 ? ['Aștepți cam un minut'] : ['Aștepți cam ', m, m >= 20 ? ' de minute' : ' minute'],
     waitShort: m => `~${m} min`,
     updated: s => s < 60 ? `actualizat acum ${s}s` : `actualizat acum ${Math.round(s / 60)} min`,
     degraded: 'aproximativ',
@@ -2331,6 +2336,7 @@ const COPY = {
     closedTitle: 'Închis',
     closedNext: t => `Se deschide ${t}`,
     hours: 'L–V 11:30–17:00',
+    opensIn: (d, h, m) => d ? ['în ', d, d === 1 ? ' zi ' : ' zile ', h, ' h'] : h ? ['în ', h, ' h ', m, ' min'] : ['în ', m, ' min'],
     noData: 'Nu avem date acum',
     report: 'Cât ai așteptat?'
   },
@@ -2339,7 +2345,7 @@ const COPY = {
     low: 'Low',
     moderate: 'Moderate',
     high: 'High',
-    wait: m => m <= 1 ? "You'll wait about a minute" : `You'll wait about ${m} minutes`,
+    wait: m => m <= 1 ? ["You'll wait about a minute"] : ["You'll wait about ", m, ' minutes'],
     waitShort: m => `~${m} min`,
     updated: s => s < 60 ? `updated ${s}s ago` : `updated ${Math.round(s / 60)} min ago`,
     degraded: 'approximate',
@@ -2347,6 +2353,7 @@ const COPY = {
     closedTitle: 'Closed',
     closedNext: t => `Opens ${t}`,
     hours: 'Mon–Fri 11:30–17:00',
+    opensIn: (d, h, m) => d ? ['in ', d, d === 1 ? ' day ' : ' days ', h, ' h'] : h ? ['in ', h, ' h ', m, ' min'] : ['in ', m, ' min'],
     noData: 'No estimate right now',
     report: 'How long did you wait?'
   }
@@ -2377,12 +2384,46 @@ const SIZES = {
     radius: 'var(--radius-lg)'
   }
 };
-const AURA = {
-  low: 0.52,
-  moderate: 0.82,
-  high: 1.18,
-  closed: 0.4
-};
+function PlainNumber({
+  value
+}) {
+  return value;
+}
+
+/* A line of copy whose numbers the caller may draw (see numberAs). */
+function Parts({
+  parts,
+  Num
+}) {
+  return parts.map((p, i) => typeof p === 'number' ? /*#__PURE__*/React.createElement(Num, {
+    key: i,
+    value: p
+  }) : /*#__PURE__*/React.createElement(React.Fragment, {
+    key: i
+  }, p));
+}
+
+/* Fine grain over the colour field: SVG noise, drawn once, no colour of its own. */
+const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E\")";
+const CARD_CSS = `
+  .ub-field{opacity:.22;transition:background var(--motion-slow) var(--ease-out)}
+  :root[data-theme="dark"] .ub-field{opacity:.34}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-field{opacity:.34}}
+  .ub-field.ub-field--glass{opacity:.62}
+  :root[data-theme="dark"] .ub-field.ub-field--glass{opacity:.8}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-field.ub-field--glass{opacity:.8}}
+  .ub-grain{background-image:${GRAIN};background-size:180px;mix-blend-mode:overlay;opacity:.32}
+  .ub-shine{position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;padding:2px;
+    background:linear-gradient(105deg,transparent 41%,var(--text-primary) 50%,transparent 59%) 100% 0/300% 100% no-repeat;
+    -webkit-mask:linear-gradient(var(--text-primary) 0 0) content-box,linear-gradient(var(--text-primary) 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(var(--text-primary) 0 0) content-box exclude,linear-gradient(var(--text-primary) 0 0);
+    animation:ub-shine var(--motion-slow) var(--ease-out) forwards}
+  @keyframes ub-shine{0%{background-position:100% 0;opacity:1}70%{opacity:1}100%{background-position:0 0;opacity:0}}
+  .ub-crowd-word{animation:ub-crowd-in var(--motion-slow) var(--ease-out)}
+  @keyframes ub-crowd-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+  .ub-crowd-report:hover{text-decoration:underline;text-underline-offset:3px}
+  @media (prefers-reduced-motion:reduce){.ub-crowd-word{animation:none}.ub-field{transition:none}.ub-shine{display:none}}
+`;
 function tone(level) {
   const l = LEVELS.includes(level) ? level : 'closed';
   return {
@@ -2509,10 +2550,24 @@ function CrowdingIndicator({
   error = false,
   onReport,
   surface = 'raised',
-  underlay = null
+  underlay = null,
+  numberAs,
+  footer = null,
+  opensInMinutes,
+  pulseKey
 }) {
   const s = SIZES[size] || SIZES.hero;
   const c = COPY[lang] || COPY.ro;
+  const Num = numberAs || PlainNumber;
+  // A new estimate (not the first one) runs the edge's light once.
+  const [shine, setShine] = React.useState(0);
+  const lastPulse = React.useRef(pulseKey);
+  React.useEffect(() => {
+    if (pulseKey === lastPulse.current) return;
+    const first = lastPulse.current == null;
+    lastPulse.current = pulseKey;
+    if (!first) setShine(n => n + 1);
+  }, [pulseKey]);
   // The schedule is configurable without a deploy (docs/05 canteen_schedule): the real hours
   // come in from the caller; the copy above is only the confirmed default.
   const hours = hoursLabel || c.hours;
@@ -2539,23 +2594,37 @@ function CrowdingIndicator({
     overflow: 'hidden',
     isolation: glass ? 'auto' : 'isolate'
   };
-  const aura = hero && /*#__PURE__*/React.createElement("span", {
+
+  // The colour field sits under the glass (which softens it); the grain sits over the glass, so
+  // it stays crisp, and under the words. On a raised card both stay under the words. The colour
+  // pours in from the top and is gone by the bottom corners: liquid glass bends the dark page in
+  // at its corners, and over a coloured corner that reads as a smudge.
+  const aura = hero && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     "aria-hidden": "true",
-    className: glass ? 'ub-aura ub-aura--glass' : 'ub-aura',
+    className: glass ? 'ub-field ub-field--glass' : 'ub-field',
     style: {
       position: 'absolute',
-      left: '50%',
-      top: size === 'kiosk' ? '46%' : '38%',
-      width: size === 'kiosk' ? 900 : 420,
-      height: size === 'kiosk' ? 900 : 420,
-      marginLeft: size === 'kiosk' ? -450 : -210,
-      marginTop: size === 'kiosk' ? -450 : -210,
-      borderRadius: '50%',
-      background: t.fill,
+      inset: 0,
+      borderRadius: 'inherit',
       zIndex: -1,
-      transform: `scale(${AURA[LEVELS.includes(level) ? level : 'closed']})`
+      pointerEvents: 'none',
+      background: `radial-gradient(120% 85% at 100% 0%, ${t.fill}, transparent 64%), radial-gradient(110% 70% at 10% 0%, color-mix(in srgb, ${t.fill} 50%, transparent), transparent 72%)`
     }
-  });
+  }), /*#__PURE__*/React.createElement("span", {
+    "aria-hidden": "true",
+    className: "ub-grain",
+    style: {
+      position: 'absolute',
+      inset: 0,
+      borderRadius: 'inherit',
+      zIndex: glass ? 1 : -1,
+      pointerEvents: 'none'
+    }
+  }), shine > 0 && /*#__PURE__*/React.createElement("span", {
+    key: shine,
+    "aria-hidden": "true",
+    className: "ub-shine"
+  }), /*#__PURE__*/React.createElement("style", null, CARD_CSS));
   if (loading) {
     return /*#__PURE__*/React.createElement("div", {
       style: shell,
@@ -2657,14 +2726,29 @@ function CrowdingIndicator({
         fontWeight: 'var(--weight-medium)',
         marginTop: 6
       }
-    }, c.closedNext(opensAtLabel)), /*#__PURE__*/React.createElement("div", {
+    }, c.closedNext(opensAtLabel)), opensInMinutes != null && opensInMinutes > 0 && /*#__PURE__*/React.createElement("div", {
+      className: "ub-numeric",
+      style: {
+        fontSize: s.meta,
+        color: 'var(--text-secondary)',
+        fontWeight: 'var(--weight-medium)',
+        marginTop: 4
+      }
+    }, /*#__PURE__*/React.createElement(Parts, {
+      Num: Num,
+      parts: c.opensIn(Math.floor(opensInMinutes / 1440), Math.floor(opensInMinutes % 1440 / 60), opensInMinutes % 60)
+    })), /*#__PURE__*/React.createElement("div", {
       className: "ub-numeric",
       style: {
         fontSize: s.meta,
         color: 'var(--text-muted)',
         marginTop: 10
       }
-    }, hours)))));
+    }, hours)), footer && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: hero ? 22 : 12
+      }
+    }, footer))));
   }
   if (!hero) {
     return /*#__PURE__*/React.createElement("div", {
@@ -2760,7 +2844,14 @@ function CrowdingIndicator({
       fontWeight: 'var(--weight-medium)',
       marginTop: 4
     }
-  }, c.wait(waitMinutes))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Parts, {
+    Num: Num,
+    parts: c.wait(waitMinutes)
+  }))), footer && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: size === 'kiosk' ? 28 : 20
+    }
+  }, footer), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -2788,18 +2879,7 @@ function CrowdingIndicator({
       cursor: 'pointer',
       whiteSpace: 'nowrap'
     }
-  }, c.report)))), /*#__PURE__*/React.createElement("style", null, `
-        .ub-aura{opacity:.16;filter:blur(46px);transition:transform var(--motion-slow) var(--ease-out),background var(--motion-slow) var(--ease-out)}
-        :root[data-theme="dark"] .ub-aura{opacity:.3}
-        @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-aura{opacity:.3}}
-        .ub-aura.ub-aura--glass{opacity:.42;filter:blur(34px)}
-        :root[data-theme="dark"] .ub-aura.ub-aura--glass{opacity:.62}
-        @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ub-aura.ub-aura--glass{opacity:.62}}
-        .ub-crowd-word{animation:ub-crowd-in var(--motion-slow) var(--ease-out)}
-        @keyframes ub-crowd-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
-        .ub-crowd-report:hover{text-decoration:underline;text-underline-offset:3px}
-        @media (prefers-reduced-motion:reduce){.ub-crowd-word{animation:none}.ub-aura{transition:none}}
-      `));
+  }, c.report)))));
 }
 Object.assign(__ds_scope, { PersonMeter, QualityBadge, FreshnessStamp, CrowdingIndicator });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/crowding/CrowdingIndicator.jsx", error: String((e && e.message) || e) }); }
@@ -3045,20 +3125,32 @@ function WaitReport({
 }
 
 /* Zone 5: typical crowding by hour. Hidden entirely in pilot week one —
-   a flat, wrong chart costs more trust than an absent section. */
+   a flat, wrong chart costs more trust than an absent section.
+   `coloured` (the crowding card's strip): every bar takes its own level's colour — by the
+   estimate's `thresholds` in minutes when given — the hours still to come are dimmer, and the
+   current one is ringed. The height carries the minutes, the colour only repeats them, and
+   `summary` says it in words for a screen reader. */
 function CrowdingByHour({
   data = [],
   nowIndex,
   lang = 'ro',
   height = 72,
-  labelEvery
+  labelEvery,
+  coloured = false,
+  thresholds,
+  summary
 }) {
   const max = Math.max(1, ...data.map(d => d.value));
   // A whole opening day is ten or eleven half-hours: at 400px only every other label fits. The
   // current slot always keeps its label; its neighbours give way so the two never touch.
   const every = labelEvery || (data.length > 8 ? 2 : 1);
   const showLabel = i => i === nowIndex || i % every === 0 && (nowIndex == null || Math.abs(i - nowIndex) >= every);
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  const levelOf = v => thresholds ? v >= thresholds.high ? 'high' : v >= thresholds.low ? 'moderate' : 'low' : v / max > 0.66 ? 'high' : v / max > 0.33 ? 'moderate' : 'low';
+  return /*#__PURE__*/React.createElement("div", {
+    role: summary ? 'img' : undefined,
+    "aria-label": summary
+  }, /*#__PURE__*/React.createElement("div", {
+    "aria-hidden": summary ? true : undefined,
     style: {
       display: 'flex',
       alignItems: 'flex-end',
@@ -3066,8 +3158,10 @@ function CrowdingByHour({
       height
     }
   }, data.map((d, i) => {
-    const level = d.value / max;
-    const tone = level > 0.66 ? 'var(--crowd-high-fill)' : level > 0.33 ? 'var(--crowd-moderate-fill)' : 'var(--crowd-low-fill)';
+    const share = d.value / max;
+    const tone = `var(--crowd-${levelOf(d.value)}-fill)`;
+    const now = i === nowIndex;
+    const later = nowIndex != null && i > nowIndex;
     return /*#__PURE__*/React.createElement("div", {
       key: d.label,
       style: {
@@ -3079,15 +3173,23 @@ function CrowdingByHour({
       }
     }, /*#__PURE__*/React.createElement("div", {
       title: `${d.label} · ${d.value} min`,
-      style: {
-        height: `${Math.max(8, level * 100)}%`,
-        background: i === nowIndex ? tone : 'var(--border-strong)',
-        opacity: i === nowIndex ? 1 : 0.55,
+      style: coloured ? {
+        height: `${Math.max(10, share * 100)}%`,
+        background: tone,
+        opacity: later ? 0.45 : 1,
+        borderRadius: 'var(--radius-xs)',
+        outline: now ? 'var(--focus-width) solid var(--text-primary)' : undefined,
+        outlineOffset: now ? 2 : undefined
+      } : {
+        height: `${Math.max(8, share * 100)}%`,
+        background: now ? tone : 'var(--border-strong)',
+        opacity: now ? 1 : 0.55,
         borderRadius: 'var(--radius-xs)'
       }
     }));
   })), /*#__PURE__*/React.createElement("div", {
     className: "ub-numeric",
+    "aria-hidden": summary ? true : undefined,
     style: {
       display: 'flex',
       gap: 4,

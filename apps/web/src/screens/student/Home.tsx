@@ -1,6 +1,7 @@
 /* Home — "the only screen that really matters" (docs/18). Most important at the top, density
-   increasing as importance falls: crowding, menu, loyalty, report, typical hours, announcements,
-   footer. Built exactly as ui_kits/student-app/HomeScreen.jsx, on live data. */
+   increasing as importance falls: crowding (with the typical hours inside the card), menu,
+   loyalty, report, announcements, footer. Built exactly as ui_kits/student-app/HomeScreen.jsx,
+   on live data. */
 import React from 'react';
 import { useLocation } from 'wouter';
 import type { CrowdingTypical, DietTag, MenuTodayResponse } from '@ubite/shared';
@@ -20,6 +21,7 @@ import { A } from '../../assets';
 import { CategoryPills, MenuList, PickCard, groupMenu } from '../../components/Menu';
 import { InstallPrompt } from '../../components/Chrome';
 import { GlassFloat, GlassIcon, GlassLayer } from '../../components/Glass';
+import { FlowNumber } from '../../components/FlowNumber';
 import { haptic, usePullToRefresh } from '../../motion';
 import { reportMessage } from '../../components/Sheets';
 import { crowdingView } from './crowding';
@@ -46,7 +48,6 @@ export function Home() {
 
   /* ── Scroll: parallax on the hall photo, mini answer after 300px ── */
   const photoRef = React.useRef<HTMLDivElement>(null);
-  const hoursRef = React.useRef<HTMLElement>(null);
   const groupRefs = React.useRef<Record<string, HTMLElement | null>>({});
   const [miniOut, setMiniOut] = React.useState(false);
   const heroRef = React.useRef<HTMLDivElement>(null);
@@ -137,16 +138,42 @@ export function Home() {
       { tone: r === 'ok' ? 'success' : 'neutral', icon: r === 'ok' ? 'bell' : 'info' });
   });
 
-  /* ── Zone 5: typical by hour ── */
+  /* ── Typical by hour, drawn inside the crowding card (it was Zone 5) — today's, or once
+     closed the next opening day's ── */
+  const today = status.data?.today ?? localDate();
   const tp = typical.data?.available ? typical.data : null;
   const slots = tp ? tp.slots.filter((s) => s.waitMinutes !== null) as Array<{ time: string; waitMinutes: number }> : [];
   const busiest = slots.length ? slots.reduce((a, b) => (b.waitMinutes > a.waitMinutes ? b : a)) : null;
   const quietest = slots.length ? slots.reduce((a, b) => (b.waitMinutes < a.waitMinutes ? b : a)) : null;
   const nowHHMM = formatTime(new Date(now), 'ro');
-  const nowIndex = tp ? tp.slots.reduce((idx, s, i) => (s.time <= nowHHMM ? i : idx), -1) : -1;
+  const nowIndex = tp && tp.date === today ? tp.slots.reduce((idx, s, i) => (s.time <= nowHHMM ? i : idx), -1) : -1;
+  const typicalShown = !!(tp && busiest && quietest && busiest.waitMinutes > quietest.waitMinutes);
+
+  /* The crowding card's strip: the same day, every hour in its level's colour. Closed with no
+     history yet, the card says so instead of leaving a gap. */
+  const opensInMinutes = view.level === 'closed' && status.data?.nextOpening
+    ? Math.max(0, Math.ceil((new Date(status.data.nextOpening).getTime() - now) / 60_000)) : undefined;
+  const cardStrip = tp && busiest && quietest && typicalShown ? (
+    <div>
+      <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', marginBottom: 10, textAlign: 'left' }}>
+        {tp.date === today ? t('typical.today') : t('typical.title', { weekday: weekdayName(tp.weekday, lang, 'plural') })}
+      </div>
+      <CrowdingByHour coloured height={44} lang={lang} thresholds={crowding.data?.thresholds}
+        data={tp.slots.map((s) => ({ label: s.time, value: s.waitMinutes ?? 0 }))}
+        nowIndex={nowIndex >= 0 && open ? nowIndex : undefined}
+        summary={t('typical.busy', { busy: busiest.time, quiet: quietest.time })} />
+      <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 8, textAlign: 'left' }}>
+        {t('typical.busy', { busy: busiest.time, quiet: quietest.time })}
+      </div>
+    </div>
+  ) : view.level === 'closed' && !tp && !typical.loading ? (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--text-muted)', textAlign: 'left' }}>
+      <Icon name="info" size={16} style={{ flex: 'none', marginTop: 2 }} />
+      <span>{t('typical.none')}</span>
+    </div>
+  ) : null;
 
   /* ── Zone 6: canteen announcements, plus upcoming schedule changes ── */
-  const today = status.data?.today ?? localDate();
   const exceptions = (status.data?.exceptions ?? []).filter((e) => e.date >= today && e.date <= addDays(today, 7));
 
   const loyaltyOn = (status.data?.features.loyalty ?? true) && (!me || me.role === 'student');
@@ -210,7 +237,8 @@ export function Home() {
               updatedSecondsAgo={view.updatedSecondsAgo} lang={lang} opensAtLabel={view.opensAtLabel} hoursLabel={view.hoursLabel}
               loading={crowding.loading && !crowding.data} error={view.noEstimate && !crowding.loading}
               onReport={open && !view.noEstimate ? () => openSheet('report') : undefined}
-              surface="glass" underlay={<GlassLayer box={heroRef} radius="--radius-lg" />} />
+              surface="glass" underlay={<GlassLayer box={heroRef} radius="--radius-lg" />}
+              numberAs={FlowNumber} footer={cardStrip} opensInMinutes={opensInMinutes} pulseKey={crowding.data?.computedAt ?? null} />
           </div>
           {view.noEstimate && open && (
             <div style={{ marginTop: 'var(--space-2)' }}>
@@ -237,7 +265,7 @@ export function Home() {
           typical={tp && busiest && quietest && busiest.waitMinutes > quietest.waitMinutes ? { weekday: tp.weekday, busy: busiest, quiet: quietest } : null}
           loyaltyFilled={loyalty.data?.filled ?? null} rewardWaiting={rewardWaiting}
           menuAlertOn={!!me?.notifications.menu_published && !!me?.pushSubscribed}
-          onHours={() => hoursRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+          onHours={() => heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
           onCard={() => navigate('/card')} onReport={() => openSheet('report')} onAlert={enableMenuAlert}
           onFeedback={() => openSheet('feedback')} />
 
@@ -317,23 +345,6 @@ export function Home() {
           <section className="ub-reveal" style={{ padding: 'var(--density-zone-3) var(--gutter) 0' }}>
             <WaitReport state={reportState} lang={lang} onSubmit={onZoneReport} />
             {reportState === 'done' && reportNote && <p className="ub-caption" style={{ marginTop: 'var(--space-2)' }}>{reportNote}</p>}
-          </section>
-        )}
-
-        {/* Zone 5 — typical crowding; hidden in week one while history accumulates */}
-        {tp && busiest && quietest && (
-          <section ref={hoursRef} className="ub-reveal" style={{ padding: 'var(--density-zone-4) var(--gutter) 0' }} aria-labelledby="typical-title">
-            <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                <h3 id="typical-title" style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)' }}>
-                  {t('typical.title', { weekday: weekdayName(tp.weekday, lang, 'plural') })}
-                </h3>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                  {t('typical.busy', { busy: busiest.time, quiet: quietest.time })}
-                </span>
-              </div>
-              <CrowdingByHour data={tp.slots.map((s) => ({ label: s.time, value: s.waitMinutes ?? 0 }))} nowIndex={nowIndex >= 0 ? nowIndex : undefined} lang={lang} />
-            </div>
           </section>
         )}
 

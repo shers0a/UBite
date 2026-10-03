@@ -55,7 +55,8 @@ export function useResource<T>(key: string | null, path: string | null, opts: { 
     loading: !!path && !initial,
   }));
   const alive = React.useRef(true);
-  React.useEffect(() => () => { alive.current = false; }, []);
+  // Set again on mount: StrictMode mounts twice in development, and the first unmount cleared it.
+  React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   React.useEffect(() => {
     setState({ data: initial?.data ?? null, fetchedAt: initial?.fetchedAt ?? null, error: null, loading: !!path && !initial });
