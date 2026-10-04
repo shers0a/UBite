@@ -48,6 +48,10 @@ services:
       retries: 10
 
   # Counts people in the queue zone from the camera's RTSP stream; posts only numbers.
+  # With several cameras, count a site instead (docs/23): every camera on the same tick, heads placed on the
+  # floor plan, queue and hall posted together. Set CAMERA_<id>_RTSP for each camera of the site file, and:
+  #   command: ["site", "--model", "models/ubite-n.onnx", "--site", "sites/cantina-P2.json", "--every", "5",
+  #             "--post", "http://app:8080/api/vision/observations"]
   vision:
     profiles: [camera]
     build: services/vision
@@ -55,6 +59,11 @@ services:
     environment:
       VISION_THREADS: "2"
       VISION_TOKEN: ${VISION_TOKEN:-}
+      CAMERA_C1_RTSP: ${CAMERA_C1_RTSP:-}
+      CAMERA_C2_RTSP: ${CAMERA_C2_RTSP:-}
+      CAMERA_C3_RTSP: ${CAMERA_C3_RTSP:-}
+      CAMERA_C4_RTSP: ${CAMERA_C4_RTSP:-}
+      CAMERA_C5_RTSP: ${CAMERA_C5_RTSP:-}
     command: ["watch", "--source", "${CAMERA_RTSP_URL:-}", "--every", "5",
               "--post", "http://app:8080/api/vision/observations", "--config", "http://app:8080/api/vision/config"]
     depends_on: [app]

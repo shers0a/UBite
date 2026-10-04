@@ -203,6 +203,92 @@ Without Docker: `pip install -r requirements.txt` is enough to run `bench.py` (n
 
 ---
 
+## Placement and counter, tested on the digital twin (3–4 Oct 2026)
+
+The twin is the canteen scanned on 30 Sep, rebuilt in Unity with calibrated light and simulated students. Its
+pipeline lives in the private `UBite-twin` folder: the renders show avatars only, but the scan shows staff. Every
+number below is from simulated people, so treat it as an upper bound that ranks the options. The real accuracy
+comes from the three manual counting sessions ([07-crowding-module.md](07-crowding-module.md)).
+
+### Where the cameras go
+
+We scored 499 mounts (ceiling at 3.12 m, walls, columns), 168 aims and 5 lenses on a 4 MP sensor. Each
+candidate was ray-cast through the scanned hall at a peak hour: the line full, 30 more in the aisle, every seat
+taken and a third of the floor walking. A person counts as seen when their head and shoulders are in sight and
+the head covers at least 12–24 px.
+
+The main plan is bought in steps: start with 2 cameras, add one at a time, and never move a mounted one. At
+each size it scores within 0.02 of the best set chosen on its own.
+
+| Set | Cameras (4 MP) | Queue (line / long tail) | Seated | Standing |
+|---|---|---|---|---|
+| P2 | C1 north wall behind the line, 2.8 mm; C2 on the column at x 26.5, 6 mm, down the aisle | 100% / 81% | 37% | 48% |
+| P3 | + C3 ceiling by the east windows, 3.6 mm | 100% / 100% | 63% | 67% |
+| P4 | + C4 ceiling by the entrance, 2.8 mm | 100% / 100% | 80% | 88% |
+| P5 | + C5 ceiling by the east windows, 3.6 mm | 100% / 100% | 86% | 91% |
+| V2 | queue only: C1 + a 6 mm camera on the same column | 100% / 81% | 31% | 48% |
+| V3 | no ceiling work: C1, a column, the entrance wall | 100% / 77% | 61% | 95% |
+
+Each set was rendered as 2 minutes of 4 MP video at 25 fps, 12:45 at peak, through a real-camera look: lens
+distortion, WDR, noise, 3D noise reduction, an on-screen clock and H.264 at 6 Mbit/s.
+
+### Off-the-shelf detectors on those feeds
+
+Error in people, with each detection given its true position so that only the detector is measured:
+
+| Model | Queue error (truth ~31) | Hall error (truth 48–91) |
+|---|---|---|
+| YOLO11n at 640 (the first counter) | 8–14 | 5–16 |
+| YOLO11/26 n–x, RT-DETR, RF-DETR at 1280, even at full 2560 | 10–12 | 2.5–5 |
+| The same with 640 px tiles at full resolution (SAHI) | **2–3** | 3–5 |
+
+Far people need full-resolution tiles. Placing people on the floor plan from the image added more error than the
+choice of model did.
+
+### The counter now in `services/vision`
+
+- **Detection.** `ubite-n.onnx` is YOLO26n trained on the twin, with three classes: person, standing head and
+  seated head. It ran 40 epochs on about 12,000 tiles: 14 lunches × 12 cameras × 14 stills, randomised camera
+  look, labels that know what is hidden. Validation on an unseen lunch: mAP50 0.925, mAP50-95 0.664.
+- **Resolution.** The whole frame is counted at 1280 px, then 640 px tiles of each camera's far band at full
+  resolution.
+- **Placement.** Each head goes on the floor plan at the height of its posture: 1.67 m standing, 1.30 m seated.
+- **Fusion.** Heads from different cameras closer than 0.45 m + 0.045 m per metre of distance are one person.
+- **Zones.** They come from the placement study and say queue or hall.
+- **Scaling.** The hall count is divided by the share of places the cameras see well and by the completeness
+  measured on the twin. Under half seen, the hall is not reported.
+
+On the second minute of the test feeds (the completeness was fitted on the first):
+
+| Set | Queue error (truth 31.4) | Hall error (truth 97.7) | CPU per 5 s round, laptop, 2 threads |
+|---|---|---|---|
+| P2 | 2.2 | 4.9 | 0.41 s |
+| P3 | 2.2 | 2.9 | 0.59 s |
+| P4 | 2.3 | 2.8 | — |
+| P5 | 1.8 | 2.6 | 0.70 s |
+| V2 | 2.0 | not reported (48% seen) | — |
+| V3 | 1.5 | 4.7 | — |
+
+The same pipeline with the COCO model counted the queue as well (2–4) but missed 24–48 of the ~99 in the hall.
+The UB HPC node runs YOLO11n about 2.3 times slower than the laptop, so expect 1–1.6 s per round on the 2-vCPU
+VM, a fifth to a third of it.
+
+### What it does not settle
+
+- **The queue zone also holds people walking along the aisle with trays.** Against the people actually waiting,
+  the count is 6–7 high at peak. The reports' calibration absorbs a steady offset, not a varying one. Counting
+  only heads that stay put between two rounds would fix it, using positions only.
+- **Synthetic people are not real people.** On frames of the real canteen from the 30 Sep visit, the model found
+  the staff's and students' heads about as well as the COCO model found their bodies. The far ones it found
+  better. How accurate it is there, and how often it gets posture right, is for the manual counts to say.
+  Fine-tuning on a few hundred real frames needs the DPIA exception.
+- **Licence.** The weights are Ultralytics, AGPL-3.0. They are trained on synthetic renders only, so publishing
+  them carries no privacy risk. The open choice is in [22-decision-log.md](22-decision-log.md).
+- **A real install needs its own calibration.** Each camera's pose and lens must be fitted from four or more
+  points of known position in the hall. Then the site file is rebuilt from the twin with the real poses.
+
+---
+
 ## Sources
 
 - [ACC-UB user guide: HPC](https://unibuc-dtd.github.io/advanced-computing-center-user-guide/hpc/), [HCI](https://unibuc-dtd.github.io/advanced-computing-center-user-guide/hci/)
