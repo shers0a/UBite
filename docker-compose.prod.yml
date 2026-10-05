@@ -50,7 +50,7 @@ services:
   # Counts people in the queue zone from the camera's RTSP stream; posts only numbers.
   # With several cameras, count a site instead (docs/23): every camera on the same tick, heads placed on the
   # floor plan, queue and hall posted together. Set CAMERA_<id>_RTSP for each camera of the site file, and:
-  #   command: ["site", "--model", "models/ubite-n.onnx", "--site", "sites/cantina-P2.json", "--every", "5",
+  #   command: ["site", "--model", "models/ubite-n.onnx", "--site", "sites/cantina-2-camere.json", "--every", "5",
   #             "--post", "http://app:8080/api/vision/observations"]
   vision:
     profiles: [camera]

@@ -160,7 +160,7 @@ switch the vision service's `command` to the `site` line commented in `docker-co
 kind whose camera has no fresh frame is left out of that tick. To check the CPU cost on the VM first:
 
 ```bash
-docker run --rm --cpus=2 ubite-vision speed --model models/ubite-n.onnx --site sites/cantina-P2.json
+docker run --rm --cpus=2 ubite-vision speed --model models/ubite-n.onnx --site sites/cantina-2-camere.json
 ```
 
 ## Choices made while implementing

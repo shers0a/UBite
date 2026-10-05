@@ -273,11 +273,76 @@ The same pipeline with the COCO model counted the queue as well (2–4) but miss
 The UB HPC node runs YOLO11n about 2.3 times slower than the laptop, so expect 1–1.6 s per round on the 2-vCPU
 VM, a fifth to a third of it.
 
+### Two cameras only
+
+**The test.** We generated eight candidate pairs from the placement study and filmed each in a simulated lunch
+on the same schedule: about 45 minutes, crowd low, then medium, then high, then low again. At the peak the queue
+grows to 56 people and runs back to the door, and waits reach 13–14 minutes. One synchronised still every 5 s, as
+the service takes them, counted by the shipped counter.
+
+**The wait** is what the app shows. It uses the docs/07 line, fitted on the students who joined in the first
+half of the lunch and scored on those who joined in the second half (60–75 students). The hall's completeness
+is fitted the same way.
+
+The pairs were filmed in four lunches. The column in brackets is the best any counter could do in that lunch: the
+same line on the true count.
+
+| Pair | Cameras | Queue count error, unfiltered | Wait error (best possible) | Within ±1 / ±2 min | Level right | Hall |
+|---|---|---|---|---|---|---|
+| **coada-sala** | ceiling 3.6 mm in the corner by the line and the windows (x 33.5, y 0.5, 3.12 m, 135°, −25°) + ceiling 4.5 mm down the aisle (x 23.5, y 4.5, 3.12 m, 150°, −25°) | 2.0 | **0.25 min** (0.31) | 100% / 100% | 95% | 7.8 people (10%), level 99% |
+| coada-lunga | north wall behind the line, 2.8 mm (x 34.1, y 3.5, 2.95 m, 165°, −35°) + ceiling 6 mm down the aisle (x 25.5, y 4.5, 3.12 m, 150°, −15°) | 2.4 | 0.54 min (0.34) | 88% / 100% | 97% | not reported (48% seen) |
+| coada | the same wall camera + 6 mm on the column at x 26.6 | 2.7 | 0.57 min (0.34) | 85% / 100% | 92% | not reported |
+| fara-tavan | the same wall camera + 6 mm on the column, looking 165° | 2.8 | 0.63 min (0.34) | 82% / 100% | 92% | 12 people (15%), level 81% |
+| echilibrat (P2) | the same wall camera + ceiling 6 mm at x 26.5 | 2.7 | 0.66 min (0.34) | 78% / 100% | 92% | 12 people (16%), level 84% |
+| un-stalp | both on one ceiling mount at x 26.5: 2.8 mm looking north (15°, −45°) + 4.5 mm down the aisle (150°, −25°) | 8.3 | 0.73 min (0.30) | 67% / 100% | 99% | not reported |
+| intrare | the same wall camera + ceiling 3.6 mm at the entrance corner | 4.8 | 1.69 min (0.34) | 18% / 57% | 85% | 6.5 people (8%), level 99% |
+| din-spate | ceiling 2.8 mm at x 24.5 looking north, at the queue's backs (15°, −45°) + ceiling 6 mm at x 27.5 (165°, −15°) | 9.5 | 2.56 min (0.35) | 5% / 29% | 88% | not reported |
+
+**Head to head.** A different lunch is a different test, so the two best pairs were filmed again in a fifth
+lunch, side by side, together with the two pairs that mix their cameras. Best possible in that lunch: 0.33 min,
+level 95%.
+
+| Pair | Queue count error, unfiltered | Wait error | Within ±1 / ±2 min | Level right | Hall |
+|---|---|---|---|---|---|
+| **coada-sala** (corner 3.6 mm + aisle 4.5 mm) | 2.5 | 0.60 min | 89% / 100% | 95% | 7.5 people (9%), level 99% |
+| north wall 2.8 mm + aisle 4.5 mm | 2.3 | 0.57 min | 86% / 100% | 95% | 7.7 people (9%), level 98% |
+| corner 3.6 mm + aisle 6 mm at x 25.5 | 2.3 | 0.59 min | 89% / 100% | 95% | 14 people (17%), level 83% |
+| coada-lunga (north wall 2.8 mm + aisle 6 mm) | 2.2 | 0.67 min | 77% / 100% | 95% | not reported |
+
+The docs/07 prior without calibration is 6.3–7.5 min off in every lunch: calibration from the reports is what
+makes the minutes right.
+
+**What the test shows.**
+
+- **Two cameras estimate the wait well** if one watches the line and the other looks down the aisle the queue
+  runs back along. Every test student is then within ±2 min, and the level is right 92–97% of the time.
+- **We ship coada-sala** (`services/vision/sites/cantina-2-camere.json`). Over two lunches its minutes were 0.25
+  and 0.60 off, all within ±2 min, and it also counts the hall: 9–10% off, the word right 99% of the time.
+- **Two for good, or two to start?** coada-sala is the best pair to keep. The main plan's P2 (echilibrat) is
+  weaker as a pair (0.66 min, hall 16% off) but is the start of P3–P5 without moving a camera. If more cameras
+  may come, plan the larger set from coada-sala first.
+- **The aisle camera decides the hall.** The 4.5 mm camera at x 23.5, pitched −25°, sees the queue's tail and
+  most of the seated hall. With it, either line camera does as well: the north wall or the ceiling corner. The
+  6 mm camera at x 25.5, aimed flatter, sees too little of the hall (48–55%).
+- **The queue's far tail must be in view.** Pairs that lose it (un-stalp, din-spate) stop counting at about 40
+  while the queue grows to 56. The line then cannot tell a 40-person queue from a 56-person one, and the minutes
+  for long queues go wrong: din-spate is 2.6 min off.
+- **Keep the persistence filter.** In 9 of 12 pair-lunch runs it improved the minutes, by up to 0.6 min. In the
+  other three it cost at most 0.25 min, except din-spate, which fails either way. It drops about 5 of the far
+  tail's people at peak, but steadily, so the calibration absorbs it. People walking along the aisle come and
+  go, so without the filter the calibration cannot absorb them.
+- **Long waits.** With the north-wall camera the longest waits come out 1.2–1.5 min short. coada-sala gets
+  them right but reads about a minute high at 8–10 min. Calibrating on reports from long queues covers both.
+- **The hall's factor needs real counts.** The shipped site divides the hall by a completeness of 1.11, the
+  twin's average. Over a whole lunch that leaves 6–8 people (10–11%) off and the word right 93–94% of the time,
+  because the factor that fits differs between lunches (1.04 and 1.18). The manual counts set the real factor.
+
 ### What it does not settle
 
 - **The queue zone also holds people walking along the aisle with trays.** Against the people actually waiting,
-  the count is 6–7 high at peak. The reports' calibration absorbs a steady offset, not a varying one. Counting
-  only heads that stay put between two rounds would fix it, using positions only.
+  the raw count is 6–7 high at peak. The persistence filter counts only heads that stayed within 0.8 m since the
+  previous round, using positions only. Simulated walkers and simulated queues move differently from real ones,
+  so the manual counts must confirm the 0.8 m.
 - **Synthetic people are not real people.** On frames of the real canteen from the 30 Sep visit, the model found
   the staff's and students' heads about as well as the COCO model found their bodies. The far ones it found
   better. How accurate it is there, and how often it gets posture right, is for the manual counts to say.

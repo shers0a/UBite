@@ -248,6 +248,8 @@ class Site:
         # how close two cameras' heads must be to be one person (see fuse)
         self.gate = float(cfg.get("gate", 0.45))
         self.per_metre = float(cfg.get("per_metre", 0.045))
+        # queue: count only heads that were within this many metres of a head at the previous round (0: off)
+        self.queue_still = float(cfg.get("queue_still", 0.8))
         self.cameras = [Camera(c["id"], tuple(c["eye"]), tuple(c["target"]), float(c["f"]), tuple(c.get("size", (2560, 1440))),
                                float(c.get("k1", 0)), float(c.get("k2", 0)), os.path.expandvars(c["source"]) if c.get("source") else None,
                                [tuple(t) for t in c.get("tiles", [])]) for c in cfg["cameras"]]
@@ -325,14 +327,38 @@ def fuse(points: list[Placed], gate: float = 0.45, per_metre: float = 0.045) -> 
 MIN_COVERAGE = 0.5
 
 
-def count_site(frames: dict[str, np.ndarray], detector: Detector, site: Site) -> list[dict]:
+def persisting(now: list[tuple[float, float]], before: list[tuple[float, float]], radius: float) -> int:
+    """How many of the heads now have a head within `radius` at the previous round, one to one (closest pairs
+    first): people waiting in a queue move up a place at most, people walking past it move metres. Positions
+    only, kept for one round; nobody is followed."""
+    pairs = sorted((math.hypot(a[0] - b[0], a[1] - b[1]), i, j) for i, a in enumerate(now) for j, b in enumerate(before))
+    used_i, used_j, n = set(), set(), 0
+    for d, i, j in pairs:
+        if d > radius:
+            break
+        if i not in used_i and j not in used_j:
+            used_i.add(i)
+            used_j.add(j)
+            n += 1
+    return n
+
+
+def count_site(frames: dict[str, np.ndarray], detector: Detector, site: Site, memory: dict | None = None,
+               now: float | None = None) -> list[dict]:
     """One observation per zone kind (queue, hall). Every camera's heads go on the floor plan; the same person
     seen by several cameras counts once (`fuse`); each person counts in the kind of zone they stand in. Where
     the cameras see only part of a kind's places, the count is scaled up by the share seen (people are
     spread evenly enough over a hall for that), and by the site's measured completeness (the share of people
     in view the cameras count); under half seen, the kind is not reported. A kind is also
     left out when a camera that owns some of its zones has no frame: a missing count is better than a short
-    one."""
+    one. With `memory` (a dict the caller keeps between rounds), the queue counts only the heads that were
+    already there at the previous round (`persisting`), so people walking along the aisle with a tray do not
+    lengthen it; the memory holds the queue's head positions of one round, nothing else."""
+    return tally(*detect_site(frames, detector, site), site, memory, now)
+
+
+def detect_site(frames: dict[str, np.ndarray], detector: Detector, site: Site) -> tuple[list[Placed], set[str]]:
+    """Every camera's heads on the floor plan, and the zone kinds a camera without a frame leaves uncounted."""
     points: list[Placed] = []
     missing: set[str] = set()
     unit = detector.heads or {PERSON: None}
@@ -344,10 +370,24 @@ def count_site(frames: dict[str, np.ndarray], detector: Detector, site: Site) ->
         for d in detector.detect_tiled(frame, site.full, cam.tiles, site.tile):
             if d.cls in unit and (p := site.locate(cam, d, unit[d.cls])) is not None:
                 points.append(p)
+    return points, missing
+
+
+def tally(points: list[Placed], missing: set[str], site: Site, memory: dict | None = None, now: float | None = None) -> list[dict]:
+    """The observations from one round's heads (see count_site)."""
     counts: dict[str, list[float]] = {}
+    queue_xy = []
     for person in fuse(points, site.gate, site.per_metre):
         counts.setdefault(person[0].zone.kind, []).append(max(p.score for p in person))
-    now = time.time()
+        if person[0].zone.kind == "queue":
+            queue_xy.append(person[0].xy)
+    now = time.time() if now is None else now
+    if memory is not None and site.queue_still > 0 and "queue" not in missing:
+        before, at = memory.get("queue"), memory.get("at", -1e9)
+        memory["queue"], memory["at"] = queue_xy, now
+        if before is not None and now - at <= 15:
+            n = persisting(queue_xy, before, site.queue_still)
+            counts["queue"] = sorted(counts.get("queue", []), reverse=True)[:n]
     out = []
     for kind in sorted({z.kind for z in site.zones} - missing):
         cover = float(site.coverage.get(kind, 1.0))

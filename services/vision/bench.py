@@ -4,8 +4,8 @@
     python bench.py images --model models/yolo11n.onnx samples/*.jpg --draw out/
     python bench.py watch  --model models/yolo11n.onnx --source rtsp://user:pass@ip:554/stream --every 5
     python bench.py watch  --model models/yolo11n.onnx --source 0          # laptop webcam
-    python bench.py site   --model models/ubite-heads.onnx --site sites/cantina-P2.json --every 5 --post URL
-    python bench.py speed  --model models/ubite-heads.onnx --site sites/cantina-P2.json --frame f.jpg
+    python bench.py site   --model models/ubite-n.onnx --site sites/cantina-2-camere.json --every 5 --post URL
+    python bench.py speed  --model models/ubite-n.onnx --site sites/cantina-2-camere.json --frame f.jpg
 
 `speed` is the number that decides where inference can live (laptop, UB VM, edge box); with --site it
 times a whole site (every camera's full frame and tiles), which is what the service does every 5 s.
@@ -197,10 +197,11 @@ def cmd_site(args) -> None:
     site = Site.load(args.site)
     det = Detector(args.model, conf=site.conf if site.conf is not None and args.conf is None else (args.conf or 0.35))
     streams = [Stream(c.id, c.source) for c in site.cameras if c.source]
+    memory: dict = {}                     # the queue's head positions of the previous round, nothing else
     while True:
         tick = time.time()
         frames = {s.cid: f for s in streams if (f := s.take(max_age=2.0)) is not None}
-        obs = count_site(frames, det, site)
+        obs = count_site(frames, det, site, memory)
         del frames
         for o in obs:
             o["observed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(o["timestamp"]))
