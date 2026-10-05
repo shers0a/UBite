@@ -337,6 +337,45 @@ makes the minutes right.
   twin's average. Over a whole lunch that leaves 6–8 people (10–11%) off and the word right 93–94% of the time,
   because the factor that fits differs between lunches (1.04 and 1.18). The manual counts set the real factor.
 
+### With two TP-Link VIGI C340 cameras
+
+**The camera.** TP-Link VIGI C340 is a 4 MP bullet camera (2560×1440, 1/3" sensor) with a fixed lens: 2.8 mm
+(102.5° across) or 4 mm (76.3°). It takes PoE and speaks RTSP and ONVIF Profile S, so the counter reads it as it
+is. It costs about 240–265 RON on eMAG (Oct 2026). Its main stream is capped at 3 Mbps.
+
+**Placement.** With 2.8 mm lenses on both cameras, no pair sees the queue's far tail well: 69% at best, against
+100% with the narrower lenses above. The best pair keeps the north-wall camera behind the line. The second one goes
+on the ceiling at x 19.5, y 4.5, looking along the aisle towards the entrance (120°, −25°).
+
+**Compression.** We encoded 10 s of the twin's 4 MP feed with H.265 at 3 Mbps (libx265, no B-frames, an I-frame
+every 2 s). We then compressed every still at the QP that gives the same image quality (PSNR):
+
+- 25 fps: 15 KB a frame, QP 40.
+- 5 fps: 71 KB a frame, QP 37.
+- 1 fps: 327 KB a frame, QP 30.
+
+**Results.** In lunch 4 the best possible wait error was 0.42 min. Its second half, the test half, was a full
+queue, with waits of 11–14 min.
+
+| Pair | Wait error: uncompressed / 3 Mbps at 5 fps / at 25 fps | Within ±2 min | Queue count error, unfiltered | Hall |
+|---|---|---|---|---|
+| **2 × 2.8 mm**, the second on the ceiling at x 19.5 | **0.37 / 0.48 / 0.61 min** | 100% | 3.5 | not reported (43% seen) |
+| **2.8 mm + 4 mm**, the 4 mm where coada-sala has its aisle camera (x 23.5, 150°, −25°) | 0.48 / 0.56 / 0.59 min | 100% | 2.0 | 7–8% off, level 99% |
+| 2 × 2.8 mm, the second on the column at x 22.2 | 0.76 / 1.04 / 1.27 min | 98% / 97% / 81% | 5.9 | not reported |
+| 2 × 2.8 mm, the second on the ceiling by the windows at x 21.5 (lunch 5) | 2.35 / 2.39 / — min | 35% | 4.0 | 14% off, level 80% |
+
+In lunch 5 the best possible was 0.64 min, and the north-wall + 4.5 mm aisle pair was 1.05 min off.
+
+- **Two VIGI C340 2.8 mm estimate the wait** as well as the narrower lenses, if the second one sits at x 19.5
+  looking towards the entrance (`sites/cantina-vigi-2x28.json`). They do not count the hall.
+- **With a 4 mm as the second camera the hall comes back**, 7–8% off. The minutes stay within about 0.1 min of
+  the 2 × 2.8 mm (`sites/cantina-vigi-28-4.json`, hall completeness 1.14 from the twin).
+- **Set the main stream to 5 fps or less**, H.265 at 3 Mbps. The counter takes one frame every 5 s, so at
+  1–5 fps each frame gets 5–20 times the bits it gets at 25 fps. At 25 fps the minutes were 0.1–0.25 min worse.
+- **Limits.**
+  - The camera's H.265+ encoder is not libx265.
+  - The 4 mm's zones come from the 4.5 mm of the placement study, which sees a little less.
+
 ### What it does not settle
 
 - **The queue zone also holds people walking along the aisle with trays.** Against the people actually waiting,
