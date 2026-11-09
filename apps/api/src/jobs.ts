@@ -6,13 +6,7 @@ import { claimEvery, claimRun, lastRun, markRun } from './services/config-store'
 import { rebuildBaseline, recalibrateThresholds, refitCalibration, runFusion } from './services/crowding';
 import { rollUpAnalytics } from './services/analytics';
 import { loadSchedule, withinHours } from './services/schedule';
-
-async function alert(ctx: Ctx, subject: string, text: string) {
-  ctx.log.warn({ alert: subject }, text);
-  for (const to of ctx.cfg.ALERT_EMAILS) {
-    await ctx.mail.send(to, `[UBite] ${subject}`, text).catch((e) => ctx.log.error({ err: e.message }, 'alert email failed'));
-  }
-}
+import { alert } from './services/alerts';
 
 export async function nightly(ctx: Ctx) {
   const today = localDate(ctx.now());
@@ -21,6 +15,7 @@ export async function nightly(ctx: Ctx) {
   await rollUpAnalytics(ctx.db, today);
   await ctx.db.query('DELETE FROM auth_codes WHERE expires_at < $1::timestamptz - interval \'1 day\'', [ctx.now()]);
   await ctx.db.query('DELETE FROM sessions WHERE expires_at < $1', [ctx.now()]);
+  await ctx.db.query("DELETE FROM daily_counters WHERE day < $1::date - interval '7 days'", [today]);
   await ctx.db.query("DELETE FROM job_runs WHERE name LIKE 'push:%' AND last_run_at < $1::timestamptz - interval '3 days'", [ctx.now()]);
   ctx.log.info({ calibration: fit ? { slope: fit.slope, n: fit.n, mae: fit.mae } : null }, 'nightly jobs done');
 }

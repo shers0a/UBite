@@ -4,10 +4,11 @@
    without touching them. */
 import crypto from 'node:crypto';
 import type { Lang, Role } from '@ubite/shared';
-import { isUbEmail, UB_DOMAIN } from '@ubite/shared';
+import { addDays, isUbEmail, localDate, UB_DOMAIN, zonedToUtc } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
+import { alert, bump, count, unbump } from './alerts';
 import { retireReceipts } from './loyalty';
 import { codeEmail } from './mail';
 
@@ -15,6 +16,9 @@ export const CODE_TTL_SECONDS = 600;
 export const SESSION_DAYS = 180;
 const MAX_ATTEMPTS = 5;
 const MAX_CODES_PER_WINDOW = 3;
+/** Wrong codes one address may send in a (Bucharest) day, across all its codes. Five per code
+ *  and three codes every 15 minutes would otherwise allow ~1,400 guesses a day at one address. */
+export const MAX_FAILED_PER_DAY = 10;
 
 export interface SessionUser {
   id: string;
@@ -27,6 +31,24 @@ const sha256 = (s: string) => crypto.createHash('sha256').update(s).digest('hex'
 
 export function normaliseEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+/** The daily counter of an address's wrong codes: a hash, never the address. */
+const failedKey = (email: string) => `signin-failed:${sha256(`signin|${email}`).slice(0, 32)}`;
+
+/** "a***@s.unibuc.ro": enough for whoever reads an alert to recognise it, no more. */
+const masked = (email: string) => email.replace(/^(.)[^@]*/, '$1***');
+
+function lockedForToday(ctx: Ctx) {
+  const now = ctx.now();
+  const midnight = zonedToUtc(addDays(localDate(now), 1), '00:00');
+  return new HttpError(429, 'signin_locked', 'Too many wrong codes today. Try again tomorrow.', {
+    retryAfterSeconds: Math.max(60, Math.ceil((midnight.getTime() - now.getTime()) / 1000)),
+  });
+}
+
+async function lockedToday(ctx: Ctx, email: string) {
+  return (await count(ctx.db, localDate(ctx.now()), failedKey(email))) >= MAX_FAILED_PER_DAY;
 }
 
 /** Anyone at UB by domain; outside addresses (staff, DCCAS, the developers) only when an admin
@@ -42,6 +64,8 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(422, 'invalid_email');
   if (!(await canSignIn(ctx.db, email))) throw new HttpError(422, 'email_domain', `Use your university address, ending in ${UB_DOMAIN}.`);
   if (!ctx.mail.enabled) throw new HttpError(503, 'mail_unavailable', 'Sign-in email is not configured.');
+  // Locked by wrong codes: no new code until tomorrow either, so none is emailed for nothing.
+  if (await lockedToday(ctx, email)) throw lockedForToday(ctx);
 
   const recent = await ctx.db.query<{ n: number }>(
     "SELECT count(*)::int AS n FROM auth_codes WHERE email = $1 AND created_at > $2::timestamptz - interval '15 minutes'",
@@ -62,28 +86,58 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   return { sent: true as const, expiresIn: CODE_TTL_SECONDS };
 }
 
-/** Wrong codes are throttled with an increasing delay: 0, 2, 4, 8, 16 seconds, then locked. */
+type CodeRow = { id: number; code_hash: string; attempts: number; last_attempt_at: Date | null; consumed_at: Date | null };
+
+function tooSoon(row: CodeRow, now: Date): HttpError {
+  if (row.consumed_at) return new HttpError(422, 'code_expired', 'Ask for a new code.');
+  if (row.attempts >= MAX_ATTEMPTS) return new HttpError(429, 'code_locked', 'Too many attempts. Ask for a new code.');
+  const wait = row.last_attempt_at ? 2 ** row.attempts * 1000 - (now.getTime() - row.last_attempt_at.getTime()) : 1000;
+  return new HttpError(429, 'slow_down', 'Wait a moment before trying again.', { retryAfterSeconds: Math.max(1, Math.ceil(wait / 1000)) });
+}
+
+/** Wrong codes are throttled with an increasing delay: 0, 2, 4, 8, 16 seconds, then the code is
+ *  burnt; and after MAX_FAILED_PER_DAY wrong codes in a day the address is locked until midnight.
+ *  Each try is claimed in the database before the code is compared, so guesses sent in parallel
+ *  cannot all slip past the count. */
 export async function verifyCode(ctx: Ctx, rawEmail: string, code: string, lang: Lang): Promise<SessionUser> {
   const email = normaliseEmail(rawEmail);
   const now = ctx.now();
-  const r = await ctx.db.query<{ id: number; code_hash: string; attempts: number; last_attempt_at: Date | null }>(
-    `SELECT id, code_hash, attempts, last_attempt_at FROM auth_codes
+  const today = localDate(now);
+  if (await lockedToday(ctx, email)) throw lockedForToday(ctx);
+  const r = await ctx.db.query<CodeRow>(
+    `SELECT id, code_hash, attempts, last_attempt_at, consumed_at FROM auth_codes
      WHERE email = $1 AND consumed_at IS NULL AND expires_at > $2 ORDER BY created_at DESC LIMIT 1`, [email, now],
   );
   const row = r.rows[0];
   if (!row) throw new HttpError(422, 'code_expired', 'Ask for a new code.');
-  if (row.attempts >= MAX_ATTEMPTS) throw new HttpError(429, 'code_locked', 'Too many attempts. Ask for a new code.');
-  if (row.attempts > 0 && row.last_attempt_at) {
-    const wait = 2 ** row.attempts * 1000 - (now.getTime() - row.last_attempt_at.getTime());
-    if (wait > 0) throw new HttpError(429, 'slow_down', 'Wait a moment before trying again.', { retryAfterSeconds: Math.ceil(wait / 1000) });
+  // Take this try: one more attempt, only while the code has tries left and its back-off is over.
+  const claimed = await ctx.db.query(
+    `UPDATE auth_codes SET attempts = attempts + 1, last_attempt_at = $2
+     WHERE id = $1 AND consumed_at IS NULL AND attempts < $3
+       AND (attempts = 0 OR last_attempt_at IS NULL OR last_attempt_at <= $2::timestamptz - make_interval(secs => power(2, attempts)))
+     RETURNING id`, [row.id, now, MAX_ATTEMPTS],
+  );
+  if (!claimed.rowCount) {
+    const fresh = await ctx.db.query<CodeRow>('SELECT id, code_hash, attempts, last_attempt_at, consumed_at FROM auth_codes WHERE id = $1', [row.id]);
+    throw tooSoon(fresh.rows[0] ?? row, now);
   }
+  // And a place among today's wrong codes, given back if this one is right.
+  const key = failedKey(email);
+  const failures = await bump(ctx.db, today, key, MAX_FAILED_PER_DAY);
+  if (failures === null) throw lockedForToday(ctx);
   const expected = Buffer.from(row.code_hash, 'hex');
   const given = Buffer.from(sha256(`${ctx.cfg.SESSION_SECRET}|${email}|${String(code).trim()}`), 'hex');
   if (!crypto.timingSafeEqual(expected, given)) {
-    await ctx.db.query('UPDATE auth_codes SET attempts = attempts + 1, last_attempt_at = $2 WHERE id = $1', [row.id, now]);
+    if (failures >= MAX_FAILED_PER_DAY) {
+      await alert(ctx, 'Prea multe coduri greșite pentru o adresă',
+        `${MAX_FAILED_PER_DAY} coduri de intrare greșite azi pentru ${masked(email)}. Adresa nu mai primește și nu mai poate folosi coduri până mâine. Poate fi cineva care încearcă să ghicească un cod.`);
+      throw lockedForToday(ctx);
+    }
     throw new HttpError(422, 'code_wrong', 'The code is not right.');
   }
-  await ctx.db.query('UPDATE auth_codes SET consumed_at = $2 WHERE id = $1', [row.id, now]);
+  await unbump(ctx.db, today, key);
+  const used = await ctx.db.query('UPDATE auth_codes SET consumed_at = $2 WHERE id = $1 AND consumed_at IS NULL RETURNING id', [row.id, now]);
+  if (!used.rowCount) throw new HttpError(422, 'code_expired', 'Ask for a new code.');
 
   const user = await ctx.db.tx(async (q) => {
     const existing = await q.query<SessionUser>(
