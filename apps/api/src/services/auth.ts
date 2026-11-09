@@ -9,6 +9,7 @@ import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
 import { alert, bump, count, unbump } from './alerts';
+import { claimRun } from './config-store';
 import { retireReceipts } from './loyalty';
 import { codeEmail } from './mail';
 
@@ -39,12 +40,37 @@ const failedKey = (email: string) => `signin-failed:${sha256(`signin|${email}`).
 /** "a***@s.unibuc.ro": enough for whoever reads an alert to recognise it, no more. */
 const masked = (email: string) => email.replace(/^(.)[^@]*/, '$1***');
 
-function lockedForToday(ctx: Ctx) {
+/** Until midnight in Bucharest, when the daily counts start again. */
+function secondsToMidnight(ctx: Ctx) {
   const now = ctx.now();
   const midnight = zonedToUtc(addDays(localDate(now), 1), '00:00');
-  return new HttpError(429, 'signin_locked', 'Too many wrong codes today. Try again tomorrow.', {
-    retryAfterSeconds: Math.max(60, Math.ceil((midnight.getTime() - now.getTime()) / 1000)),
-  });
+  return Math.max(60, Math.ceil((midnight.getTime() - now.getTime()) / 1000));
+}
+
+function lockedForToday(ctx: Ctx) {
+  return new HttpError(429, 'signin_locked', 'Too many wrong codes today. Try again tomorrow.', { retryAfterSeconds: secondsToMidnight(ctx) });
+}
+
+const EMAILS_KEY = 'signin-emails';
+
+/** A place among today's sign-in emails (SIGNIN_EMAILS_PER_DAY, below the provider's free daily
+ *  quota: Brevo sends 300, and the alerts need some of them). An alert at 80 % and at the cap;
+ *  past it, a clear refusal instead of codes the provider would silently drop. */
+async function takeEmailPlace(ctx: Ctx) {
+  const today = localDate(ctx.now());
+  const cap = ctx.cfg.SIGNIN_EMAILS_PER_DAY;
+  const n = await bump(ctx.db, today, EMAILS_KEY, cap);
+  if (n === null) {
+    if (await claimRun(ctx.db, `alert:mail-cap:${today}`)) {
+      await alert(ctx, 'Limita zilnică de emailuri de intrare e atinsă',
+        `Azi s-au trimis ${cap} emailuri cu cod de intrare (SIGNIN_EMAILS_PER_DAY). Până la miezul nopții nimeni nu mai primește cod; cine e deja în cont nu e afectat.`);
+    }
+    throw new HttpError(503, 'mail_quota', 'No more sign-in emails can go out today. Try again tomorrow.', { retryAfterSeconds: secondsToMidnight(ctx) });
+  }
+  if (n === Math.ceil(cap * 0.8)) {
+    await alert(ctx, 'Emailurile de intrare de azi sunt pe sfârșite',
+      `${n} din ${cap} emailuri cu cod de intrare trimise azi (80 %). La ${cap}, UBite nu mai trimite coduri până la miezul nopții.`);
+  }
 }
 
 async function lockedToday(ctx: Ctx, email: string) {
@@ -73,14 +99,15 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   );
   if (recent.rows[0].n >= MAX_CODES_PER_WINDOW) throw new HttpError(429, 'too_many_codes', 'Too many codes. Try again in 15 minutes.', { retryAfterSeconds: 900 });
 
+  const demo = ctx.cfg.DEMO_SHOW_CODES && !ctx.cfg.SMTP_URL;
+  if (!demo) await takeEmailPlace(ctx);
+
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
   await ctx.db.query(
     `INSERT INTO auth_codes (email, code_hash, created_at, expires_at) VALUES ($1, $2, $3, $3::timestamptz + make_interval(secs => $4))`,
     [email, sha256(`${ctx.cfg.SESSION_SECRET}|${email}|${code}`), ctx.now(), CODE_TTL_SECONDS],
   );
-  if (ctx.cfg.DEMO_SHOW_CODES && !ctx.cfg.SMTP_URL) {
-    return { sent: true as const, expiresIn: CODE_TTL_SECONDS, demoCode: code };
-  }
+  if (demo) return { sent: true as const, expiresIn: CODE_TTL_SECONDS, demoCode: code };
   const mail = codeEmail(code, lang);
   await ctx.mail.send(email, mail.subject, mail.text);
   return { sent: true as const, expiresIn: CODE_TTL_SECONDS };

@@ -22,6 +22,9 @@ const schema = z.object({
 
   SMTP_URL: optional,
   MAIL_FROM: z.string().default('UBite <no-reply@ubite.local>'),
+  /** Sign-in emails a day, below the provider's free quota (Brevo: 300 a day, alerts included).
+   *  An alert goes to ALERT_EMAILS at 80 %; past the cap, sign-in says to try again tomorrow. */
+  SIGNIN_EMAILS_PER_DAY: z.coerce.number().int().min(1).default(250),
   /** Who receives "no menu by 10:00" and "camera silent" (docs/12 — a named person who acts). */
   ALERT_EMAILS: list,
 

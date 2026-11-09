@@ -94,3 +94,29 @@ describe('guessing a sign-in code', () => {
     expect([a.body.error, b.body.error].filter(Boolean)[0]).toMatch(/code_expired|slow_down/);
   });
 });
+
+describe('the daily cap on sign-in emails', () => {
+  it('warns at 80 %, refuses past the cap until midnight, and alerts once', async () => {
+    await ctx.db.close();
+    ctx = await testContext({ ALERT_EMAILS: 'ops@unibuc.ro', SIGNIN_EMAILS_PER_DAY: '5' });
+    app = appFor(ctx);
+    const alerts = () => ctx.sent.filter((m) => m.to === 'ops@unibuc.ro').map((m) => m.subject);
+    for (let i = 1; i <= 5; i++) {
+      await ask(`cap${n}.${i}@s.unibuc.ro`).expect(200);
+      expect(alerts()).toHaveLength(i < 4 ? 0 : 1);
+    }
+    expect(alerts()[0]).toMatch(/pe sfârșite/);
+    for (const i of [6, 7]) {
+      const r = await ask(`cap${n}.${i}@s.unibuc.ro`);
+      expect(r.status).toBe(503);
+      expect(r.body.error).toBe('mail_quota');
+      expect(Number(r.headers['retry-after'])).toBeGreaterThan(0);
+    }
+    expect(alerts()).toHaveLength(2);
+    expect(alerts()[1]).toMatch(/Limita zilnică/);
+    const codes = ctx.sent.filter((m) => m.to.startsWith(`cap${n}.`));
+    expect(codes).toHaveLength(5);
+    ctx.setNow('2026-10-14T09:40:00Z');
+    await ask(`cap${n}.8@s.unibuc.ro`).expect(200);
+  });
+});

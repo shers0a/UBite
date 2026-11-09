@@ -85,6 +85,9 @@ Rules that come from the docs:
 - **Uptime monitoring** watches `GET /api/health`; alerts for "no menu by 10:00" and "camera silent
   15 minutes" go to `ALERT_EMAILS` — name the person who acts on them.
 - **Test email delivery to `@s.unibuc.ro` before launch** (docs/10): institutional servers are strict.
+- **Sign-in emails are capped** at `SIGNIN_EMAILS_PER_DAY` (250), under Brevo's free 300 a day, which the
+  alerts share. `ALERT_EMAILS` hear at 80 % and at the cap; past it nobody gets a code until midnight. An
+  address with 10 wrong codes in a day is locked until midnight too, with an alert.
 - **Rehearse one restore** before launch (commands at the top of `deploy/backup.sh`).
 - **Feature flags** in `.env`: `FEATURE_CAMERA`, `FEATURE_LOYALTY`, `FEATURE_WASTE`,
   `FEATURE_PREDICTION` (the typical-hours chart also hides itself in week one).
