@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FeedbackRequest, Me, RequestCodeResponse } from '@ubite/shared';
+import { isUbEmail } from '@ubite/shared';
 import { Button, Input, Sheet, WaitReport } from '@ds';
 import { apiSend, ApiError } from '../api/client';
 import { enqueue } from '../api/outbox';
@@ -32,6 +33,9 @@ export function SignInSheet() {
   };
 
   const send = async () => {
+    // The server answers every address alike (docs/10), so the app says it here: students sign
+    // in with a UB address. Staff accounts may use any address, from the staff tools.
+    if (signInOpen !== 'staff' && !isUbEmail(email.trim())) { setError(t('signin.err.email_domain')); return; }
     setBusy(true); setError(null);
     try {
       const r = await apiSend<RequestCodeResponse>('POST', '/auth/request-code', { email: email.trim() });
@@ -67,7 +71,8 @@ export function SignInSheet() {
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); verify(); }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <p style={{ fontSize: 'var(--text-base)' }}>
-            {demoCode ? t('signin.demoCode', { code: demoCode }) : t('signin.codeSent', { email: email.trim().toLowerCase() })}
+            {demoCode ? t('signin.demoCode', { code: demoCode })
+              : t(isUbEmail(email.trim()) ? 'signin.codeSent' : 'signin.codeSentIfAccount', { email: email.trim().toLowerCase() })}
           </p>
           <Input label={t('signin.code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="\d{6}"
             className="ub-numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}

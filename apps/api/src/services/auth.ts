@@ -4,7 +4,7 @@
    without touching them. */
 import crypto from 'node:crypto';
 import type { Lang, Role } from '@ubite/shared';
-import { addDays, isUbEmail, localDate, UB_DOMAIN, zonedToUtc } from '@ubite/shared';
+import { addDays, isUbEmail, localDate, zonedToUtc } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
@@ -53,6 +53,9 @@ function lockedForToday(ctx: Ctx) {
 
 const EMAILS_KEY = 'signin-emails';
 
+const emailsUsedUp = (ctx: Ctx) =>
+  new HttpError(503, 'mail_quota', 'No more sign-in emails can go out today. Try again tomorrow.', { retryAfterSeconds: secondsToMidnight(ctx) });
+
 /** A place among today's sign-in emails (SIGNIN_EMAILS_PER_DAY, below the provider's free daily
  *  quota: Brevo sends 300, and the alerts need some of them). An alert at 80 % and at the cap;
  *  past it, a clear refusal instead of codes the provider would silently drop. */
@@ -65,7 +68,7 @@ async function takeEmailPlace(ctx: Ctx) {
       await alert(ctx, 'Limita zilnică de emailuri de intrare e atinsă',
         `Azi s-au trimis ${cap} emailuri cu cod de intrare (SIGNIN_EMAILS_PER_DAY). Până la miezul nopții nimeni nu mai primește cod; cine e deja în cont nu e afectat.`);
     }
-    throw new HttpError(503, 'mail_quota', 'No more sign-in emails can go out today. Try again tomorrow.', { retryAfterSeconds: secondsToMidnight(ctx) });
+    throw emailsUsedUp(ctx);
   }
   if (n === Math.ceil(cap * 0.8)) {
     await alert(ctx, 'Emailurile de intrare de azi sunt pe sfârșite',
@@ -85,10 +88,13 @@ export async function canSignIn(db: Queryable, email: string): Promise<boolean> 
   return r.rowCount > 0;
 }
 
+/** The same answer whether or not an address may sign in: an outside address with no account
+ *  gets the response a staff account gets, and the same limits, and nothing is sent. Otherwise
+ *  200 against 422 told anyone which outside addresses hold a staff or admin account. The app
+ *  asks students for a UB address before it calls this. */
 export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   const email = normaliseEmail(rawEmail);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(422, 'invalid_email');
-  if (!(await canSignIn(ctx.db, email))) throw new HttpError(422, 'email_domain', `Use your university address, ending in ${UB_DOMAIN}.`);
   if (!ctx.mail.enabled) throw new HttpError(503, 'mail_unavailable', 'Sign-in email is not configured.');
   // Locked by wrong codes: no new code until tomorrow either, so none is emailed for nothing.
   if (await lockedToday(ctx, email)) throw lockedForToday(ctx);
@@ -100,6 +106,15 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   if (recent.rows[0].n >= MAX_CODES_PER_WINDOW) throw new HttpError(429, 'too_many_codes', 'Too many codes. Try again in 15 minutes.', { retryAfterSeconds: 900 });
 
   const demo = ctx.cfg.DEMO_SHOW_CODES && !ctx.cfg.SMTP_URL;
+  if (!(await canSignIn(ctx.db, email))) {
+    if (!demo && (await count(ctx.db, localDate(ctx.now()), EMAILS_KEY)) >= ctx.cfg.SIGNIN_EMAILS_PER_DAY) throw emailsUsedUp(ctx);
+    // A code row nobody can match, so the per-address limits behave exactly as for an account.
+    await ctx.db.query(
+      `INSERT INTO auth_codes (email, code_hash, created_at, expires_at) VALUES ($1, $2, $3, $3::timestamptz + make_interval(secs => $4))`,
+      [email, sha256(crypto.randomBytes(32).toString('hex')), ctx.now(), CODE_TTL_SECONDS],
+    );
+    return { sent: true as const, expiresIn: CODE_TTL_SECONDS };
+  }
   if (!demo) await takeEmailPlace(ctx);
 
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
@@ -192,6 +207,9 @@ export async function verifyCode(ctx: Ctx, rawEmail: string, code: string, lang:
       'SELECT id, email::text AS email, role::text AS role, locale::text AS locale FROM users WHERE email = $1 AND deleted_at IS NULL', [email],
     );
     if (existing.rows[0]) return existing.rows[0];
+    // Only a UB address becomes a new account; an outside one needs an admin (and never gets a
+    // code it could match, see requestCode).
+    if (!isUbEmail(email)) throw new HttpError(422, 'code_wrong', 'The code is not right.');
     const created = await q.query<SessionUser>(
       `INSERT INTO users (email, role, locale) VALUES ($1, 'student', $2)
        RETURNING id, email::text AS email, role::text AS role, locale::text AS locale`, [email, lang],

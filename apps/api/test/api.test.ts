@@ -25,10 +25,21 @@ async function dish(name: string, category = 'main', bani = 1500) {
 }
 
 describe('sign-in by email code (docs/10)', () => {
-  it('accepts only UB addresses for new accounts', async () => {
-    const r = await request(app).post('/api/auth/request-code').set(H).send({ email: 'someone@gmail.com' });
-    expect(r.status).toBe(422);
-    expect(r.body.error).toBe('email_domain');
+  it('accepts only UB addresses for new accounts, without saying which outside ones have one', async () => {
+    await ctx.db.query("INSERT INTO users (email, role) VALUES ('dccas.office@gmail.com', 'dccas_admin')");
+    const nobody = await request(app).post('/api/auth/request-code').set(H).send({ email: 'someone@gmail.com' });
+    const staff = await request(app).post('/api/auth/request-code').set(H).send({ email: 'dccas.office@gmail.com' });
+    expect(nobody.status).toBe(staff.status);
+    expect(nobody.body).toEqual(staff.body);
+    expect(nobody.body).toEqual({ sent: true, expiresIn: 600 });
+    // Only the account got an email; the outside address got nothing, and no account.
+    expect(ctx.sent.map((m) => m.to)).toEqual(['dccas.office@gmail.com']);
+    for (let i = 0; i < 2; i++) await request(app).post('/api/auth/request-code').set(H).send({ email: 'someone@gmail.com' });
+    const fourth = await request(app).post('/api/auth/request-code').set(H).send({ email: 'someone@gmail.com' });
+    expect(fourth.body.error).toBe('too_many_codes'); // the same limits as an account
+    const guess = await request(app).post('/api/auth/verify').set(H).send({ email: 'someone@gmail.com', code: '123456' });
+    expect(guess.body.error).toBe('code_wrong');
+    expect((await ctx.db.query("SELECT 1 FROM users WHERE email = 'someone@gmail.com'")).rowCount).toBe(0);
   });
 
   it('holds accounts for every UB domain in the database too, and nothing else', async () => {
