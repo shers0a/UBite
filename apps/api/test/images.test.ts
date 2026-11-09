@@ -5,7 +5,8 @@ import request from 'supertest';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { checkImage, MAX_INPUT_PIXELS, prepareReceipt, sniffImage } from '../src/services/receipt-image';
-import { JobLimiter } from '../src/services/pool';
+import { createPool, JobLimiter } from '../src/services/pool';
+import { loadConfig } from '../src/config';
 import { appFor, lastCode, testContext, tinyJpeg, type TestCtx } from './helpers';
 
 const H = { 'X-UBite': '1' };
@@ -150,5 +151,46 @@ describe('the upload routes', () => {
     await staff.put(`/api/staff/dishes/${id}/photo`).set(H).attach('photo', await tinyJpeg(), 'p.jpg').expect(200);
     const stored = await ctx.db.query<{ mime: string }>('SELECT mime FROM dish_photos WHERE dish_id = $1', [id]);
     expect(stored.rows[0].mime).toBe('image/webp');
+  });
+});
+
+describe('the OCR worker pool (OCR_WORKERS)', () => {
+  it('defaults to two workers, one per vCPU of the UB VM', () => {
+    expect(loadConfig({ NODE_ENV: 'test' }).OCR_WORKERS).toBe(2);
+    expect(loadConfig({ NODE_ENV: 'test', OCR_WORKERS: '1' }).OCR_WORKERS).toBe(1);
+    expect(() => loadConfig({ NODE_ENV: 'test', OCR_WORKERS: '0' })).toThrow(/OCR_WORKERS/);
+  });
+
+  it('creates workers only when needed, never more than its size, and reuses them', async () => {
+    let made = 0;
+    let busy = 0;
+    let peak = 0;
+    const pool = createPool(2, async () => ({ id: ++made }));
+    const seen: number[] = [];
+    const job = () => pool.use(async (w) => {
+      busy++;
+      peak = Math.max(peak, busy);
+      await new Promise((r) => setTimeout(r, 10));
+      busy--;
+      seen.push(w.id);
+    });
+    await job();
+    expect(pool.created).toBe(1);
+    await Promise.all([job(), job(), job(), job(), job(), job()]);
+    expect(pool.created).toBe(2);
+    expect(peak).toBe(2);
+    expect(new Set(seen)).toEqual(new Set([1, 2]));
+  });
+
+  it('a worker that fails to start frees its place for the next try', async () => {
+    let attempts = 0;
+    const pool = createPool(1, async () => {
+      attempts++;
+      if (attempts === 1) throw new Error('no language data');
+      return { ok: true };
+    });
+    await expect(pool.use(async () => 'never')).rejects.toThrow('no language data');
+    await expect(pool.use(async (w) => w.ok)).resolves.toBe(true);
+    expect(pool.created).toBe(1);
   });
 });

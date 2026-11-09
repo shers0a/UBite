@@ -17,7 +17,7 @@ export async function createContext(cfg: Config = loadConfig()): Promise<Ctx> {
     mail: createMailer(cfg, log),
     push: createPusher(cfg, log),
     receipts: createTesseractReader(cfg, log),
-    images: new JobLimiter(2, 8),
+    images: new JobLimiter(cfg.OCR_WORKERS, 8),
     now: () => new Date(),
     defer: (work) => { work.catch((e) => log.error({ err: e?.message }, 'deferred work failed')); },
   };

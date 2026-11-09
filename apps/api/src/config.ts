@@ -49,6 +49,9 @@ const schema = z.object({
   /** Tesseract language data directory; empty downloads it once to the cache. */
   OCR_LANG_PATH: optional,
   OCR_CACHE_PATH: z.string().default('.data/tesseract'),
+  /** Tesseract workers, and how many photos are decoded or read at once (ctx.images). One per
+   *  vCPU: two on the UB VM. Each worker adds roughly 100-150 MB while it reads. */
+  OCR_WORKERS: z.coerce.number().int().min(1).max(8).default(2),
 
   PRIVACY_CONTROLLER: optional,
   PRIVACY_CONTACT_EMAIL: optional,

@@ -5,6 +5,7 @@
 import crypto from 'node:crypto';
 import type { Logger } from 'pino';
 import type { Config } from '../config';
+import { createPool } from './pool';
 import { prepareReceipt } from './receipt-image';
 
 export interface ReceiptReader {
@@ -303,29 +304,25 @@ export function hashReceipt(identity: string): string {
 
 /* ── Tesseract ────────────────────────────────────────────────────────────────────────── */
 
+/** OCR_WORKERS Tesseract workers (two by default, one per vCPU of the UB VM), created on first
+ *  need. A photo's three preparations are read in parallel across them, so one scan alone takes
+ *  about half as long, and two scans at once (the most ctx.images lets through) keep both busy.
+ *  Each worker holds the Romanian model and a WebAssembly heap: roughly 100-150 MB while reading. */
 export function createTesseractReader(cfg: Config, log: Logger): ReceiptReader {
-  let worker: Promise<any> | null = null;
-  const getWorker = () => {
-    if (!worker) {
-      worker = (async () => {
-        const { createWorker } = await import('tesseract.js');
-        return createWorker('ron', 1, {
-          ...(cfg.OCR_LANG_PATH ? { langPath: cfg.OCR_LANG_PATH, gzip: false } : {}),
-          cachePath: cfg.OCR_CACHE_PATH,
-        });
-      })().catch((e) => { worker = null; throw e; });
-    }
-    return worker;
-  };
+  const workers = createPool(cfg.OCR_WORKERS, async () => {
+    const { createWorker } = await import('tesseract.js');
+    return createWorker('ron', 1, {
+      ...(cfg.OCR_LANG_PATH ? { langPath: cfg.OCR_LANG_PATH, gzip: false } : {}),
+      cachePath: cfg.OCR_CACHE_PATH,
+    });
+  });
   return {
     async read(image) {
       const sharp = (await import('sharp')).default;
       let prepared: Buffer[] = [];
       try {
         prepared = await prepareReceipt(sharp, image);
-        const w = await getWorker();
-        const texts: string[] = [];
-        for (const p of prepared) texts.push(String((await w.recognize(p)).data.text || ''));
+        const texts = await Promise.all(prepared.map((p) => workers.use(async (w) => String((await w.recognize(p)).data.text || ''))));
         return texts.join('\f');
       } catch (e: any) {
         log.warn({ err: e?.message }, 'receipt OCR failed');
