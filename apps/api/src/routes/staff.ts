@@ -76,7 +76,7 @@ export function staffRoutes(ctx: Ctx) {
   });
 
   /** One photo per catalogue entry, taken once (docs/05) — stored small, as WebP. */
-  r.put('/staff/dishes/:id/photo', limits.upload, upload.single('photo'), async (req, res) => {
+  r.put('/staff/dishes/:id/photo', limits.staffPhoto, upload.single('photo'), async (req, res) => {
     const id = parse(z.string().uuid(), req.params.id);
     if (!req.file) throw new HttpError(422, 'no_image');
     const sharp = (await import('sharp')).default;

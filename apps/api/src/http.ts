@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { z } from 'zod';
 import type { Role } from '@ubite/shared';
 import { HttpError } from './context';
@@ -38,14 +38,35 @@ export function parse<T extends z.ZodTypeAny>(schema: T, value: unknown): z.infe
 export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const uuid = z.string().uuid();
 
+/* Who a limit counts. UB students share very few public addresses (eduroam, the faculties' NAT),
+   so an IP is a whole lecture hall: wherever a session exists the limit is the account's own, and
+   only anonymous requests are counted by IP (an IPv6 /56, ipKeyGenerator). */
+const byIp = (req: Request) => `ip:${ipKeyGenerator(req.ip ?? '')}`;
+export const accountOrIp = (req: Request) => (req.user ? `user:${req.user.id}` : byIp(req));
+/** Sign-in has no session yet: one address from one IP, so a student retrying never uses up
+ *  the attempts of the others behind the same NAT. The database caps each address on its own. */
+export const addressOnIp = (req: Request) =>
+  `${byIp(req)}|${String((req.body as { email?: unknown } | undefined)?.email ?? '').trim().toLowerCase().slice(0, 200)}`;
+
+const limiter = (windowMs: number, limit: number, keyGenerator: (req: Request) => string) =>
+  rateLimit({ windowMs, limit, keyGenerator, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } });
+
 /** Rate limits on authentication, wait reports and receipt uploads (docs/04 Security). */
 export const limits = {
-  auth: rateLimit({ windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
-  report: rateLimit({ windowMs: 60 * 60_000, limit: 6, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
-  upload: rateLimit({ windowMs: 60 * 60_000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
-  feedback: rateLimit({ windowMs: 60 * 60_000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
-  analytics: rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
-  redeem: rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'rate_limited' } }),
+  authAddress: limiter(15 * 60_000, 20, addressOnIp),
+  /** A NAT full of students signing in at lunch fits; one machine trying address after address does not. */
+  authIp: limiter(15 * 60_000, 200, byIp),
+  report: limiter(60 * 60_000, 6, accountOrIp),
+  feedback: limiter(60 * 60_000, 10, accountOrIp),
+  pushTest: limiter(60 * 60_000, 10, accountOrIp),
+  /** Photographing a receipt: each scan decodes a photo and runs OCR (ctx.images). */
+  scan: limiter(60 * 60_000, 20, accountOrIp),
+  /** Confirming a draft, or typing a receipt. */
+  confirm: limiter(60 * 60_000, 30, accountOrIp),
+  staffPhoto: limiter(60 * 60_000, 60, accountOrIp),
+  /** Anonymous by design (a beacon without a cookie): per IP. */
+  analytics: limiter(60_000, 120, byIp),
+  redeem: limiter(60_000, 30, accountOrIp),
 };
 
 export function langOf(req: Request): 'ro' | 'en' {

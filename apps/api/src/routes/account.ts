@@ -81,12 +81,12 @@ export function accountRoutes(ctx: Ctx) {
   const loyaltyOn = (_req: any, _res: any, next: any) => (ctx.cfg.FEATURE_LOYALTY ? next() : next(new HttpError(404, 'feature_off')));
 
   /* ── Auth ── */
-  r.post('/auth/request-code', limits.auth, async (req, res) => {
+  r.post('/auth/request-code', limits.authIp, limits.authAddress, async (req, res) => {
     const body = parse(z.object({ email: z.string().max(200) }), req.body);
     res.json(await requestCode(ctx, body.email, langOf(req)));
   });
 
-  r.post('/auth/verify', limits.auth, async (req, res) => {
+  r.post('/auth/verify', limits.authIp, limits.authAddress, async (req, res) => {
     const body = parse(z.object({ email: z.string().max(200), code: z.string().regex(/^\d{6}$/) }), req.body);
     const user = await verifyCode(ctx, body.email, body.code, langOf(req));
     const session = await createSession(ctx.db, user.id, ctx.now());
@@ -161,7 +161,7 @@ export function accountRoutes(ctx: Ctx) {
 
   // "Send me a test": proves the whole chain on this phone — permission, subscription, VAPID,
   // the push service, the service worker. Rate-limited like feedback.
-  r.post('/me/push/test', student, limits.feedback, async (req, res) => {
+  r.post('/me/push/test', student, limits.pushTest, async (req, res) => {
     if (!ctx.push.enabled) throw new HttpError(503, 'push_off', 'Push is not configured on the server.');
     const reached = await ctx.push.sendToUsers(ctx.db, [req.user!.id], (locale) => (locale === 'en'
       ? { title: 'UBite', body: 'Notifications work on this phone.', url: '/account#notifications', tag: 'test' }
@@ -213,7 +213,7 @@ export function accountRoutes(ctx: Ctx) {
     res.set('Cache-Control', 'private, no-store').json(await loyaltyState(ctx.db, req.user!.id, localDate(ctx.now())));
   });
 
-  r.post('/me/visits/scan', student, loyaltyOn, limits.upload, upload.single('receipt'), async (req, res) => {
+  r.post('/me/visits/scan', student, loyaltyOn, limits.scan, upload.single('receipt'), async (req, res) => {
     if (!req.file) throw new HttpError(422, 'no_image', 'Attach a photo of the receipt.');
     const photo = req.file.buffer;
     req.file.buffer = Buffer.alloc(0);
@@ -250,7 +250,7 @@ export function accountRoutes(ctx: Ctx) {
     res.json(draft);
   });
 
-  r.post('/me/visits', student, loyaltyOn, limits.upload, async (req, res) => {
+  r.post('/me/visits', student, loyaltyOn, limits.confirm, async (req, res) => {
     const body = parse(z.union([
       z.object({ draftToken: z.string().max(4000) }),
       z.object({ manual: z.object({ receiptNumber: z.string().regex(/^\s*\d{1,8}\s*$/), totalBani: z.number().int().min(0).max(100_000) }) }),
