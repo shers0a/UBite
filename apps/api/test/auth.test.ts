@@ -120,3 +120,31 @@ describe('the daily cap on sign-in emails', () => {
     await ask(`cap${n}.8@s.unibuc.ro`).expect(200);
   });
 });
+
+describe('when the email provider fails', () => {
+  it('says to try again shortly (503), keeps nothing of the code, and alerts once an hour', async () => {
+    let down = true;
+    const send = ctx.mail.send.bind(ctx.mail);
+    ctx.mail = {
+      enabled: true,
+      async send(to, subject, text) {
+        if (down && to !== 'ops@unibuc.ro') throw Object.assign(new Error('Daily sending quota exceeded'), { responseCode: 554 });
+        return send(to, subject, text);
+      },
+    };
+    const r = await ask();
+    expect(r.status).toBe(503);
+    expect(r.body.error).toBe('mail_failed');
+    expect(r.headers['retry-after']).toBe('120');
+    expect((await ask()).status).toBe(503);
+    const alerts = ctx.sent.filter((m) => m.to === 'ops@unibuc.ro');
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].text).toMatch(/554 Daily sending quota exceeded/);
+    expect((await ctx.db.query('SELECT 1 FROM auth_codes WHERE email = $1', [EMAIL])).rowCount).toBe(0);
+    expect((await ctx.db.query("SELECT n FROM daily_counters WHERE key = 'signin-emails'")).rows[0]).toMatchObject({ n: 0 });
+    // Back up: the failed sends did not use up the address's three codes.
+    down = false;
+    for (let i = 0; i < 3; i++) { later(1); await ask().expect(200); }
+    await guess(lastCode(ctx, EMAIL)).expect(200);
+  });
+});

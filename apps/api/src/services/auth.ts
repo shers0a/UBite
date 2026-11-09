@@ -9,7 +9,7 @@ import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
 import { alert, bump, count, unbump } from './alerts';
-import { claimRun } from './config-store';
+import { claimEvery, claimRun } from './config-store';
 import { retireReceipts } from './loyalty';
 import { codeEmail } from './mail';
 
@@ -103,14 +103,35 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   if (!demo) await takeEmailPlace(ctx);
 
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
-  await ctx.db.query(
-    `INSERT INTO auth_codes (email, code_hash, created_at, expires_at) VALUES ($1, $2, $3, $3::timestamptz + make_interval(secs => $4))`,
+  const row = await ctx.db.query<{ id: number }>(
+    `INSERT INTO auth_codes (email, code_hash, created_at, expires_at) VALUES ($1, $2, $3, $3::timestamptz + make_interval(secs => $4))
+     RETURNING id`,
     [email, sha256(`${ctx.cfg.SESSION_SECRET}|${email}|${code}`), ctx.now(), CODE_TTL_SECONDS],
   );
   if (demo) return { sent: true as const, expiresIn: CODE_TTL_SECONDS, demoCode: code };
   const mail = codeEmail(code, lang);
-  await ctx.mail.send(email, mail.subject, mail.text);
+  try {
+    await ctx.mail.send(email, mail.subject, mail.text);
+  } catch (e) {
+    await mailFailed(ctx, row.rows[0].id, e);
+  }
   return { sent: true as const, expiresIn: CODE_TTL_SECONDS };
+}
+
+/** The provider refused or could not be reached (its quota, an SMTP error, the network): the
+ *  code never left, so it is not one of the address's three, nor one of today's emails. The
+ *  student is told to try again shortly; the team hears once an hour at most. */
+async function mailFailed(ctx: Ctx, codeId: number, e: unknown): Promise<never> {
+  const err = e as { message?: string; code?: string; responseCode?: number };
+  ctx.log.error({ err: err?.message, code: err?.code, responseCode: err?.responseCode }, 'sign-in email failed');
+  await ctx.db.query('DELETE FROM auth_codes WHERE id = $1', [codeId]).catch(() => {});
+  await unbump(ctx.db, localDate(ctx.now()), EMAILS_KEY).catch(() => {});
+  if (await claimEvery(ctx.db, 'alert:mail-failed', ctx.now(), 3600).catch(() => false)) {
+    await alert(ctx, 'Emailurile de intrare nu pleacă',
+      `Furnizorul de email a refuzat un cod de intrare: ${err?.responseCode ?? err?.code ?? ''} ${err?.message ?? ''}`.trim()
+      + '. Studenții văd „încearcă din nou peste câteva minute”. Verifică SMTP_URL și cota Brevo.');
+  }
+  throw new HttpError(503, 'mail_failed', 'Sign-in emails are not going out right now. Try again in a few minutes.', { retryAfterSeconds: 120 });
 }
 
 type CodeRow = { id: number; code_hash: string; attempts: number; last_attempt_at: Date | null; consumed_at: Date | null };

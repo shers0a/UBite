@@ -159,6 +159,7 @@ export const ro = {
   'signin.err.rate_limited': 'Prea multe încercări de pe acest dispozitiv. Încearcă din nou peste 15 minute.',
   'signin.err.mail_unavailable': 'Nu putem trimite emailuri acum. Încearcă mai târziu.',
   'signin.err.mail_quota': 'Azi nu mai putem trimite coduri de intrare. Încearcă din nou mâine.',
+  'signin.err.mail_failed': 'Emailurile cu cod de intrare nu pleacă acum. Încearcă din nou peste câteva minute.',
   'signin.welcome': 'Ai intrat în cont.',
 
   // Feedback
@@ -490,6 +491,7 @@ export const en: Record<StringKey, string> = {
   'signin.err.rate_limited': 'Too many attempts from this device. Try again in 15 minutes.',
   'signin.err.mail_unavailable': 'We cannot send email right now. Try later.',
   'signin.err.mail_quota': 'We cannot send more sign-in codes today. Try again tomorrow.',
+  'signin.err.mail_failed': 'Sign-in emails are not going out right now. Try again in a few minutes.',
   'signin.welcome': 'You are signed in.',
 
   'feedback.title': 'Your opinion',
