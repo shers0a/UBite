@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { addDays, rewardCodeAt, rewardDigits, rewardStep } from '@ubite/shared';
 import { checkReceiptWindow, loyaltyState, recordVisit, redeemAtTill } from '../src/services/loyalty';
 import { eraseAccount } from '../src/services/auth';
-import { hashReceipt, parseReceipt, receiptIdentity } from '../src/services/receipt';
+import { hashReceipt, parseReceipt, receiptIdentity, receiptRef, typedReceiptIdentity } from '../src/services/receipt';
 import { testContext, type TestCtx } from './helpers';
 
 let ctx: TestCtx;
@@ -187,5 +187,136 @@ ID UNIC: 8000123456`;
     const b = hashReceipt(receiptIdentity({ receiptNumber: '421', date: '2026-10-13' }));
     expect(a).toBe(b);
     expect(a).not.toBe(hashReceipt(receiptIdentity({ receiptNumber: '421', date: '2026-10-14' })));
+  });
+});
+
+/* ── Typed receipts (docs/09 DEGRADATION): one a week, never the free meal, one receipt once ── */
+
+/** A receipt photographed and read: the till's series is in its hash. */
+const scanned = (userId: string, day: string, number: string, totalBani: number | null, deviceId = 'DA4400012345') =>
+  recordVisit(ctx, {
+    userId, occurredOn: day, receiptIdentity: receiptIdentity({ receiptNumber: number, date: day, deviceId }),
+    receiptRef: receiptRef({ receiptNumber: number, date: day }), totalBani, items: null, source: 'receipt_ocr',
+  });
+
+/** A receipt typed by hand: day, number and total, no series. */
+const typed = (userId: string, day: string, number: string, totalBani: number) =>
+  recordVisit(ctx, {
+    userId, occurredOn: day, receiptIdentity: typedReceiptIdentity({ receiptNumber: number, date: day, totalBani }),
+    receiptRef: receiptRef({ receiptNumber: number, date: day }), totalBani, items: null, source: 'receipt_manual',
+  });
+
+describe('a typed receipt, at most one in any seven days', () => {
+  it('refuses a second inside the week and takes one again seven days later', async () => {
+    expect((await typed(student, '2026-10-13', '57', 1700)).counted).toBe(true);
+    await expect(typed(student, '2026-10-14', '58', 1700)).rejects.toMatchObject({ status: 429, code: 'manual_weekly_limit', extra: { nextOn: '2026-10-20' } });
+    await expect(typed(student, '2026-10-19', '59', 1700)).rejects.toMatchObject({ code: 'manual_weekly_limit' });
+    expect((await typed(student, '2026-10-20', '60', 1700)).counted).toBe(true);
+    // Scanned receipts are not limited, and the limit is each student's own.
+    expect((await scanned(student, '2026-10-21', '61', 1700)).counted).toBe(true);
+    expect((await typed(other, '2026-10-21', '62', 1700)).counted).toBe(true);
+  });
+
+  it('does not use up the week on a typed receipt that was refused as a duplicate', async () => {
+    await scanned(other, '2026-10-13', '57', 1700);
+    await expect(typed(student, '2026-10-13', '57', 1700)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+    expect((await typed(student, '2026-10-14', '12', 900)).counted).toBe(true);
+  });
+});
+
+describe('a typed receipt never issues a free meal', () => {
+  const four = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08'];
+
+  it('counts as the fifth visit, and the next scanned receipt issues the reward', async () => {
+    for (const [i, d] of four.entries()) await scanned(student, d, String(10 + i), 1700);
+    const fifth = await typed(student, '2026-10-09', '99', 1700);
+    expect(fifth).toMatchObject({ counted: true, rewardIssued: false });
+    expect(fifth.loyalty).toMatchObject({ countedVisits: 5, filled: 5, rewardPending: true, rewards: [] });
+
+    const next = await scanned(student, '2026-10-12', '20', 1700);
+    expect(next).toMatchObject({ counted: true, rewardIssued: true });
+    expect(next.loyalty.rewards).toHaveLength(1);
+    expect(next.loyalty.rewardPending).toBe(false);
+    expect(next.loyalty.countedVisits).toBe(6);
+    // One reward per five points, never two for the same five.
+    const after = await scanned(student, '2026-10-13', '21', 1700);
+    expect(after.rewardIssued).toBe(false);
+    expect((await ctx.db.query('SELECT 1 FROM loyalty_rewards WHERE user_id = $1', [student])).rowCount).toBe(1);
+  });
+
+  it('a scanned receipt later the same day issues it too, though it earns no point', async () => {
+    for (const [i, d] of four.entries()) await scanned(student, d, String(10 + i), 1700);
+    await typed(student, '2026-10-09', '99', 1700);
+    const sameDay = await scanned(student, '2026-10-09', '100', 900);
+    expect(sameDay).toMatchObject({ counted: false, rewardIssued: true });
+    expect(sameDay.loyalty).toMatchObject({ countedVisits: 5, filled: 5, rewardPending: false });
+  });
+
+  it('the cashier confirming the card issues it as well', async () => {
+    for (const [i, d] of four.entries()) await scanned(student, d, String(10 + i), 1700);
+    await typed(student, '2026-10-09', '99', 1700);
+    ctx.setNow('2026-10-12T09:40:00Z');
+    expect(await redeemAtTill(ctx, `UBITE:C:${student}`, staff)).toMatchObject({ kind: 'card', status: 'ok' });
+    const s = await loyaltyState(ctx.db, student, '2026-10-12');
+    expect(s.rewards).toHaveLength(1);
+    expect(s.rewardPending).toBe(false);
+  });
+
+  it('a typed receipt that earns a point past the fifth still issues nothing', async () => {
+    for (const [i, d] of four.entries()) await scanned(student, d, String(10 + i), 1700);
+    await typed(student, '2026-10-09', '99', 1700);
+    const later = await typed(student, '2026-10-16', '98', 1700);
+    expect(later).toMatchObject({ counted: true, rewardIssued: false });
+    expect(later.loyalty).toMatchObject({ countedVisits: 6, rewardPending: true });
+    expect((await scanned(student, '2026-10-19', '30', 1700)).rewardIssued).toBe(true);
+  });
+});
+
+describe('one receipt counts once, scanned or typed, whichever comes first', () => {
+  it('a typed copy of a scanned receipt is refused, for anyone', async () => {
+    await scanned(student, '2026-10-13', '57', 1700);
+    await expect(typed(other, '2026-10-13', '0057', 1700)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+  });
+
+  it('a scan of a receipt someone already typed is refused', async () => {
+    await typed(student, '2026-10-13', '57', 1700);
+    await expect(scanned(other, '2026-10-13', '57', 1700)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+  });
+
+  it('a scan whose total could not be read clashes with a typed receipt of that number, both ways', async () => {
+    await typed(student, '2026-10-13', '57', 1700);
+    await expect(scanned(other, '2026-10-13', '57', null)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+    await scanned(other, '2026-10-13', '58', null);
+    const third = await user('maria.pop@s.unibuc.ro');
+    await expect(typed(third, '2026-10-13', '58', 2400)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+  });
+
+  it('two tills, one number: different totals or different series are different receipts', async () => {
+    await scanned(student, '2026-10-13', '57', 1700, 'DA4400012345');
+    expect((await scanned(other, '2026-10-13', '57', 1700, 'ED4747386469')).counted).toBe(true);
+    const third = await user('maria.pop@s.unibuc.ro');
+    expect((await typed(third, '2026-10-13', '57', 2650)).counted).toBe(true);
+    // The same number on another day is another receipt.
+    const fourth = await user('dan.pop@s.unibuc.ro');
+    expect((await typed(fourth, '2026-10-14', '57', 1700)).counted).toBe(true);
+  });
+
+  it('keeps refusing it, either way, after the first owner erases the account', async () => {
+    await scanned(student, '2026-10-13', '57', 1700);
+    await typed(other, '2026-10-13', '58', 900);
+    await eraseAccount(ctx, student);
+    await eraseAccount(ctx, other);
+    const a = await user('maria.pop@s.unibuc.ro');
+    const b = await user('dan.pop@s.unibuc.ro');
+    await expect(typed(a, '2026-10-13', '57', 1700)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+    await expect(scanned(b, '2026-10-13', '58', 900)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+    await expect(scanned(b, '2026-10-13', '58', null)).rejects.toMatchObject({ code: 'duplicate_receipt' });
+    expect((await scanned(b, '2026-10-13', '58', 1100)).counted).toBe(true);
+  });
+
+  it('cannot be raced by two students at once', async () => {
+    const results = await Promise.allSettled([scanned(student, '2026-10-13', '57', 1700), typed(other, '2026-10-13', '57', 1700)]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({ reason: { code: 'duplicate_receipt' } });
   });
 });

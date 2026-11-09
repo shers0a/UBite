@@ -36,6 +36,9 @@ const schema = z.object({
   FEATURE_LOYALTY: bool(true),
   FEATURE_WASTE: bool(false),
   FEATURE_PREDICTION: bool(true),
+  /** Typing a receipt's number and total when the photo cannot be read (docs/09 DEGRADATION):
+   *  one typed receipt every seven days, never the one that issues a free meal. */
+  FEATURE_MANUAL_RECEIPTS: bool(true),
 
   /** Accounts created on first start so somebody can sign in to the staff tools. */
   BOOTSTRAP_TECH_ADMINS: list,
@@ -95,5 +98,6 @@ export function features(cfg: Config) {
     loyalty: cfg.FEATURE_LOYALTY,
     waste: cfg.FEATURE_WASTE,
     prediction: cfg.FEATURE_PREDICTION,
+    manualReceipts: cfg.FEATURE_LOYALTY && cfg.FEATURE_MANUAL_RECEIPTS,
   };
 }

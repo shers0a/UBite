@@ -277,6 +277,7 @@ export const ro = {
   'card.how.3': 'La cinci buline, a șasea masă e gratuită. Arată codul la casă.',
   'card.offline': 'Codul merge și fără internet.',
   'card.soft': 'Masa gratuită se acordă de cantină, după acordul DCCAS.',
+  'card.pending': 'Ai cinci buline. Masa gratuită apare după următorul bon fotografiat sau după ce casierul îți scanează cardul.',
 
   // Add a visit
   'visit.title': 'Adaugă o vizită',
@@ -301,7 +302,10 @@ export const ro = {
   'visit.recorded': 'Vizită adăugată · {filled} din 5',
   'visit.recordedNoPoint': 'Bon adăugat. Punctul de azi îl aveai deja.',
   'visit.reward': 'Ai o masă gratuită. Arată codul la casă.',
+  'visit.rewardPending': 'Vizită adăugată · 5 din 5. Masa gratuită apare după următorul bon fotografiat.',
   'visit.err.duplicate_receipt': 'Bonul acesta a fost deja adăugat.',
+  'visit.err.manual_weekly_limit': 'Poți scrie de mână un singur bon la șapte zile. Pe acesta fotografiază-l.',
+  'visit.err.manual_off': 'Bonurile nu se mai pot scrie de mână. Fotografiază bonul.',
   'visit.err.receipt_not_today': 'Bonul nu e de azi. Adaugă bonul în ziua în care ai mâncat.',
   'visit.err.receipt_outside_hours': 'Ora de pe bon e în afara programului cantinei.',
   'visit.err.receipt_other_shop': 'Bonul nu pare să fie de la cantină. Se adaugă doar bonurile cantinei.',
@@ -596,6 +600,7 @@ export const en: Record<StringKey, string> = {
   'card.how.3': 'At five dots, the sixth meal is free. Show the code at the till.',
   'card.offline': 'The code works without internet too.',
   'card.soft': 'The free meal is given by the canteen, as agreed with DCCAS.',
+  'card.pending': 'You have five dots. The free meal comes with the next receipt you photograph, or when the cashier scans your card.',
 
   'visit.title': 'Add a visit',
   'visit.intro': 'Ask for the receipt at the till and photograph it. Each receipt is a dot on your loyalty card.',
@@ -619,7 +624,10 @@ export const en: Record<StringKey, string> = {
   'visit.recorded': 'Visit added · {filled} of 5',
   'visit.recordedNoPoint': 'Receipt added. You already had today’s dot.',
   'visit.reward': 'You have a free meal. Show the code at the till.',
+  'visit.rewardPending': 'Visit added · 5 of 5. The free meal comes with the next receipt you photograph.',
   'visit.err.duplicate_receipt': 'This receipt was already added.',
+  'visit.err.manual_weekly_limit': 'You can type one receipt every seven days. Photograph this one.',
+  'visit.err.manual_off': 'Receipts can no longer be typed in. Photograph the receipt.',
   'visit.err.receipt_not_today': 'The receipt is not from today. Add it on the day you ate.',
   'visit.err.receipt_outside_hours': 'The time on the receipt is outside the canteen’s hours.',
   'visit.err.receipt_other_shop': 'This does not look like a canteen receipt. Only the canteen’s receipts count.',

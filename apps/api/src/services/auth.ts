@@ -8,6 +8,7 @@ import { isUbEmail, UB_DOMAIN } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import type { Queryable } from '../db/index';
+import { retireReceipts } from './loyalty';
 import { codeEmail } from './mail';
 
 export const CODE_TTL_SECONDS = 600;
@@ -134,10 +135,7 @@ export async function endSession(db: Queryable, token: string) {
  *  but detach; the loyalty ledger goes; receipt hashes stay, anonymously, against duplicates. */
 export async function eraseAccount(ctx: Ctx, userId: string) {
   await ctx.db.tx(async (q) => {
-    await q.query(
-      `INSERT INTO retired_receipt_hashes (receipt_hash)
-       SELECT receipt_hash FROM visits WHERE user_id = $1 AND receipt_hash IS NOT NULL ON CONFLICT DO NOTHING`, [userId],
-    );
+    await retireReceipts(q, userId);
     await q.query('DELETE FROM visits WHERE user_id = $1', [userId]);
     await q.query('DELETE FROM loyalty_rewards WHERE user_id = $1', [userId]);
     await q.query('DELETE FROM favorites WHERE user_id = $1', [userId]);

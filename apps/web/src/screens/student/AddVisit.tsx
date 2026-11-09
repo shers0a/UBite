@@ -61,6 +61,10 @@ export function AddVisit() {
     if (r.rewardIssued) {
       toast(t('visit.reward'), { tone: 'success', icon: 'gift' });
       navigate('/card');
+    } else if (r.counted && r.loyalty.rewardPending) {
+      // A typed receipt completed the card: the free meal waits for a scanned one (docs/09).
+      toast(t('visit.rewardPending'), { tone: 'success', icon: 'circle-check' });
+      navigate('/card');
     } else {
       toast(r.counted ? t('visit.recorded', { filled: r.loyalty.filled }) : t('visit.recordedNoPoint'), { tone: 'success', icon: 'circle-check' });
       navigate('/');
@@ -149,9 +153,11 @@ export function AddVisit() {
               <Button fullWidth size="lg" iconLeft="camera" loading={step === 'reading'} disabled={!online}
                 onClick={() => fileRef.current?.click()}>{step === 'reading' ? t('visit.reading') : t('visit.take')}</Button>
             </div>
-            <div style={{ marginTop: 'var(--space-2)' }}>
-              <button type="button" className="ub-linkbtn" onClick={() => { setStep('manual'); setError(null); }} disabled={!online}>{t('visit.manual')}</button>
-            </div>
+            {status.data?.features.manualReceipts !== false && (
+              <div style={{ marginTop: 'var(--space-2)' }}>
+                <button type="button" className="ub-linkbtn" onClick={() => { setStep('manual'); setError(null); }} disabled={!online}>{t('visit.manual')}</button>
+              </div>
+            )}
             <p style={{ marginTop: 12, fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{t('visit.privacy')}</p>
           </>
         )}

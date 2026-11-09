@@ -292,9 +292,26 @@ export function readsAsDate(read: string, date: string): boolean {
  *  add nothing the day and the till do not already say, and every extra field is one more chance
  *  for two scans of one receipt to disagree. */
 export function receiptIdentity(p: { receiptNumber: string; date: string | null; deviceId?: string | null }): string {
-  const n = String(Number(p.receiptNumber.replace(/\D/g, '')) || p.receiptNumber.trim());
   const device = p.deviceId ? digits(p.deviceId.toUpperCase()).replace(/[^0-9A-Z]/g, '') : '';
-  return ['v2', p.date || '', device, n].join('|');
+  return ['v2', p.date || '', device, receiptNumberKey(p.receiptNumber)].join('|');
+}
+
+/** "0057", "57" and " 57 " are one receipt number. */
+function receiptNumberKey(raw: string): string {
+  return String(Number(raw.replace(/\D/g, '')) || raw.trim());
+}
+
+/** A typed receipt has no till series: it is what the student copies off it, the day, the number
+ *  and the total. Two tills can print the same number on one day, rarely with the same total. */
+export function typedReceiptIdentity(p: { receiptNumber: string; date: string; totalBani: number }): string {
+  return ['v3-typed', p.date, receiptNumberKey(p.receiptNumber), String(p.totalBani)].join('|');
+}
+
+/** The day and the number: what a scan and a typed entry of one receipt both know for sure. Not
+ *  unique on its own (every till restarts its numbers each day); recordVisit adds the total and
+ *  uses it to stop one receipt counting twice, once scanned and once typed, whichever comes first. */
+export function receiptRef(p: { receiptNumber: string; date: string }): string {
+  return crypto.createHash('sha256').update(`ubite-receipt-ref|${p.date}|${receiptNumberKey(p.receiptNumber)}`).digest('hex');
 }
 
 /** docs/05: SHA-256 of the normalised receipt identity. Global uniqueness sits on this. */

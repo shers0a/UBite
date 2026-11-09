@@ -11,7 +11,7 @@ import { HttpError } from '../context';
 import { SESSION_COOKIE, langOf, limits, parse, requireRole } from '../http';
 import { createSession, endSession, eraseAccount, requestCode, verifyCode } from '../services/auth';
 import { checkReceiptWindow, loyaltyState, recordVisit } from '../services/loyalty';
-import { matchFiscalCode, parseReceipt, receiptIdentity } from '../services/receipt';
+import { matchFiscalCode, parseReceipt, receiptIdentity, receiptRef, typedReceiptIdentity } from '../services/receipt';
 import { getCrowdingConfig } from '../services/config-store';
 import { checkImage } from '../services/receipt-image';
 
@@ -261,15 +261,19 @@ export function accountRoutes(ctx: Ctx) {
       const d = readDraft(ctx, body.draftToken);
       if (d.u !== req.user!.id) throw new HttpError(422, 'invalid_draft');
       await checkReceiptWindow(ctx, d.p.date, d.p.time);
+      const date = d.p.date || today;
       result = await recordVisit(ctx, {
-        userId: req.user!.id, occurredOn: today, receiptIdentity: receiptIdentity({ ...d.p, date: d.p.date || today }),
+        userId: req.user!.id, occurredOn: today, receiptIdentity: receiptIdentity({ ...d.p, date }),
+        receiptRef: receiptRef({ receiptNumber: d.p.receiptNumber, date }),
         totalBani: d.p.totalBani, items: d.p.items?.length ? d.p.items : null, source: 'receipt_ocr',
       });
     } else {
+      if (!ctx.cfg.FEATURE_MANUAL_RECEIPTS) throw new HttpError(404, 'manual_off', 'Typed receipts are switched off. Photograph the receipt.');
       await checkReceiptWindow(ctx, today, null);
+      const typed = { receiptNumber: body.manual.receiptNumber, date: today, totalBani: body.manual.totalBani };
       result = await recordVisit(ctx, {
-        userId: req.user!.id, occurredOn: today, receiptIdentity: receiptIdentity({ receiptNumber: body.manual.receiptNumber, date: today }),
-        totalBani: body.manual.totalBani, items: null, source: 'receipt_manual',
+        userId: req.user!.id, occurredOn: today, receiptIdentity: typedReceiptIdentity(typed), receiptRef: receiptRef(typed),
+        totalBani: typed.totalBani, items: null, source: 'receipt_manual',
       });
     }
     res.status(201).json(result);

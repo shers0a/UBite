@@ -17,6 +17,8 @@ export interface Features {
   loyalty: boolean;
   waste: boolean;
   prediction: boolean;
+  /** Typing a receipt's number and total, the OCR fallback (FEATURE_MANUAL_RECEIPTS). */
+  manualReceipts: boolean;
 }
 
 /* ── Catalogue and menu ─────────────────────────────────────────────────────────────────── */
@@ -181,6 +183,9 @@ export interface LoyaltyResponse {
   countedVisits: number;
   countedToday: boolean;
   rewards: Reward[];
+  /** Five points, no free meal yet: a typed receipt completed the card. The next visit that is
+   *  not typed (a scanned receipt, or the cashier confirming the card) issues it. */
+  rewardPending: boolean;
   redeemedCount: number;
   /** Payload of the card QR, generated on the phone. */
   cardId: string;

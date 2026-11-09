@@ -65,6 +65,9 @@ export function Card() {
           ) : (
             <Skeleton width="70%" height={18} />
           )}
+          {!reward && loyalty.data?.rewardPending && (
+            <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>{t('card.pending')}</p>
+          )}
 
           {reward && (
             <div style={{ marginTop: 'var(--space-5)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-3)', textAlign: 'center' }}>

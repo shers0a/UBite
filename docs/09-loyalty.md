@@ -41,11 +41,16 @@ The trade-off is OCR quality on thermal receipts, which is genuinely variable.
 | One point per calendar day | Unique index on `(user_id, occurred_on)` where counted |
 | Only during opening hours | Rejected outside Mon–Fri 11:30–17:00 |
 | One account per person | Email verified at a UB address (`…unibuc.ro`) |
-| A receipt counts once, globally | `receipt_hash` unique across all users |
+| A receipt counts once, globally | `receipt_hash` unique across all users; a typed receipt and a scan of it clash on day, number and total (`receipt_ref`), whichever comes first |
+| One typed receipt in any seven days | Checked under the student's lock; switched off entirely with `FEATURE_MANUAL_RECEIPTS=false` |
+| A typed receipt never issues a free meal | It can earn the fifth point; the reward is issued by the next visit that is not typed (a scanned receipt, or the cashier confirming the card) |
 | Points do not expire during the pilot | Simplicity; revisit afterwards |
 
 The first and fourth rules together defeat the obvious attacks: photographing one receipt
-repeatedly, sharing a receipt with friends, and farming points in a single visit.
+repeatedly, sharing a receipt with friends, and farming points in a single visit. A typed
+receipt proves nothing, since anyone can make up a number, so the typed-receipt rules keep the
+fallback from becoming a free-meal generator: at most one invented point a week, and never a
+free meal without a real receipt after it.
 
 ## Student flow
 

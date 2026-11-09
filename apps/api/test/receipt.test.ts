@@ -203,4 +203,47 @@ describe('adding a visit from a photo (docs/09, docs/18 "Add visit")', () => {
     expect(r.status).toBe(422);
     expect(r.body.error).toBe('receipt_not_today');
   });
+  it('a typed copy of a scanned receipt does not count for a second student, nor the other way round', async () => {
+    ctx = await testContext();
+    const ana = await student('ana.pop@s.unibuc.ro');
+    const draft = await scan(ana, DATECS).expect(200);
+    await ana.post('/api/me/visits').set(H).send({ draftToken: draft.body.token }).expect(201);
+    const ion = await student('ion.ionescu@s.unibuc.ro');
+    const copy = await ion.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '0057', totalBani: 2650 } });
+    expect(copy.status).toBe(409);
+    expect(copy.body.error).toBe('duplicate_receipt');
+
+    const maria = await student('maria.pop@s.unibuc.ro');
+    await maria.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '953', totalBani: 1550 } }).expect(201);
+    const dan = await student('dan.pop@s.unibuc.ro');
+    const scanned = await scan(dan, TREMOL).expect(200);
+    const late = await dan.post('/api/me/visits').set(H).send({ draftToken: scanned.body.token });
+    expect(late.status).toBe(409);
+    expect(late.body.error).toBe('duplicate_receipt');
+  });
+
+  it('takes one typed receipt in any seven days', async () => {
+    ctx = await testContext();
+    const ana = await student('ana.pop@s.unibuc.ro');
+    await ana.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '12', totalBani: 900 } }).expect(201);
+    ctx.setNow('2026-10-19T09:40:00Z'); // Monday, six days later
+    const again = await ana.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '13', totalBani: 900 } });
+    expect(again.status).toBe(429);
+    expect(again.body).toMatchObject({ error: 'manual_weekly_limit', nextOn: '2026-10-20' });
+    ctx.setNow('2026-10-20T09:40:00Z');
+    await ana.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '14', totalBani: 900 } }).expect(201);
+  });
+
+  it('typing a receipt can be switched off (FEATURE_MANUAL_RECEIPTS)', async () => {
+    ctx = await testContext({ FEATURE_MANUAL_RECEIPTS: 'false' });
+    const ana = await student('ana.pop@s.unibuc.ro');
+    const status = await ana.get('/api/status').expect(200);
+    expect(status.body.features).toMatchObject({ loyalty: true, manualReceipts: false });
+    const r = await ana.post('/api/me/visits').set(H).send({ manual: { receiptNumber: '12', totalBani: 900 } });
+    expect(r.status).toBe(404);
+    expect(r.body.error).toBe('manual_off');
+    // Photographing still works.
+    const draft = await scan(ana, DATECS).expect(200);
+    await ana.post('/api/me/visits').set(H).send({ draftToken: draft.body.token }).expect(201);
+  });
 });
