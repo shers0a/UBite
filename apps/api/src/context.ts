@@ -2,6 +2,7 @@ import type { Logger } from 'pino';
 import type { Config } from './config';
 import type { Db } from './db/index';
 import type { Mailer } from './services/mail';
+import type { JobLimiter } from './services/pool';
 import type { Pusher } from './services/push';
 import type { ReceiptReader } from './services/receipt';
 
@@ -13,6 +14,8 @@ export interface Ctx {
   mail: Mailer;
   push: Pusher;
   receipts: ReceiptReader;
+  /** Photo decoding and OCR: at most two at once, a short queue, then 503 (services/pool.ts). */
+  images: JobLimiter;
   /** The clock, injectable so tests can stand at 12:40 on a Tuesday. */
   now: () => Date;
   /** Work that may finish after the response: serverless hosts keep the instance alive for it. */

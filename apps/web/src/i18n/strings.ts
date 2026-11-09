@@ -308,6 +308,9 @@ export const ro = {
   'visit.err.closed': 'Bonul se adaugă în ziua mesei, în jurul programului cantinei.',
   'visit.err.draft_expired': 'A trecut prea mult timp. Fotografiază bonul din nou.',
   'visit.err.feature_off': 'Fidelitatea nu e încă pornită.',
+  'visit.err.unsupported_image': 'Fotografia trebuie să fie JPEG, PNG sau WebP. Fă poza din aplicație.',
+  'visit.err.image_too_large': 'Fotografia e prea mare. Fă poza din aplicație.',
+  'visit.err.busy': 'Citim multe bonuri chiar acum. Încearcă din nou peste câteva secunde.',
   'visit.offline': 'Ai nevoie de internet ca să adaugi bonul. Păstrează-l până revine semnalul.',
   'visit.signIn': 'Intră în cont ca să adaugi bonul.',
 
@@ -623,6 +626,9 @@ export const en: Record<StringKey, string> = {
   'visit.err.closed': 'Receipts are added on the day, around the canteen’s hours.',
   'visit.err.draft_expired': 'Too much time passed. Photograph the receipt again.',
   'visit.err.feature_off': 'Loyalty is not switched on yet.',
+  'visit.err.unsupported_image': 'The photo must be a JPEG, PNG or WebP. Take it from the app.',
+  'visit.err.image_too_large': 'The photo is too large. Take it from the app.',
+  'visit.err.busy': 'We are reading a lot of receipts right now. Try again in a few seconds.',
   'visit.offline': 'You need internet to add a receipt. Keep it until the signal is back.',
   'visit.signIn': 'Sign in to add a receipt.',
 

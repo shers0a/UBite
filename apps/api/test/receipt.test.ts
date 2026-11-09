@@ -2,9 +2,9 @@
    fiscal printers use, with the mistakes Tesseract really makes on thermal print (measured with
    scripts/ocr-bench.ts) — and the whole path through the API: photo, draft, confirm, counted. */
 import request from 'supertest';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { hashReceipt, matchFiscalCode, parseReceipt, readsAsDate, receiptIdentity } from '../src/services/receipt';
-import { appFor, lastCode, testContext, type TestCtx } from './helpers';
+import { appFor, lastCode, testContext, tinyJpeg, type TestCtx } from './helpers';
 
 const DATECS = `UNIVERSITATEA DIN BUCURESTI
 CANTINA M. KOGALNICEANU
@@ -149,7 +149,9 @@ describe('adding a visit from a photo (docs/09, docs/18 "Add visit")', () => {
   let ctx: TestCtx;
   afterEach(async () => { await ctx.db.close(); });
   const H = { 'X-UBite': '1' };
-  const photo = Buffer.from('a photo, read by the fake OCR');
+  // A real (tiny) JPEG: the route checks the bytes and the header before the fake OCR reads it.
+  let photo: Buffer;
+  beforeAll(async () => { photo = await tinyJpeg(); });
 
   async function student(email: string, env: Record<string, string> = {}) {
     ctx ??= await testContext(env);

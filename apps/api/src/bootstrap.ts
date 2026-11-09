@@ -4,6 +4,7 @@ import type { Ctx } from './context';
 import { createDb } from './db/index';
 import { migrate } from './db/migrate';
 import { createMailer } from './services/mail';
+import { JobLimiter } from './services/pool';
 import { createPusher } from './services/push';
 import { createTesseractReader } from './services/receipt';
 
@@ -16,6 +17,7 @@ export async function createContext(cfg: Config = loadConfig()): Promise<Ctx> {
     mail: createMailer(cfg, log),
     push: createPusher(cfg, log),
     receipts: createTesseractReader(cfg, log),
+    images: new JobLimiter(2, 8),
     now: () => new Date(),
     defer: (work) => { work.catch((e) => log.error({ err: e?.message }, 'deferred work failed')); },
   };

@@ -5,6 +5,7 @@ import { createDb } from '../src/db/index';
 import { migrate } from '../src/db/migrate';
 import { invalidateSchedule } from '../src/services/schedule';
 import { createApp } from '../src/app';
+import { JobLimiter } from '../src/services/pool';
 
 export interface TestCtx extends Ctx {
   setNow(iso: string): void;
@@ -27,6 +28,7 @@ export async function testContext(env: Record<string, string> = {}): Promise<Tes
     mail: { enabled: true, async send(to, subject, text) { sent.push({ to, subject, text }); } },
     push: { enabled: false, publicKey: null, async sendToUsers() { return 0; } },
     receipts: { async read() { return ctx.ocrText; } },
+    images: new JobLimiter(2, 8),
     now: () => now,
     defer: (work) => { work.catch(() => {}); },
     setNow(iso) { now = new Date(iso); },
@@ -45,4 +47,10 @@ export function lastCode(ctx: TestCtx, email: string): string {
   const mail = [...ctx.sent].reverse().find((m) => m.to === email);
   if (!mail) throw new Error(`no mail to ${email}`);
   return mail.text.slice(0, 6);
+}
+
+/** A real 32 x 32 JPEG, for routes that check an upload's bytes and header before reading it. */
+export async function tinyJpeg(): Promise<Buffer> {
+  const sharp = (await import('sharp')).default;
+  return sharp({ create: { width: 32, height: 32, channels: 3, background: { r: 255, g: 255, b: 255 } } }).jpeg().toBuffer();
 }

@@ -538,7 +538,12 @@ function DishEditor({ dish, onDone }: { dish: StaffDish; onDone: () => void }) {
     try {
       await apiSend('PUT', `/staff/dishes/${dish.id}/photo`, form);
       toast(L('Fotografia e salvată.', 'Photo saved.'), { tone: 'success', icon: 'circle-check' });
-    } catch { toast(L('Nu am putut încărca fotografia.', 'We could not upload the photo.'), { tone: 'danger' }); } finally { setPhotoBusy(false); }
+    } catch (e) {
+      const code = (e as { code?: string }).code;
+      toast(code === 'unsupported_image' ? L('Fotografia trebuie să fie JPEG, PNG sau WebP.', 'The photo must be a JPEG, PNG or WebP.')
+        : code === 'image_too_large' ? L('Fotografia are prea mulți pixeli. Încearcă una mai mică.', 'The photo has too many pixels. Try a smaller one.')
+          : L('Nu am putut încărca fotografia.', 'We could not upload the photo.'), { tone: 'danger' });
+    } finally { setPhotoBusy(false); }
   };
 
   const check = <T extends string>(list: T[], set: (v: T[]) => void, value: T, label: string) => {

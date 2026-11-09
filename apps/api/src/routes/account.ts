@@ -13,11 +13,12 @@ import { createSession, endSession, eraseAccount, requestCode, verifyCode } from
 import { checkReceiptWindow, loyaltyState, recordVisit } from '../services/loyalty';
 import { matchFiscalCode, parseReceipt, receiptIdentity } from '../services/receipt';
 import { getCrowdingConfig } from '../services/config-store';
+import { checkImage } from '../services/receipt-image';
 
+// No MIME filter: the client names the type, the bytes are checked instead (checkImage).
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-  fileFilter: (_req, file, cb) => cb(null, /^image\/(jpeg|png|webp|heic|heif)$/.test(file.mimetype)),
 });
 
 export async function loadMe(ctx: Ctx, userId: string): Promise<Me> {
@@ -214,8 +215,15 @@ export function accountRoutes(ctx: Ctx) {
 
   r.post('/me/visits/scan', student, loyaltyOn, limits.upload, upload.single('receipt'), async (req, res) => {
     if (!req.file) throw new HttpError(422, 'no_image', 'Attach a photo of the receipt.');
-    const text = await ctx.receipts.read(req.file.buffer);
+    const photo = req.file.buffer;
     req.file.buffer = Buffer.alloc(0);
+    let text: string;
+    try {
+      await checkImage((await import('sharp')).default, photo);
+      text = await ctx.images.run(() => ctx.receipts.read(photo));
+    } finally {
+      photo.fill(0);
+    }
     const parsed = text ? parseReceipt(text) : null;
     // Without a number and a date there is nothing to check — ask for a clearer photo.
     if (!parsed || !parsed.date) throw new HttpError(422, 'unreadable', 'We could not read the receipt.');

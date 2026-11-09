@@ -3,8 +3,45 @@
    modest size. Measured on scripts/ocr-bench.ts: no single preparation reads every photo, but their
    mistakes differ — so the reader runs three and the parser takes each field by majority. */
 import type sharpType from 'sharp';
+import { HttpError } from '../context';
 
 type Sharp = typeof sharpType;
+
+/** About 40 megapixels: a 48 Mpx phone sensor bins to 12 Mpx, and the app sends 2400 px at most.
+ *  sharp's own default (268 Mpx) lets a 300 KB PNG of 16000 × 16000 take a gigabyte to decode. */
+export const MAX_INPUT_PIXELS = 40_000_000;
+
+export type ImageFormat = 'jpeg' | 'png' | 'webp';
+
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** The format from the file's first bytes, never from the MIME type the client sent: JPEG, PNG
+ *  and WebP only. SVG, TIFF, GIF, PDF and the rest are refused before sharp sees them. HEIC is
+ *  not on the list: the app re-encodes every photo to JPEG in the browser before it uploads, and
+ *  sharp's prebuilt libvips cannot decode HEVC-coded HEIC anyway. */
+export function sniffImage(buf: Buffer): ImageFormat | null {
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpeg';
+  if (buf.length >= 8 && buf.subarray(0, 8).equals(PNG_SIGNATURE)) return 'png';
+  if (buf.length >= 12 && buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP') return 'webp';
+  return null;
+}
+
+/** Checks an upload before any pixel is decoded: its bytes say JPEG, PNG or WebP, its header
+ *  agrees, and it has at most MAX_INPUT_PIXELS. Reading the header costs microseconds. */
+export async function checkImage(sharp: Sharp, buf: Buffer): Promise<{ format: ImageFormat; width: number; height: number }> {
+  const format = sniffImage(buf);
+  if (!format) throw new HttpError(415, 'unsupported_image', 'Send a JPEG, PNG or WebP photo.');
+  let meta: Awaited<ReturnType<ReturnType<Sharp>['metadata']>>;
+  try {
+    // Only the header is read here; the pixel count is compared below, with its own error.
+    meta = await sharp(buf, { limitInputPixels: false }).metadata();
+  } catch {
+    throw new HttpError(422, 'unreadable', 'We could not read the photo.');
+  }
+  if (meta.format !== format || !meta.width || !meta.height) throw new HttpError(422, 'unreadable', 'We could not read the photo.');
+  if (meta.width * meta.height > MAX_INPUT_PIXELS) throw new HttpError(413, 'image_too_large', 'The photo has too many pixels.');
+  return { format, width: meta.width, height: meta.height };
+}
 
 /** Otsu's threshold: the grey level that best separates paper from ink (or paper from table). */
 export function otsu(px: Uint8Array): number {
@@ -98,7 +135,9 @@ export function paperBox(px: Uint8Array, w: number, h: number, threshold: number
 /** The three preparations, as PNG buffers: the whole frame at a modest size; the paper cut out and
  *  straightened; the same, reduced to black and white. */
 export async function prepareReceipt(sharp: Sharp, image: Buffer): Promise<Buffer[]> {
-  const upright = await sharp(image, { failOn: 'truncated' }).rotate().toBuffer();
+  // The route has checked already; this is the last line for any other caller.
+  if (!sniffImage(image)) throw new Error('not a JPEG, PNG or WebP image');
+  const upright = await sharp(image, { failOn: 'truncated', limitInputPixels: MAX_INPUT_PIXELS }).rotate().toBuffer();
   const whole = await sharp(upright).resize({ width: 1200 }).grayscale().normalise().png().toBuffer();
 
   const look = async (buf: Buffer) => {

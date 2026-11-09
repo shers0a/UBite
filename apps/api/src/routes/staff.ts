@@ -10,11 +10,12 @@ import { HttpError } from '../context';
 import { isoDate, limits, parse, requireRole } from '../http';
 import { getMenu, previousPublished, publishMenu, saveDish, staffCatalogue } from '../services/menu';
 import { redeemAtTill } from '../services/loyalty';
+import { MAX_INPUT_PIXELS, checkImage } from '../services/receipt-image';
 
+// No MIME filter: the bytes are checked instead (checkImage).
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024, files: 1 },
-  fileFilter: (_req, file, cb) => cb(null, /^image\//.test(file.mimetype)),
 });
 
 const dishSchema = z.object({
@@ -79,7 +80,10 @@ export function staffRoutes(ctx: Ctx) {
     const id = parse(z.string().uuid(), req.params.id);
     if (!req.file) throw new HttpError(422, 'no_image');
     const sharp = (await import('sharp')).default;
-    const webp = await sharp(req.file.buffer).rotate().resize({ width: 960, height: 960, fit: 'cover', position: 'attention' }).webp({ quality: 78 }).toBuffer();
+    const photo = req.file.buffer;
+    await checkImage(sharp, photo);
+    const webp = await ctx.images.run(() => sharp(photo, { limitInputPixels: MAX_INPUT_PIXELS })
+      .rotate().resize({ width: 960, height: 960, fit: 'cover', position: 'attention' }).webp({ quality: 78 }).toBuffer());
     const r2 = await ctx.db.query(
       `INSERT INTO dish_photos (dish_id, content, mime, placeholder, updated_at) VALUES ($1, $2, 'image/webp', false, now())
        ON CONFLICT (dish_id) DO UPDATE SET content = EXCLUDED.content, mime = EXCLUDED.mime, placeholder = false, updated_at = now()`,
