@@ -1,0 +1,10 @@
+{
+  "title": "Areas filled with grey before a frame is kept or counted: the staff side of the serving counter",
+  "frame": "normalised image coordinates (0-1), x right, y down; one list of polygons per camera",
+  "aimed": "as the cameras were aimed on 9 Nov 2026 (ch3 was re-aimed after 16 Oct; redraw if a camera moves)",
+  "cameras": {
+    "C1": [],
+    "C2": [],
+    "C3": [[[0.84, 1.0], [0.97, 0.27], [1.0, 0.27], [1.0, 1.0]]]
+  }
+}

@@ -187,6 +187,18 @@ CAMERA_RTSP_URL=rtsp://user:pass@camera/stream VISION_TOKEN=… \
   docker compose -f docker-compose.prod.yml --profile camera up -d vision
 ```
 
+With two or more cameras, the service counts a **site** instead: a file in `services/vision/sites/`
+with each camera's calibration and the floor zones, built from the digital twin (docs/23). Set
+`CAMERA_C1_RTSP`, `CAMERA_C2_RTSP`, … for the cameras the site lists, put the canteen model in
+`services/vision/models/ubite-n.onnx` (it is not in git; it comes from the twin's training), and
+switch the vision service's `command` to the `site` line commented in `docker-compose.prod.yml`. Every
+5 s it takes one frame from every camera at the same moment and posts a `queue` and a `hall` count; a
+kind whose camera has no fresh frame is left out of that tick. To check the CPU cost on the VM first:
+
+```bash
+docker run --rm --cpus=2 ubite-vision speed --model models/ubite-n.onnx --site sites/cantina-2-camere.json
+```
+
 ## Choices made while implementing
 
 | Where the docs left it open | What the code does |

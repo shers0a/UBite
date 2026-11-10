@@ -203,6 +203,196 @@ Without Docker: `pip install -r requirements.txt` is enough to run `bench.py` (n
 
 ---
 
+## Placement and counter, tested on the digital twin (3–4 Oct 2026)
+
+The twin is the canteen scanned on 30 Sep, rebuilt in Unity with calibrated light and simulated students. Its
+pipeline lives in the private `UBite-twin` folder: the renders show avatars only, but the scan shows staff. Every
+number below is from simulated people, so treat it as an upper bound that ranks the options. The real accuracy
+comes from the three manual counting sessions ([07-crowding-module.md](07-crowding-module.md)).
+
+### Where the cameras go
+
+We scored 499 mounts (ceiling at 3.12 m, walls, columns), 168 aims and 5 lenses on a 4 MP sensor. Each
+candidate was ray-cast through the scanned hall at a peak hour: the line full, 30 more in the aisle, every seat
+taken and a third of the floor walking. A person counts as seen when their head and shoulders are in sight and
+the head covers at least 12–24 px.
+
+The main plan is bought in steps: start with 2 cameras, add one at a time, and never move a mounted one. At
+each size it scores within 0.02 of the best set chosen on its own.
+
+| Set | Cameras (4 MP) | Queue (line / long tail) | Seated | Standing |
+|---|---|---|---|---|
+| P2 | C1 north wall behind the line, 2.8 mm; C2 on the column at x 26.5, 6 mm, down the aisle | 100% / 81% | 37% | 48% |
+| P3 | + C3 ceiling by the east windows, 3.6 mm | 100% / 100% | 63% | 67% |
+| P4 | + C4 ceiling by the entrance, 2.8 mm | 100% / 100% | 80% | 88% |
+| P5 | + C5 ceiling by the east windows, 3.6 mm | 100% / 100% | 86% | 91% |
+| V2 | queue only: C1 + a 6 mm camera on the same column | 100% / 81% | 31% | 48% |
+| V3 | no ceiling work: C1, a column, the entrance wall | 100% / 77% | 61% | 95% |
+
+Each set was rendered as 2 minutes of 4 MP video at 25 fps, 12:45 at peak, through a real-camera look: lens
+distortion, WDR, noise, 3D noise reduction, an on-screen clock and H.264 at 6 Mbit/s.
+
+### Off-the-shelf detectors on those feeds
+
+Error in people, with each detection given its true position so that only the detector is measured:
+
+| Model | Queue error (truth ~31) | Hall error (truth 48–91) |
+|---|---|---|
+| YOLO11n at 640 (the first counter) | 8–14 | 5–16 |
+| YOLO11/26 n–x, RT-DETR, RF-DETR at 1280, even at full 2560 | 10–12 | 2.5–5 |
+| The same with 640 px tiles at full resolution (SAHI) | **2–3** | 3–5 |
+
+Far people need full-resolution tiles. Placing people on the floor plan from the image added more error than the
+choice of model did.
+
+### The counter now in `services/vision`
+
+- **Detection.** `ubite-n.onnx` is YOLO26n trained on the twin, with three classes: person, standing head and
+  seated head. It ran 40 epochs on about 12,000 tiles: 14 lunches × 12 cameras × 14 stills, randomised camera
+  look, labels that know what is hidden. Validation on an unseen lunch: mAP50 0.925, mAP50-95 0.664.
+- **Resolution.** The whole frame is counted at 1280 px, then 640 px tiles of each camera's far band at full
+  resolution.
+- **Placement.** Each head goes on the floor plan at the height of its posture: 1.67 m standing, 1.30 m seated.
+- **Fusion.** Heads from different cameras closer than 0.45 m + 0.045 m per metre of distance are one person.
+- **Zones.** They come from the placement study and say queue or hall.
+- **Scaling.** The hall count is divided by the share of places the cameras see well and by the completeness
+  measured on the twin. Under half seen, the hall is not reported.
+
+On the second minute of the test feeds (the completeness was fitted on the first):
+
+| Set | Queue error (truth 31.4) | Hall error (truth 97.7) | CPU per 5 s round, laptop, 2 threads |
+|---|---|---|---|
+| P2 | 2.2 | 4.9 | 0.41 s |
+| P3 | 2.2 | 2.9 | 0.59 s |
+| P4 | 2.3 | 2.8 | — |
+| P5 | 1.8 | 2.6 | 0.70 s |
+| V2 | 2.0 | not reported (48% seen) | — |
+| V3 | 1.5 | 4.7 | — |
+
+The same pipeline with the COCO model counted the queue as well (2–4) but missed 24–48 of the ~99 in the hall.
+The UB HPC node runs YOLO11n about 2.3 times slower than the laptop, so expect 1–1.6 s per round on the 2-vCPU
+VM, a fifth to a third of it.
+
+### Two cameras only
+
+**The test.** We generated eight candidate pairs from the placement study and filmed each in a simulated lunch
+on the same schedule: about 45 minutes, crowd low, then medium, then high, then low again. At the peak the queue
+grows to 56 people and runs back to the door, and waits reach 13–14 minutes. One synchronised still every 5 s, as
+the service takes them, counted by the shipped counter.
+
+**The wait** is what the app shows. It uses the docs/07 line, fitted on the students who joined in the first
+half of the lunch and scored on those who joined in the second half (60–75 students). The hall's completeness
+is fitted the same way.
+
+The pairs were filmed in four lunches. The column in brackets is the best any counter could do in that lunch: the
+same line on the true count.
+
+| Pair | Cameras | Queue count error, unfiltered | Wait error (best possible) | Within ±1 / ±2 min | Level right | Hall |
+|---|---|---|---|---|---|---|
+| **coada-sala** | ceiling 3.6 mm in the corner by the line and the windows (x 33.5, y 0.5, 3.12 m, 135°, −25°) + ceiling 4.5 mm down the aisle (x 23.5, y 4.5, 3.12 m, 150°, −25°) | 2.0 | **0.25 min** (0.31) | 100% / 100% | 95% | 7.8 people (10%), level 99% |
+| coada-lunga | north wall behind the line, 2.8 mm (x 34.1, y 3.5, 2.95 m, 165°, −35°) + ceiling 6 mm down the aisle (x 25.5, y 4.5, 3.12 m, 150°, −15°) | 2.4 | 0.54 min (0.34) | 88% / 100% | 97% | not reported (48% seen) |
+| coada | the same wall camera + 6 mm on the column at x 26.6 | 2.7 | 0.57 min (0.34) | 85% / 100% | 92% | not reported |
+| fara-tavan | the same wall camera + 6 mm on the column, looking 165° | 2.8 | 0.63 min (0.34) | 82% / 100% | 92% | 12 people (15%), level 81% |
+| echilibrat (P2) | the same wall camera + ceiling 6 mm at x 26.5 | 2.7 | 0.66 min (0.34) | 78% / 100% | 92% | 12 people (16%), level 84% |
+| un-stalp | both on one ceiling mount at x 26.5: 2.8 mm looking north (15°, −45°) + 4.5 mm down the aisle (150°, −25°) | 8.3 | 0.73 min (0.30) | 67% / 100% | 99% | not reported |
+| intrare | the same wall camera + ceiling 3.6 mm at the entrance corner | 4.8 | 1.69 min (0.34) | 18% / 57% | 85% | 6.5 people (8%), level 99% |
+| din-spate | ceiling 2.8 mm at x 24.5 looking north, at the queue's backs (15°, −45°) + ceiling 6 mm at x 27.5 (165°, −15°) | 9.5 | 2.56 min (0.35) | 5% / 29% | 88% | not reported |
+
+**Head to head.** A different lunch is a different test, so the two best pairs were filmed again in a fifth
+lunch, side by side, together with the two pairs that mix their cameras. Best possible in that lunch: 0.33 min,
+level 95%.
+
+| Pair | Queue count error, unfiltered | Wait error | Within ±1 / ±2 min | Level right | Hall |
+|---|---|---|---|---|---|
+| **coada-sala** (corner 3.6 mm + aisle 4.5 mm) | 2.5 | 0.60 min | 89% / 100% | 95% | 7.5 people (9%), level 99% |
+| north wall 2.8 mm + aisle 4.5 mm | 2.3 | 0.57 min | 86% / 100% | 95% | 7.7 people (9%), level 98% |
+| corner 3.6 mm + aisle 6 mm at x 25.5 | 2.3 | 0.59 min | 89% / 100% | 95% | 14 people (17%), level 83% |
+| coada-lunga (north wall 2.8 mm + aisle 6 mm) | 2.2 | 0.67 min | 77% / 100% | 95% | not reported |
+
+The docs/07 prior without calibration is 6.3–7.5 min off in every lunch: calibration from the reports is what
+makes the minutes right.
+
+**What the test shows.**
+
+- **Two cameras estimate the wait well** if one watches the line and the other looks down the aisle the queue
+  runs back along. Every test student is then within ±2 min, and the level is right 92–97% of the time.
+- **We ship coada-sala** (`services/vision/sites/cantina-2-camere.json`). Over two lunches its minutes were 0.25
+  and 0.60 off, all within ±2 min, and it also counts the hall: 9–10% off, the word right 99% of the time.
+- **Two for good, or two to start?** coada-sala is the best pair to keep. The main plan's P2 (echilibrat) is
+  weaker as a pair (0.66 min, hall 16% off) but is the start of P3–P5 without moving a camera. If more cameras
+  may come, plan the larger set from coada-sala first.
+- **The aisle camera decides the hall.** The 4.5 mm camera at x 23.5, pitched −25°, sees the queue's tail and
+  most of the seated hall. With it, either line camera does as well: the north wall or the ceiling corner. The
+  6 mm camera at x 25.5, aimed flatter, sees too little of the hall (48–55%).
+- **The queue's far tail must be in view.** Pairs that lose it (un-stalp, din-spate) stop counting at about 40
+  while the queue grows to 56. The line then cannot tell a 40-person queue from a 56-person one, and the minutes
+  for long queues go wrong: din-spate is 2.6 min off.
+- **Keep the persistence filter.** In 9 of 12 pair-lunch runs it improved the minutes, by up to 0.6 min. In the
+  other three it cost at most 0.25 min, except din-spate, which fails either way. It drops about 5 of the far
+  tail's people at peak, but steadily, so the calibration absorbs it. People walking along the aisle come and
+  go, so without the filter the calibration cannot absorb them.
+- **Long waits.** With the north-wall camera the longest waits come out 1.2–1.5 min short. coada-sala gets
+  them right but reads about a minute high at 8–10 min. Calibrating on reports from long queues covers both.
+- **The hall's factor needs real counts.** The shipped site divides the hall by a completeness of 1.11, the
+  twin's average. Over a whole lunch that leaves 6–8 people (10–11%) off and the word right 93–94% of the time,
+  because the factor that fits differs between lunches (1.04 and 1.18). The manual counts set the real factor.
+
+### With two TP-Link VIGI C340 cameras
+
+**The camera.** TP-Link VIGI C340 is a 4 MP bullet camera (2560×1440, 1/3" sensor) with a fixed lens: 2.8 mm
+(102.5° across) or 4 mm (76.3°). It takes PoE and speaks RTSP and ONVIF Profile S, so the counter reads it as it
+is. It costs about 240–265 RON on eMAG (Oct 2026). Its main stream is capped at 3 Mbps.
+
+**Placement.** With 2.8 mm lenses on both cameras, no pair sees the queue's far tail well: 69% at best, against
+100% with the narrower lenses above. The best pair keeps the north-wall camera behind the line. The second one goes
+on the ceiling at x 19.5, y 4.5, looking along the aisle towards the entrance (120°, −25°).
+
+**Compression.** We encoded 10 s of the twin's 4 MP feed with H.265 at 3 Mbps (libx265, no B-frames, an I-frame
+every 2 s). We then compressed every still at the QP that gives the same image quality (PSNR):
+
+- 25 fps: 15 KB a frame, QP 40.
+- 5 fps: 71 KB a frame, QP 37.
+- 1 fps: 327 KB a frame, QP 30.
+
+**Results.** In lunch 4 the best possible wait error was 0.42 min. Its second half, the test half, was a full
+queue, with waits of 11–14 min.
+
+| Pair | Wait error: uncompressed / 3 Mbps at 5 fps / at 25 fps | Within ±2 min | Queue count error, unfiltered | Hall |
+|---|---|---|---|---|
+| **2 × 2.8 mm**, the second on the ceiling at x 19.5 | **0.37 / 0.48 / 0.61 min** | 100% | 3.5 | not reported (43% seen) |
+| **2.8 mm + 4 mm**, the 4 mm where coada-sala has its aisle camera (x 23.5, 150°, −25°) | 0.48 / 0.56 / 0.59 min | 100% | 2.0 | 7–8% off, level 99% |
+| 2 × 2.8 mm, the second on the column at x 22.2 | 0.76 / 1.04 / 1.27 min | 98% / 97% / 81% | 5.9 | not reported |
+| 2 × 2.8 mm, the second on the ceiling by the windows at x 21.5 (lunch 5) | 2.35 / 2.39 / — min | 35% | 4.0 | 14% off, level 80% |
+
+In lunch 5 the best possible was 0.64 min, and the north-wall + 4.5 mm aisle pair was 1.05 min off.
+
+- **Two VIGI C340 2.8 mm estimate the wait** as well as the narrower lenses, if the second one sits at x 19.5
+  looking towards the entrance (`sites/cantina-vigi-2x28.json`). They do not count the hall.
+- **With a 4 mm as the second camera the hall comes back**, 7–8% off. The minutes stay within about 0.1 min of
+  the 2 × 2.8 mm (`sites/cantina-vigi-28-4.json`, hall completeness 1.14 from the twin).
+- **Set the main stream to 5 fps or less**, H.265 at 3 Mbps. The counter takes one frame every 5 s, so at
+  1–5 fps each frame gets 5–20 times the bits it gets at 25 fps. At 25 fps the minutes were 0.1–0.25 min worse.
+- **Limits.**
+  - The camera's H.265+ encoder is not libx265.
+  - The 4 mm's zones come from the 4.5 mm of the placement study, which sees a little less.
+
+### What it does not settle
+
+- **The queue zone also holds people walking along the aisle with trays.** Against the people actually waiting,
+  the raw count is 6–7 high at peak. The persistence filter counts only heads that stayed within 0.8 m since the
+  previous round, using positions only. Simulated walkers and simulated queues move differently from real ones,
+  so the manual counts must confirm the 0.8 m.
+- **Synthetic people are not real people.** On frames of the real canteen from the 30 Sep visit, the model found
+  the staff's and students' heads about as well as the COCO model found their bodies. The far ones it found
+  better. How accurate it is there, and how often it gets posture right, is for the manual counts to say.
+  Fine-tuning on a few hundred real frames needs the DPIA exception.
+- **Licence.** The weights are Ultralytics, AGPL-3.0. They are trained on synthetic renders only, so publishing
+  them carries no privacy risk. The open choice is in [22-decision-log.md](22-decision-log.md).
+- **A real install needs its own calibration.** Each camera's pose and lens must be fitted from four or more
+  points of known position in the hall. Then the site file is rebuilt from the twin with the real poses.
+
+---
+
 ## Sources
 
 - [ACC-UB user guide: HPC](https://unibuc-dtd.github.io/advanced-computing-center-user-guide/hpc/), [HCI](https://unibuc-dtd.github.io/advanced-computing-center-user-guide/hci/)

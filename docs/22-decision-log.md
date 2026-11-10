@@ -54,6 +54,13 @@ contain nonsense. *Consequence:* one absurd report cannot move the published num
 Counting people needs no bespoke model. *Consequence:* removes weeks of work and removes the
 only reason to store images. Fine-tuning remains possible later if measured accuracy demands it.
 
+**D-28 · Count heads with a model trained on the digital twin; supersedes D-09 in part (4 Oct 2026).**
+On the twin's feeds an off-the-shelf detector missed about a third of a peak queue and half of the
+diners. Marius asked to train if needed. The model is trained on synthetic renders only, so D-09's
+privacy reason holds: no image of a real person is stored. *Consequence:* the vision service needs
+the trained weights (`models/ubite-n.onnx`, not in git) and a site file per camera layout; accuracy is
+proven on the manual counts, not on the twin.
+
 **D-10 · The queue is measured, not the room.**
 Field evidence says tables are almost never all occupied, while the queue is a recurring
 complaint. *Consequence:* one well-placed camera beats two poorly-placed ones, and the form's
@@ -153,6 +160,7 @@ rather than silently corrected — see R-04 in [16-risk-register.md](16-risk-reg
 |---|---|---|
 | Who enters the menu if the canteen does not | Depends on the site visit | Before launch |
 | Whether any calibration images are captured | Recommended: none | Before camera install |
+| Licence of the counter's weights: Ultralytics AGPL-3.0 (publish the weights, repo otherwise MIT per D-24) or an Apache-2.0 model trained on the same twin data (RF-DETR, D-FINE; slower on CPU) | Needs the team | Before launch |
 | Named owner for the vision module | Team conversation | This week |
 | GitHub Organisation vs personal repository | Team chose to keep current arrangement; recorded as a risk | This week |
 | Single or staged launch | Depends on build progress | This week |

@@ -215,17 +215,30 @@ than an absent one.
 
 ## Model and runtime
 
-- **Pre-trained detection, `person` class only.** No training is required to count people; a
-  standard pre-trained detector does this out of the box. The form asks for *estimation*, not
-  for a bespoke model.
-- Small model variant, CPU inference, one frame every 3–5 seconds. That is ample for a value
-  that is published as one of three levels.
-- The team elected to fine-tune on a few dozen canteen images for calibration. This is
-  permitted but **not on the critical path** — ship with the pre-trained model, fine-tune later
-  only if measured accuracy demands it. Image handling rules are mandatory and are specified in
-  [11-privacy-gdpr-accessibility.md](11-privacy-gdpr-accessibility.md).
-- A zone polygon, configured once, restricts counting to the queue area. This both improves
-  accuracy and narrows the privacy footprint.
+Revised on 4 Oct 2026 after testing on the digital twin ([23-camera-research.md](23-camera-research.md),
+D-28). An off-the-shelf person detector missed about a third of a peak queue and half of the
+diners, so the counter changed in four ways:
+
+- **Heads, not whole people, and their posture.** The model (`services/vision/models/ubite-n.onnx`,
+  YOLO26n) finds a person, a standing head and a seated head. Heads stay visible in a queue and
+  behind a table; the posture says at what height the head is.
+- **Trained on the twin, not on people.** About 12,000 tiles rendered from the Unity twin of this
+  hall: 14 lunches at different hours and crowds, the planned cameras moved a little plus random
+  ones, labels that know what is hidden, and a randomised real-camera look. No real image is used
+  or stored. Fine-tuning on real frames would improve it further but needs the DPIA exception
+  ([11-privacy-gdpr-accessibility.md](11-privacy-gdpr-accessibility.md)).
+- **Full resolution where people are small.** The whole frame at 1280 px plus 640 px tiles of the
+  far part at full resolution, chosen per camera from its calibration.
+- **Zones on the floor plan, people fused by position.** With several cameras, each head is placed
+  on the plan of the hall; heads from different cameras that land on the same spot at the same
+  moment are one person. Nothing is recognised, only positions are compared. A site file
+  (`services/vision/sites/`) holds the calibration, the zones, the share of the hall the cameras
+  see and the completeness measured on the twin. The completeness is re-measured on the three
+  manual counting sessions.
+
+CPU only, one synchronised round every 5 s: about 0.4–0.7 s for 2–5 cameras on a laptop, an
+estimated 1–1.6 s on the 2-vCPU VM. The first setup (one camera, a polygon drawn in `/admin`, people
+counted by their feet) still works unchanged.
 
 ## Privacy constraints — non-negotiable
 
