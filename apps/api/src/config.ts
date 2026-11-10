@@ -66,8 +66,9 @@ const schema = z.object({
 
   /** Development only: print sign-in codes to the log when no SMTP server is configured. */
   DEV_LOG_CODES: bool(false),
-  /** A public demo with made-up data and no email: the sign-in code is shown on screen. Never on
-   *  the real service — anyone could sign in as anyone. */
+  /** A public demo with made-up data and no email: a student's sign-in code is shown on screen
+   *  (never a staff, DCCAS or admin account's), and no push message is sent. Never on the real
+   *  service: anyone can sign in as any student. */
   DEMO_SHOW_CODES: bool(false),
 
   /** Where scheduled work runs: timers in the process (a server, the UB VM), or on incoming

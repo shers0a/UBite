@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /* Every feature of docs/03, used the way a person uses it — in a real browser, through the UI,
    against a running deployment with demo data. Signs in through the sign-in sheet, so the server
-   must show demo codes (DEMO_SHOW_CODES=1) and be open at the time of the run.
+   must show demo codes (DEMO_SHOW_CODES=1) and be open at the time of the run. A demo shows codes
+   to students only: the staff, DCCAS and admin accounts (E2E_STAFF, E2E_DCCAS, E2E_ADMIN) must
+   exist (BOOTSTRAP_*), and their codes are read from the API's log (API_LOG, development mode).
 
-   node scripts/e2e.mjs [baseUrl] [receiptPhoto] [secondReceiptPhoto]
+   API_LOG=<api log> node scripts/e2e.mjs [baseUrl] [receiptPhoto] [secondReceiptPhoto]
 
    Prints one line per check and a summary; failures leave a screenshot in dist/e2e/. */
 import fs from 'node:fs';
@@ -14,6 +16,10 @@ const BASE = (process.argv[2] || 'http://localhost:8080').replace(/\/$/, '');
 const RECEIPT = process.argv[3];
 const RECEIPT2 = process.argv[4];
 const OUT = path.resolve('dist/e2e');
+const LOG = process.env.API_LOG;
+const STAFF = process.env.E2E_STAFF || 'cantina@ubite.local';
+const DCCAS = process.env.E2E_DCCAS || 'dccas@ubite.local';
+const ADMIN = process.env.E2E_ADMIN || 'admin@ubite.local';
 fs.mkdirSync(OUT, { recursive: true });
 
 const exe = [process.env.BROWSER_PATH, path.join(process.env.LOCALAPPDATA || '', 'Google/Chrome/Application/chrome.exe'),
@@ -121,13 +127,32 @@ async function api(p, method, url, body) {
   }, method, url, body);
 }
 
-/** Through the sign-in sheet, as a person would: address, send, the demo code is filled in, enter. */
+/** The last sign-in code the API wrote to its log (development, DEV_LOG_CODES). */
+function codeFromLog() {
+  if (!LOG) throw new Error('set API_LOG to the API log file: a demo never shows a staff code');
+  const lines = fs.readFileSync(LOG, 'utf8').trim().split('\n').reverse();
+  const code = lines.map((l) => { try { return JSON.parse(l); } catch { return null; } })
+    .find((l) => l?.msg?.startsWith('[dev mail]'))?.msg.match(/(\d{6})/)?.[1];
+  if (!code) throw new Error('no code in the API log');
+  return code;
+}
+
+/** Through the sign-in sheet, as a person would: address, send, the code, enter. A demo fills
+ *  in a student's code itself; a staff account's code comes from the API log, as from an inbox. */
 async function signIn(p, email, opener) {
   if (opener) await opener();
   await see(p, 'Intră în cont');
-  await fill(p, email.endsWith('@s.unibuc.ro') ? 'Adresa ta de la universitate' : 'Adresa contului', email);
+  const student = email.endsWith('@s.unibuc.ro');
+  await fill(p, student ? 'Adresa ta de la universitate' : 'Adresa contului', email);
   await click(p, 'Trimite codul');
-  await see(p, /Codul tău este \d{6}/);
+  if (student) {
+    await see(p, /Codul tău este \d{6}/);
+  } else {
+    await see(p, /cod de șase cifre/);
+    if (/Codul tău este \d{6}/.test(await text(p))) throw new Error('the demo showed a staff code on screen');
+    await sleep(400);
+    await fill(p, 'Codul din email', codeFromLog());
+  }
   await click(p, 'Intră');
   await see(p, 'Ai intrat în cont.');
 }
@@ -333,7 +358,7 @@ console.log('\nCanteen staff');
   const p = await page({ width: 1280, height: 900 });
   await check('staff sign in', async () => {
     await p.goto(`${BASE}/staff`, { waitUntil: 'networkidle2' });
-    await signIn(p, 'cantina@ubite.local', () => click(p, 'Intră în cont'));
+    await signIn(p, STAFF, () => click(p, 'Intră în cont'));
   });
   await check('F14 publish today\'s menu from the catalogue', async () => {
     await p.goto(`${BASE}/staff`, { waitUntil: 'networkidle2' });
@@ -381,7 +406,7 @@ console.log('\nDCCAS dashboard and admin');
   const p = await page({ width: 1280, height: 900 });
   await check('F16 the DCCAS dashboard loads its indicators', async () => {
     await p.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle2' });
-    await signIn(p, 'dccas@ubite.local', () => click(p, 'Intră în cont'));
+    await signIn(p, DCCAS, () => click(p, 'Intră în cont'));
     await p.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle2' });
     await see(p, /Vizite|vizite/, /Feedback|feedback/);
   });
@@ -406,7 +431,7 @@ console.log('\nDCCAS dashboard and admin');
   const a = await page({ width: 1280, height: 900 });
   await check('admin: thresholds, camera zone, hours and accounts', async () => {
     await a.goto(`${BASE}/admin`, { waitUntil: 'networkidle2' });
-    await signIn(a, 'admin@ubite.local', () => click(a, 'Intră în cont'));
+    await signIn(a, ADMIN, () => click(a, 'Intră în cont'));
     await a.goto(`${BASE}/admin`, { waitUntil: 'networkidle2' });
     await see(a, /Praguri|praguri/, /Program|program/);
   });

@@ -80,12 +80,10 @@ async function lockedToday(ctx: Ctx, email: string) {
   return (await count(ctx.db, localDate(ctx.now()), failedKey(email))) >= MAX_FAILED_PER_DAY;
 }
 
-/** Anyone at UB by domain; outside addresses (staff, DCCAS, the developers) only when an admin
- *  created the account. */
-export async function canSignIn(db: Queryable, email: string): Promise<boolean> {
-  if (isUbEmail(email)) return true;
-  const r = await db.query("SELECT 1 FROM users WHERE email = $1 AND role <> 'student' AND deleted_at IS NULL", [email]);
-  return r.rowCount > 0;
+/** The role of the account at this address, if there is one. */
+async function accountRole(db: Queryable, email: string): Promise<Role | null> {
+  const r = await db.query<{ role: Role }>('SELECT role::text AS role FROM users WHERE email = $1 AND deleted_at IS NULL', [email]);
+  return r.rows[0]?.role ?? null;
 }
 
 /** The same answer whether or not an address may sign in: an outside address with no account
@@ -105,9 +103,15 @@ export async function requestCode(ctx: Ctx, rawEmail: string, lang: Lang) {
   );
   if (recent.rows[0].n >= MAX_CODES_PER_WINDOW) throw new HttpError(429, 'too_many_codes', 'Too many codes. Try again in 15 minutes.', { retryAfterSeconds: 900 });
 
-  const demo = ctx.cfg.DEMO_SHOW_CODES && !ctx.cfg.SMTP_URL;
-  if (!(await canSignIn(ctx.db, email))) {
-    if (!demo && (await count(ctx.db, localDate(ctx.now()), EMAILS_KEY)) >= ctx.cfg.SIGNIN_EMAILS_PER_DAY) throw emailsUsedUp(ctx);
+  // Anyone at UB by domain; outside addresses (staff, DCCAS, the developers) only when an admin
+  // created the account.
+  const role = await accountRole(ctx.db, email);
+  const allowed = isUbEmail(email) || (role !== null && role !== 'student');
+  // A public demo shows the code on screen instead of mailing it, and only ever a student's: a
+  // staff, DCCAS or admin account there is emailed like anywhere else, never shown.
+  const demo = ctx.cfg.DEMO_SHOW_CODES && !ctx.cfg.SMTP_URL && allowed && (role ?? 'student') === 'student';
+  if (!allowed) {
+    if ((await count(ctx.db, localDate(ctx.now()), EMAILS_KEY)) >= ctx.cfg.SIGNIN_EMAILS_PER_DAY) throw emailsUsedUp(ctx);
     // A code row nobody can match, so the per-address limits behave exactly as for an account.
     await ctx.db.query(
       `INSERT INTO auth_codes (email, code_hash, created_at, expires_at) VALUES ($1, $2, $3, $3::timestamptz + make_interval(secs => $4))`,

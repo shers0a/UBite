@@ -40,9 +40,11 @@ In development, sign-in codes are printed to the API log (no SMTP needed). Demo 
 |---|---|
 | `ubite.demo.1@s.unibuc.ro` | student at 4 of 5 dots |
 | `ubite.demo.2@s.unibuc.ro` | student with a free meal waiting |
-| `cantina@ubite.local` | canteen staff → `/staff` |
-| `dccas@ubite.local` | DCCAS → `/dashboard` |
-| `admin@ubite.local` | tech admin → `/admin` |
+
+The demo seed creates students only. For the staff tools on your machine, name the accounts in
+`.env` and they are created on start: `BOOTSTRAP_CANTEEN_STAFF` (→ `/staff`), `BOOTSTRAP_DCCAS`
+(→ `/dashboard`), `BOOTSTRAP_TECH_ADMINS` (→ `/admin`), or `npm run cli -w @ubite/api -- user:add
+<email> <role>`. Their codes are only ever in the API log or the mailbox, never on screen.
 
 The kiosk is `/kiosk` (rotation) and `/kiosk/attract` (the 11-second loop).
 
@@ -59,9 +61,24 @@ npm run e2e -- <url> [receipt.jpg]   # every docs/03 feature through the UI in a
 npm run ocr:bench -- <dir>           # the receipt reader, field by field (see "Measured" below)
 ```
 
-`npm run screens` needs the API running with demo data and `API_LOG` pointing at its log file.
+`npm run screens` needs the API running in development with demo data, `API_LOG` pointing at its
+log file, and the staff and DCCAS accounts it photographs (`cantina@ubite.local`,
+`dccas@ubite.local`) created with `BOOTSTRAP_*` as below.
 `npm run e2e` needs a server with demo data, open at the time of the run, and `DEMO_SHOW_CODES=1`
-(it signs in through the sign-in sheet); it changes the data, so point it at a throwaway instance.
+(it signs students in through the sign-in sheet). The staff, DCCAS and admin checks sign in as
+`E2E_STAFF`, `E2E_DCCAS` and `E2E_ADMIN` (default `cantina@ubite.local`, `dccas@ubite.local`,
+`admin@ubite.local`): create them with `BOOTSTRAP_*`, run the API in development and point
+`API_LOG` at its log, where their codes are. It changes the data, so point it at a throwaway
+instance:
+
+```bash
+cd apps/api && DATABASE_URL=pglite:.data/e2e npx tsx src/cli.ts seed --demo
+NODE_ENV=development PORT=8090 DATABASE_URL=pglite:.data/e2e DEMO_SHOW_CODES=1 \
+  BOOTSTRAP_CANTEEN_STAFF=cantina@ubite.local BOOTSTRAP_DCCAS=dccas@ubite.local \
+  BOOTSTRAP_TECH_ADMINS=admin@ubite.local WEB_DIST=../web/dist npx tsx src/index.ts > ../../.data/e2e-api.log
+# in a second terminal, at the repo root:
+API_LOG=.data/e2e-api.log npm run e2e -- http://localhost:8090
+```
 
 ## Deploying (docs/12)
 
@@ -137,10 +154,20 @@ npm run vercel:build && npx vercel deploy --prebuilt --prod
 
 `scripts/vercel-build.ts` writes `.vercel/output`: the PWA with the same security headers the
 container sends, and the API bundled with esbuild beside a Linux build of sharp, tesseract.js, the
-migrations and the Romanian OCR model. The demo lives at **https://ubite.vercel.app** (project `ubite`, Neon database `ubite-db` in
-Frankfurt). `DEMO_SHOW_CODES=1` turns a deployment into a public demo:
-sign-in codes are shown on screen instead of emailed, and search engines are told to stay away.
-Never set it on the real service.
+migrations and the Romanian OCR model.
+
+**https://ubite.vercel.app is a public demo, not a fallback for the real service** (project
+`ubite`, Neon database `ubite-db` in Frankfurt). The real service is the UB VM. `DEMO_SHOW_CODES=1`
+makes a deployment a demo, locked so that being public costs nothing:
+
+- sign-in codes are shown on screen instead of emailed, and **only for students**; a staff, DCCAS
+  or admin account is emailed like anywhere else, and the demo has none (`seed --demo` creates
+  students only, so its addresses can be published);
+- **no push message is ever sent**: phones may subscribe, the subscriptions are stored, nothing
+  leaves;
+- search engines are told to stay away.
+
+Never set it on the real service, and never give a demo staff accounts at public addresses.
 
 ### The camera
 

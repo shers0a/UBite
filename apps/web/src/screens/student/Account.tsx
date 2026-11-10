@@ -225,7 +225,10 @@ function Notifications() {
     try {
       const r = await apiSend<{ reached: number }>('POST', '/me/push/test');
       toast(t(r.reached ? 'account.pushTestSent' : 'account.pushTestNone'), { tone: r.reached ? 'success' : 'neutral', icon: r.reached ? 'bell' : 'info' });
-    } catch { toast(t('common.errorGeneric'), { tone: 'danger' }); } finally { setTesting(false); }
+    } catch (e) {
+      if ((e as { code?: string }).code === 'push_off') toast(t('account.pushServerOff'), { icon: 'info' });
+      else toast(t('common.errorGeneric'), { tone: 'danger' });
+    } finally { setTesting(false); }
   };
 
   const toggle = async (type: NotificationType, v: boolean) => {

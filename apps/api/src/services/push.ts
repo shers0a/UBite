@@ -20,7 +20,11 @@ export interface Pusher {
 }
 
 export function createPusher(cfg: Config, log: Logger): Pusher {
-  const enabled = !!(cfg.VAPID_PUBLIC_KEY && cfg.VAPID_PRIVATE_KEY);
+  const keys = !!(cfg.VAPID_PUBLIC_KEY && cfg.VAPID_PRIVATE_KEY);
+  // A public demo (DEMO_SHOW_CODES) lets anyone in, so it sends nothing: phones may subscribe and
+  // the subscriptions are stored, but no message ever leaves, whoever publishes a menu there.
+  const enabled = keys && !cfg.DEMO_SHOW_CODES;
+  if (keys && cfg.DEMO_SHOW_CODES) log.info('web push off: a demo stores subscriptions and sends nothing');
   if (enabled) webpush.setVapidDetails(cfg.VAPID_SUBJECT, cfg.VAPID_PUBLIC_KEY!, cfg.VAPID_PRIVATE_KEY!);
   return {
     enabled,

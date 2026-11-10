@@ -105,14 +105,13 @@ export async function seedDemo(ctx: Ctx, log = (m: string) => ctx.log.info(m)) {
   const pap = bySlug.get('papanasi');
   if (pap) for (const a of ['gluten', 'milk', 'eggs']) await ctx.db.query("INSERT INTO dish_allergens (dish_id, allergen, source) VALUES ($1, $2, 'canteen_declared') ON CONFLICT DO NOTHING", [pap.id, a]);
 
-  // Accounts: the shared canteen account, DCCAS, a developer, and demo students.
+  // Accounts: demo students only. A demo's addresses are public (docs/24), and a public staff, DCCAS
+  // or admin account would let anyone publish menus or read the dashboard. Staff accounts come from
+  // BOOTSTRAP_* or `user:add`, with addresses nobody publishes.
   const upsertUser = async (email: string, role: string) =>
     (await ctx.db.query<{ id: string }>(
       `INSERT INTO users (email, role) VALUES ($1, $2) ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role RETURNING id`, [email, role],
     )).rows[0].id;
-  const staff = await upsertUser('cantina@ubite.local', 'canteen_staff');
-  await upsertUser('dccas@ubite.local', 'dccas_admin');
-  await upsertUser('admin@ubite.local', 'tech_admin');
   const students: string[] = [];
   for (let i = 1; i <= 40; i++) {
     const id = await upsertUser(`ubite.demo.${i}@s.unibuc.ro`, 'student');
@@ -133,7 +132,7 @@ export async function seedDemo(ctx: Ctx, log = (m: string) => ctx.log.info(m)) {
     const m = await ctx.db.query<{ id: string }>(
       `INSERT INTO daily_menus (service_date, published_at, published_by) VALUES ($1, $2, $3)
        ON CONFLICT (service_date) DO UPDATE SET published_at = EXCLUDED.published_at RETURNING id`,
-      [date, zonedToUtc(date, '09:40'), staff],
+      [date, zonedToUtc(date, '09:40'), null],
     );
     await ctx.db.query('DELETE FROM daily_menu_items WHERE daily_menu_id = $1', [m.rows[0].id]);
     for (const [i, d] of pick.entries()) {
@@ -228,8 +227,8 @@ export async function seedDemo(ctx: Ctx, log = (m: string) => ctx.log.info(m)) {
   await ctx.db.query(
     'INSERT INTO announcements (body_ro, body_en, starts_at, ends_at, created_by) VALUES ($1, $2, $3, $4, $5)',
     ['Vineri cantina se închide la 15:00. Bucătăria are revizie tehnică.', 'On Friday the canteen closes at 15:00 for a kitchen inspection.',
-      new Date(now.getTime() - 3600_000), new Date(now.getTime() + 3 * 86_400_000), staff],
+      new Date(now.getTime() - 3600_000), new Date(now.getTime() + 3 * 86_400_000), null],
   );
   log('demo data seeded: 3 weeks of menus, estimates, reports, ratings, feedback, loyalty and analytics');
-  log('demo sign-in: cantina@ubite.local (staff), dccas@ubite.local (DCCAS), admin@ubite.local (tech admin), ubite.demo.1@s.unibuc.ro (student at 4/5), ubite.demo.2@s.unibuc.ro (reward waiting)');
+  log('demo sign-in: ubite.demo.1@s.unibuc.ro (student at 4/5), ubite.demo.2@s.unibuc.ro (reward waiting). Staff, DCCAS and admin: BOOTSTRAP_* or user:add');
 }
