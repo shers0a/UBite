@@ -48,6 +48,9 @@ services:
       retries: 10
 
   # Counts people in the queue zone from the camera's RTSP stream; posts only numbers.
+  # A source can also be an http still URL, one JPEG fetched per tick (no RTSP port, no stream decoding):
+  # the canteen's Hikvision NVR serves them at /ISAPI/Streaming/channels/<n>01/picture to its live-view-only
+  # user, e.g. CAMERA_RTSP_URL=http://ubite:<password>@<nvr>/ISAPI/Streaming/channels/301/picture
   # With several cameras, count a site instead (docs/23): every camera on the same tick, heads placed on the
   # floor plan, queue and hall posted together. Set CAMERA_<id>_RTSP for each camera of the site file, and:
   #   command: ["site", "--model", "models/ubite-n.onnx", "--site", "sites/cantina-2-camere.json", "--every", "5",
@@ -64,7 +67,7 @@ services:
       CAMERA_C3_RTSP: ${CAMERA_C3_RTSP:-}
       CAMERA_C4_RTSP: ${CAMERA_C4_RTSP:-}
       CAMERA_C5_RTSP: ${CAMERA_C5_RTSP:-}
-    command: ["watch", "--source", "${CAMERA_RTSP_URL:-}", "--every", "5",
+    command: ["watch", "--model", "${VISION_MODEL:-models/yolo11n.onnx}", "--source", "${CAMERA_RTSP_URL:-}", "--every", "5",
               "--post", "http://app:8080/api/vision/observations", "--config", "http://app:8080/api/vision/config"]
     depends_on: [app]
 

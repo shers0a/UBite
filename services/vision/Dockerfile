@@ -8,7 +8,7 @@ WORKDIR /app
 ENV VISION_THREADS=2
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY counter.py bench.py ./
+COPY counter.py bench.py capture.py ./
 COPY sites/ sites/
 COPY models/ models/
 ENTRYPOINT ["python", "bench.py"]
