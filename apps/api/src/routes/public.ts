@@ -7,7 +7,7 @@ import { DIET_TAGS, localDate } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import { features } from '../config';
-import { isoDate, limits, parse } from '../http';
+import { isCalendarDate, limits, parse } from '../http';
 import { currentEstimate, submitReport, typicalToday } from '../services/crowding';
 import { dishAllergens, getDish, getMenu, listDishes, todayMenu } from '../services/menu';
 import { loadSchedule, scheduleFacts } from '../services/schedule';
@@ -30,7 +30,9 @@ export function publicRoutes(ctx: Ctx) {
   });
 
   r.get('/menu/:date', cache(60), async (req, res) => {
-    const date = parse(isoDate, req.params.date);
+    // A path that names no day is a bad request, not a missing menu and not a server error.
+    if (!isCalendarDate(req.params.date)) throw new HttpError(400, 'invalid_date', 'Not a date: use YYYY-MM-DD.');
+    const date = req.params.date;
     const menu = await getMenu(ctx.db, date, { publishedOnly: true });
     if (!menu) throw new HttpError(404, 'no_menu');
     res.json({ today: localDate(ctx.now()), menu, outdated: false });

@@ -84,6 +84,19 @@ describe('sign-in by email code (docs/10)', () => {
 });
 
 describe('menu (docs/03 F1)', () => {
+  it('answers a day that does not exist with 400, never 500', async () => {
+    for (const day of ['2026-13-45', '2026-02-30', '2026-00-10', '0000-01-01', 'azi', '2026-1-5']) {
+      const r = await request(app).get(`/api/menu/${day}`);
+      expect(r.status, day).toBe(400);
+      expect(r.body.error).toBe('invalid_date');
+    }
+    expect((await request(app).get('/api/menu/2028-02-29').expect(404)).body.error).toBe('no_menu');
+    // The same check guards every date the API reads: the dashboard's range too.
+    await ctx.db.query("INSERT INTO users (email, role) VALUES ('dccas@unibuc.ro', 'dccas_admin')");
+    const d = await signIn('dccas@unibuc.ro');
+    expect((await d.agent.get('/api/dashboard/summary?from=2026-13-45').expect(422)).body.error).toBe('invalid_request');
+  });
+
   it('shows the previous menu, marked outdated, when today is not published', async () => {
     const id = await dish('Ciorbă de perișoare', 'soup', 900);
     const m = await ctx.db.query<{ id: string }>("INSERT INTO daily_menus (service_date, published_at) VALUES ('2026-10-12', now()) RETURNING id");

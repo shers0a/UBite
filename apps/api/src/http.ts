@@ -35,7 +35,14 @@ export function parse<T extends z.ZodTypeAny>(schema: T, value: unknown): z.infe
   return r.data;
 }
 
-export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/** YYYY-MM-DD and a day that exists: 2026-13-45 or 2026-02-30 fit the pattern, and PostgreSQL
+ *  refuses them with an error that would otherwise surface as a 500. */
+export function isCalendarDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || s.startsWith('0000')) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+export const isoDate = z.string().refine(isCalendarDate, 'not a date (YYYY-MM-DD)');
 export const uuid = z.string().uuid();
 
 /* Who a limit counts. UB students share very few public addresses (eduroam, the faculties' NAT),

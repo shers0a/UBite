@@ -136,6 +136,9 @@ export function createApp(ctx: Ctx) {
     const e = err as { type?: string; status?: number; code?: string; message?: string };
     if (e?.type === 'entity.parse.failed') return res.status(400).json({ error: 'invalid_json' });
     if (e?.type === 'entity.too.large' || e?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'too_large' });
+    // A date or time PostgreSQL cannot read (22007, 22008) came from the request, whichever route
+    // let it through: the caller's mistake, not ours.
+    if (e?.code === '22007' || e?.code === '22008') return res.status(400).json({ error: 'invalid_request', message: 'A date or time in the request is not valid.' });
     ctx.log.error({ err: e?.message, path: req.path, method: req.method }, 'request failed');
     res.status(500).json({ error: 'server_error', message: 'Something went wrong on our side.' });
   });
