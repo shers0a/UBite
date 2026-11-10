@@ -13,7 +13,11 @@ import type { Category, DietTag } from '@ubite/shared';
 import { addDays, localDate, weekdayOf, zonedToUtc, formatHHMM } from '@ubite/shared';
 import type { Ctx } from './context';
 import { rebuildBaseline } from './services/crowding';
+import { eraseAccount } from './services/auth';
 import { levelFor } from './crowding/levels';
+
+/** The staff, DCCAS and admin addresses the demo seed used to create, which docs/24 published. */
+export const RETIRED_DEMO_STAFF = ['cantina@ubite.local', 'dccas@ubite.local', 'admin@ubite.local'];
 
 interface SeedDish {
   slug: string;
@@ -108,6 +112,15 @@ export async function seedDemo(ctx: Ctx, log = (m: string) => ctx.log.info(m)) {
   // Accounts: demo students only. A demo's addresses are public (docs/24), and a public staff, DCCAS
   // or admin account would let anyone publish menus or read the dashboard. Staff accounts come from
   // BOOTSTRAP_* or `user:add`, with addresses nobody publishes.
+  // Earlier demo seeds made a staff, a DCCAS and an admin account at these addresses, published in
+  // docs/24, so anyone could sign in as them on a public demo. A reseed retires them and ends every
+  // staff, DCCAS and admin session, so whoever got in that way is out for good.
+  const retired = await ctx.db.query<{ id: string }>(
+    "SELECT id FROM users WHERE lower(email::text) = ANY($1::text[]) AND role <> 'student' AND deleted_at IS NULL", [RETIRED_DEMO_STAFF],
+  );
+  for (const u of retired.rows) await eraseAccount(ctx, u.id);
+  await ctx.db.query("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE role <> 'student')");
+  if (retired.rowCount) log(`retired ${retired.rowCount} demo staff account(s) at public addresses`);
   const upsertUser = async (email: string, role: string) =>
     (await ctx.db.query<{ id: string }>(
       `INSERT INTO users (email, role) VALUES ($1, $2) ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role RETURNING id`, [email, role],

@@ -62,20 +62,21 @@ npm run ocr:bench -- <dir>           # the receipt reader, field by field (see "
 ```
 
 `npm run screens` needs the API running in development with demo data, `API_LOG` pointing at its
-log file, and the staff and DCCAS accounts it photographs (`cantina@ubite.local`,
-`dccas@ubite.local`) created with `BOOTSTRAP_*` as below.
+log file, and the staff and DCCAS accounts it photographs (`e2e.cantina@ubite.local`,
+`e2e.dccas@ubite.local`) created with `BOOTSTRAP_*` as below.
 `npm run e2e` needs a server with demo data, open at the time of the run, and `DEMO_SHOW_CODES=1`
 (it signs students in through the sign-in sheet). The staff, DCCAS and admin checks sign in as
-`E2E_STAFF`, `E2E_DCCAS` and `E2E_ADMIN` (default `cantina@ubite.local`, `dccas@ubite.local`,
-`admin@ubite.local`): create them with `BOOTSTRAP_*`, run the API in development and point
-`API_LOG` at its log, where their codes are. It changes the data, so point it at a throwaway
-instance:
+`E2E_STAFF`, `E2E_DCCAS` and `E2E_ADMIN` (default `e2e.cantina@ubite.local`,
+`e2e.dccas@ubite.local`, `e2e.admin@ubite.local`): create them with `BOOTSTRAP_*`, run the API in
+development and point `API_LOG` at its log, where their codes are. Outside the canteen's hours the
+wait report and the typed receipt are refused, as they should be; give the throwaway database an
+open day in `/admin` first. It changes the data, so point it at a throwaway instance:
 
 ```bash
-cd apps/api && DATABASE_URL=pglite:.data/e2e npx tsx src/cli.ts seed --demo
+cd apps/api && mkdir -p ../../.data && DATABASE_URL=pglite:.data/e2e npx tsx src/cli.ts seed --demo
 NODE_ENV=development PORT=8090 DATABASE_URL=pglite:.data/e2e DEMO_SHOW_CODES=1 \
-  BOOTSTRAP_CANTEEN_STAFF=cantina@ubite.local BOOTSTRAP_DCCAS=dccas@ubite.local \
-  BOOTSTRAP_TECH_ADMINS=admin@ubite.local WEB_DIST=../web/dist npx tsx src/index.ts > ../../.data/e2e-api.log
+  BOOTSTRAP_CANTEEN_STAFF=e2e.cantina@ubite.local BOOTSTRAP_DCCAS=e2e.dccas@ubite.local \
+  BOOTSTRAP_TECH_ADMINS=e2e.admin@ubite.local WEB_DIST=../web/dist npx tsx src/index.ts > ../../.data/e2e-api.log
 # in a second terminal, at the repo root:
 API_LOG=.data/e2e-api.log npm run e2e -- http://localhost:8090
 ```
@@ -164,7 +165,10 @@ makes a deployment a demo, locked so that being public costs nothing:
 
 - sign-in codes are shown on screen instead of emailed, and **only for students**; a staff, DCCAS
   or admin account is emailed like anywhere else, and the demo has none (`seed --demo` creates
-  students only, so its addresses can be published);
+  students only, so its addresses can be published). A reseed
+  (`DATABASE_URL=… npm run cli -w @ubite/api -- seed --demo`) also retires the staff, DCCAS and
+  admin accounts that older seeds made at addresses this page once listed, and signs out every
+  staff, DCCAS and admin session;
 - **no push message is ever sent**: phones may subscribe, the subscriptions are stored, nothing
   leaves;
 - search engines are told to stay away.

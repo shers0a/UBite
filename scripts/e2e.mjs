@@ -17,9 +17,9 @@ const RECEIPT = process.argv[3];
 const RECEIPT2 = process.argv[4];
 const OUT = path.resolve('dist/e2e');
 const LOG = process.env.API_LOG;
-const STAFF = process.env.E2E_STAFF || 'cantina@ubite.local';
-const DCCAS = process.env.E2E_DCCAS || 'dccas@ubite.local';
-const ADMIN = process.env.E2E_ADMIN || 'admin@ubite.local';
+const STAFF = process.env.E2E_STAFF || 'e2e.cantina@ubite.local';
+const DCCAS = process.env.E2E_DCCAS || 'e2e.dccas@ubite.local';
+const ADMIN = process.env.E2E_ADMIN || 'e2e.admin@ubite.local';
 fs.mkdirSync(OUT, { recursive: true });
 
 const exe = [process.env.BROWSER_PATH, path.join(process.env.LOCALAPPDATA || '', 'Google/Chrome/Application/chrome.exe'),

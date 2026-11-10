@@ -111,7 +111,7 @@ for (const theme of ['dark', 'light']) {
 {
   const p = await page({ width: 1200, height: 860, theme: 'light' });
   await p.goto(`${BASE}/`, { waitUntil: 'networkidle0' });
-  await signIn(p, 'cantina@ubite.local');
+  await signIn(p, 'e2e.cantina@ubite.local');
   await p.goto(`${BASE}/staff`, { waitUntil: 'networkidle0' });
   await shot(p, 'staff-editor', { full: true });
   await p.goto(`${BASE}/staff/redeem`, { waitUntil: 'networkidle0' });
@@ -124,7 +124,7 @@ for (const theme of ['dark', 'light']) {
 {
   const p = await page({ width: 1200, height: 860, theme: 'light' });
   await p.goto(`${BASE}/`, { waitUntil: 'networkidle0' });
-  await signIn(p, 'dccas@ubite.local');
+  await signIn(p, 'e2e.dccas@ubite.local');
   await p.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle0' });
   await shot(p, 'dashboard', { full: true });
   await p.close();

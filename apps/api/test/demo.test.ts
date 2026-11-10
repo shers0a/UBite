@@ -8,6 +8,7 @@ import pino from 'pino';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPusher } from '../src/services/push';
 import { seedDemo } from '../src/seed';
+import { createSession } from '../src/services/auth';
 import { appFor, testContext, type TestCtx } from './helpers';
 
 const H = { 'X-UBite': '1' };
@@ -42,6 +43,22 @@ describe('demo data', () => {
     expect(roles.rows).toEqual([{ role: 'student', n: 40 }]);
     const menus = await ctx.db.query<{ n: number }>('SELECT count(*)::int AS n FROM daily_menus WHERE published_at IS NOT NULL');
     expect(menus.rows[0].n).toBeGreaterThan(10);
+  });
+
+  it('a reseed retires the staff accounts older seeds made at public addresses, and ends staff sessions', async () => {
+    ctx = await testContext();
+    const ids = new Map<string, string>();
+    for (const [email, role] of [['cantina@ubite.local', 'canteen_staff'], ['dccas@ubite.local', 'dccas_admin'], ['admin@ubite.local', 'tech_admin'], ['someone@gmail.com', 'tech_admin'], ['ubite.demo.1@s.unibuc.ro', 'student']]) {
+      const id = (await ctx.db.query<{ id: string }>('INSERT INTO users (email, role) VALUES ($1, $2) RETURNING id', [email, role])).rows[0].id;
+      ids.set(email, id);
+      await createSession(ctx.db, id, ctx.now());
+    }
+    await seedDemo(ctx, () => {});
+    const live = await ctx.db.query<{ email: string }>("SELECT email::text AS email FROM users WHERE deleted_at IS NULL AND role <> 'student'");
+    // A staff account somebody added on the demo stays, but signed out; the published ones are gone.
+    expect(live.rows.map((r) => r.email)).toEqual(['someone@gmail.com']);
+    const sessions = await ctx.db.query<{ user_id: string }>('SELECT user_id FROM sessions');
+    expect(sessions.rows.map((r) => r.user_id)).toEqual([ids.get('ubite.demo.1@s.unibuc.ro')]);
   });
 });
 
