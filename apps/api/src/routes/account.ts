@@ -14,6 +14,7 @@ import { checkReceiptWindow, loyaltyState, recordVisit } from '../services/loyal
 import { matchFiscalCode, parseReceipt, receiptIdentity, receiptRef, typedReceiptIdentity } from '../services/receipt';
 import { getCrowdingConfig } from '../services/config-store';
 import { checkImage } from '../services/receipt-image';
+import { isPushEndpoint } from '../services/push';
 
 // No MIME filter: the client names the type, the bytes are checked instead (checkImage).
 const upload = multer({
@@ -151,6 +152,8 @@ export function accountRoutes(ctx: Ctx) {
       endpoint: z.string().url().max(1000),
       keys: z.object({ p256dh: z.string().max(200), auth: z.string().max(100) }),
     }), req.body);
+    // The server will connect to this URL: a browser's push service only (services/push.ts).
+    if (!isPushEndpoint(body.endpoint)) throw new HttpError(422, 'push_endpoint', 'Not a known push service endpoint.');
     await ctx.db.query(
       `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth) VALUES ($1, $2, $3, $4)
        ON CONFLICT (endpoint) DO UPDATE SET user_id = $1, p256dh = $3, auth = $4`,
