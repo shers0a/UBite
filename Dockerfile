@@ -48,6 +48,10 @@ COPY --from=tessdata /tessdata ./tessdata
 # The generated placeholder dish photos the base seed attaches (status: placeholder).
 COPY assets/manifest.json ./assets/manifest.json
 COPY assets/photos ./assets/photos
+# The commit the image is built from, which /api/health reports. Last, so a new commit rebuilds no
+# other layer: docker build --build-arg GIT_SHA=$(git rev-parse --short HEAD) (compose passes it).
+ARG GIT_SHA=unknown
+ENV GIT_SHA=$GIT_SHA
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s   CMD node -e "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

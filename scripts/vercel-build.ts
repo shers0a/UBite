@@ -24,6 +24,10 @@ const out = path.join(root, '.vercel/output');
 const fn = path.join(out, 'functions/api.func');
 const apiPkg = JSON.parse(fs.readFileSync(path.join(root, 'apps/api/package.json'), 'utf8'));
 const run = (cmd: string, cwd = root) => execSync(cmd, { cwd, stdio: 'inherit' });
+function gitSha(): string {
+  if (process.env.GIT_SHA) return process.env.GIT_SHA;
+  try { return execSync('git rev-parse --short HEAD', { cwd: root, encoding: 'utf8' }).trim(); } catch { return process.env.VERCEL_GIT_COMMIT_SHA || 'unknown'; }
+}
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(fn, { recursive: true });
@@ -78,6 +82,8 @@ fs.writeFileSync(path.join(fn, '.vc-config.json'), JSON.stringify({
   memory: 2048,
   // Frankfurt: next to the students, and to a database in eu-central-1.
   regions: ['fra1'],
+  // The commit being deployed, which /api/health reports (a prebuilt deploy names none itself).
+  environment: { GIT_SHA: gitSha() },
 }, null, 1));
 
 // 3 · Routes and headers.

@@ -76,6 +76,10 @@ const schema = z.object({
   JOBS: z.enum(['timers', 'requests']).default('timers'),
   /** Serverless only: the bearer token the platform's daily cron calls /api/cron with. */
   CRON_SECRET: optional,
+
+  /** The commit this build came from, which /api/health reports: the Dockerfile's GIT_SHA build
+   *  argument, or the one scripts/vercel-build.ts writes into the function. Never set it by hand. */
+  GIT_SHA: optional,
 });
 
 export type Config = z.infer<typeof schema>;
@@ -93,7 +97,15 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     if (cfg.DATABASE_URL.startsWith('pglite:')) throw new Error('Production needs a PostgreSQL DATABASE_URL');
     if (cfg.DEV_LOG_CODES) throw new Error('DEV_LOG_CODES must be off in production');
   }
+  // Vercel names the commit it built, when the deployment came from git.
+  cfg.GIT_SHA ??= env.VERCEL_GIT_COMMIT_SHA || undefined;
   return cfg;
+}
+
+/** What /api/health calls the running version: the commit, or "unknown" for a build without one. */
+export function appVersion(cfg: Config): string {
+  const sha = cfg.GIT_SHA?.trim();
+  return sha && sha !== 'unknown' && /^[\w.-]{1,64}$/.test(sha) ? sha : 'unknown';
 }
 
 export function features(cfg: Config) {

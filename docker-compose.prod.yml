@@ -23,7 +23,11 @@ services:
     depends_on: [app]
 
   app:
-    build: .
+    # GIT_SHA=$(git rev-parse --short HEAD) before `build`, so /api/health names the commit.
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:-unknown}
     restart: always
     env_file: .env
     environment:

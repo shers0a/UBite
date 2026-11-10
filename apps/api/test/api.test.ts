@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { appFor, lastCode, testContext, type TestCtx } from './helpers';
 import { runFusion } from '../src/services/crowding';
 import { csvCell } from '../src/services/dashboard';
+import { appVersion, loadConfig } from '../src/config';
 
 let ctx: TestCtx;
 let app: ReturnType<typeof appFor>;
@@ -80,6 +81,20 @@ describe('sign-in by email code (docs/10)', () => {
   it('refuses state changes without the X-UBite header', async () => {
     const r = await request(app).post('/api/auth/request-code').send({ email: 'ana.pop@s.unibuc.ro' });
     expect(r.status).toBe(403);
+  });
+});
+
+describe('health', () => {
+  it('names the deployed commit, from the GIT_SHA build argument or Vercel', async () => {
+    const plain = await request(app).get('/api/health').expect(200);
+    expect(plain.body).toMatchObject({ ok: true, version: 'unknown' });
+    const built = await testContext({ GIT_SHA: '29c7f7b' });
+    try {
+      expect((await request(appFor(built)).get('/api/health').expect(200)).body.version).toBe('29c7f7b');
+    } finally { await built.db.close(); }
+    const sha = 'e588810'.padEnd(40, '0');
+    expect(appVersion(loadConfig({ NODE_ENV: 'test', VERCEL_GIT_COMMIT_SHA: sha }))).toBe(sha);
+    expect(appVersion(loadConfig({ NODE_ENV: 'test', GIT_SHA: '<script>' }))).toBe('unknown');
   });
 });
 

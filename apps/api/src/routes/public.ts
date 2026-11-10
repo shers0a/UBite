@@ -6,7 +6,7 @@ import type { Announcement, DishDetail, StatusResponse } from '@ubite/shared';
 import { DIET_TAGS, localDate } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
-import { features } from '../config';
+import { appVersion, features } from '../config';
 import { isCalendarDate, limits, parse } from '../http';
 import { currentEstimate, submitReport, typicalToday } from '../services/crowding';
 import { dishAllergens, getDish, getMenu, listDishes, todayMenu } from '../services/menu';
@@ -20,9 +20,10 @@ export function publicRoutes(ctx: Ctx) {
     next();
   };
 
+  // The version is the commit the build came from, so anyone can tell which one is deployed.
   r.get('/health', async (_req, res) => {
     await ctx.db.query('SELECT 1');
-    res.set('Cache-Control', 'no-store').json({ ok: true, time: ctx.now().toISOString() });
+    res.set('Cache-Control', 'no-store').json({ ok: true, time: ctx.now().toISOString(), version: appVersion(ctx.cfg) });
   });
 
   r.get('/menu/today', async (_req, res) => {

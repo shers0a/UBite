@@ -89,7 +89,7 @@ and 443 must be reachable from the internet).
 ```bash
 cp .env.example .env                 # fill SESSION_SECRET, POSTGRES_PASSWORD, SMTP_URL, VAPID_*, DOMAIN
 npm run cli -w @ubite/api -- vapid   # once, for VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY
-docker compose -f docker-compose.prod.yml up -d --build
+GIT_SHA=$(git rev-parse --short HEAD) docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js migrate
 docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js seed
 docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js user:add cantinakogalniceanu@unibuc.ro canteen_staff
@@ -99,7 +99,8 @@ Rules that come from the docs:
 
 - **Never deploy between 11:00 and 17:30 on a weekday.** Migrations are their own step, after a
   manual backup (`deploy/backup.sh`).
-- **Uptime monitoring** watches `GET /api/health`; alerts for "no menu by 10:00" and "camera silent
+- **Uptime monitoring** watches `GET /api/health`, which also names the deployed commit (`version`,
+  from the `GIT_SHA` build argument; `unknown` when the build was not given one); alerts for "no menu by 10:00" and "camera silent
   15 minutes" go to `ALERT_EMAILS` — name the person who acts on them.
 - **Test email delivery to `@s.unibuc.ro` before launch** (docs/10): institutional servers are strict.
 - **Sign-in emails are capped** at `SIGNIN_EMAILS_PER_DAY` (250), under Brevo's free 300 a day, which the
@@ -123,7 +124,7 @@ there are three differences:
 ```bash
 git clone https://github.com/shers0a/UBite.git /opt/ubite && cd /opt/ubite
 cp .env.example .env && chmod 600 .env   # DOMAIN, DOMAIN_ALIASES, POSTGRES_PASSWORD, SESSION_SECRET, VAPID_*, SMTP_URL
-podman-compose -f docker-compose.prod.yml build app
+GIT_SHA=$(git rev-parse --short HEAD) podman-compose -f docker-compose.prod.yml build app
 podman-compose -f docker-compose.prod.yml up -d db
 podman-compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js migrate
 podman-compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js seed
@@ -131,7 +132,8 @@ podman-compose -f docker-compose.prod.yml up -d db app caddy
 crontab -e                               # 30 3 * * * /opt/ubite/deploy/backup.sh
 ```
 
-To update: `git pull`, rebuild `app`, run `migrate` (after a backup), then `up -d app`.
+To update: `git pull`, rebuild `app` with `GIT_SHA` as above, run `migrate` (after a backup), then
+`up -d app`. `curl -s https://$DOMAIN/api/health` then shows the new commit.
 
 While the final domain is pending, `DOMAIN` is the address that works now and `DOMAIN_ALIASES` lists
 the others. Caddy gets certificates for all of them and sends the aliases to `DOMAIN`.
