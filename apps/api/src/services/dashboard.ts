@@ -186,16 +186,21 @@ export const EXPORTS: Record<string, { title: string; sql: string }> = {
   },
 };
 
+/** One CSV cell. Feedback text and dish names come from people, and a spreadsheet runs a cell that
+ *  starts with = + - @ (or a tab or CR before one) as a formula, so such a cell starts with ' and
+ *  is read as text. A plain number ("-1.5") is left alone: it can be nothing but a number. */
+export function csvCell(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  let s = v instanceof Date ? v.toISOString() : String(v);
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
+  return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export async function exportCsv(db: Queryable, name: string, from: string, to: string): Promise<string | null> {
   const e = EXPORTS[name];
   if (!e) return null;
   const r = await db.query<Record<string, unknown>>(e.sql, [from, addDays(to, 1)]);
   const cols = r.rows[0] ? Object.keys(r.rows[0]) : [];
-  const cell = (v: unknown) => {
-    if (v === null || v === undefined) return '';
-    const s = v instanceof Date ? v.toISOString() : String(v);
-    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
   // Excel on Romanian Windows opens UTF-8 CSV correctly only with the BOM.
-  return '﻿' + [cols.join(','), ...r.rows.map((row) => cols.map((c) => cell(row[c])).join(','))].join('\r\n') + '\r\n';
+  return '﻿' + [cols.join(','), ...r.rows.map((row) => cols.map((c) => csvCell(row[c])).join(','))].join('\r\n') + '\r\n';
 }

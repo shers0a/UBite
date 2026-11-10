@@ -2,6 +2,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { appFor, lastCode, testContext, type TestCtx } from './helpers';
 import { runFusion } from '../src/services/crowding';
+import { csvCell } from '../src/services/dashboard';
 
 let ctx: TestCtx;
 let app: ReturnType<typeof appFor>;
@@ -197,6 +198,23 @@ describe('status, feedback, analytics', () => {
     expect(s.body.headline).toBeDefined();
     const csv = await d.agent.get('/api/dashboard/export/feedback.csv').expect(200);
     expect(csv.headers['content-type']).toMatch(/text\/csv/);
+  });
+
+  it('exports what people typed as text, never as a spreadsheet formula', async () => {
+    const typed = ['=HYPERLINK("https://evil.example","Deschide")', '+1+cmd|\' /C calc\'!A0', '-2+3', '@SUM(A1:A9)', '\t=1+1', 'Mai multe feluri de post'];
+    for (const [i, text] of typed.entries())
+      await ctx.db.query("INSERT INTO feedback (source, food_rating, missing_feature, submitted_at) VALUES ('app', 4, $1, $2)", [text, new Date(ctx.now().getTime() - (10 - i) * 60_000)]);
+    await ctx.db.query("INSERT INTO users (email, role) VALUES ('dccas@unibuc.ro', 'dccas_admin')");
+    const d = await signIn('dccas@unibuc.ro');
+    const day = '2026-10-13';
+    const csv = (await d.agent.get(`/api/dashboard/export/feedback.csv?from=${day}&to=${day}`).expect(200)).text;
+    const rows = csv.trim().split('\r\n').slice(1);
+    const expected = ['"\'=HYPERLINK(""https://evil.example"",""Deschide"")"', '\'+1+cmd|\' /C calc\'!A0', '\'-2+3', '\'@SUM(A1:A9)', '\'\t=1+1', ',Mai multe feluri de post'];
+    expect(rows).toHaveLength(expected.length);
+    for (const [i, cell] of expected.entries()) expect(rows[i].endsWith(cell), rows[i]).toBe(true);
+    expect(csvCell(-1.5)).toBe('-1.5');
+    expect(csvCell('-12')).toBe('-12');
+    expect(csvCell('\r=1')).toBe('"\'\r=1"');
   });
 });
 
