@@ -186,7 +186,7 @@ console.log('Student without an account');
     if (/%/.test(hero)) throw new Error('a percentage in the crowding hero');
     // Letter lookarounds, not \b: \b knows only ASCII letters, so it sees no boundary after the ă
     // of „Mică” (and one inside „Mareșal”).
-    return /(?<!\p{L})(Mică|Medie|Mare)(?!\p{L})/u.test(hero) &&/\d+ (de )?minute|un minut/.test(hero) && /actualizat/i.test(hero);
+    return /(?<!\p{L})(Mică|Medie|Mare)(?!\p{L})/u.test(hero) && /\d+ (de )?minute|un minut/.test(hero) && /actualizat/i.test(hero);
   };
   await check('F3 crowding: a level word, minutes and the age — or says there is no data', async () => {
     if (!(await heroShowsEstimate())) await see(p, /Nu avem date acum|Închis/);
@@ -310,10 +310,16 @@ console.log('\nStudent with an account (4 of 5 dots)');
     await click(p, 'Adaugă vizita');
     await see(p, /Vizită adăugată|Bon adăugat|Ai o masă gratuită/);
   });
-  await check('F4 the card: dots, a reward code that changes every minute, works offline', async () => {
+  await check('F4 the card: dots, the card code; a typed fifth receipt waits for a photographed one', async () => {
     await p.goto(`${BASE}/card`, { waitUntil: 'networkidle2' });
     await see(p, 'Cardul de fidelitate');
-    await see(p, /se schimbă în \d+s|Codul cardului tău/);
+    // /i: innerText comes back upper-cased where the design system sets a label in capitals.
+    const body = await see(p, /se schimbă în \d+s|codul cardului tău/i);
+    if (!RECEIPT) {
+      // demo.1 had four dots and the fifth was typed, which never issues the free meal (docs/09).
+      if (/se schimbă în \d+s/.test(body)) throw new Error('a typed receipt issued the free meal');
+      await see(p, 'Masa gratuită apare după următorul bon fotografiat');
+    }
   });
   await check('F9 personal history: visits and spend this month', async () => {
     await p.goto(`${BASE}/account`, { waitUntil: 'networkidle2' });
