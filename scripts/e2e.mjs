@@ -184,7 +184,9 @@ console.log('Student without an account');
     const body = await see(p, /Coada acum/i);
     const hero = body.slice(0, body.search(/Ce mănâncă lumea/));
     if (/%/.test(hero)) throw new Error('a percentage in the crowding hero');
-    return /\b(Mică|Medie|Mare)\b/.test(hero) && /\d+ (de )?minute|un minut/.test(hero) && /actualizat/i.test(hero);
+    // Letter lookarounds, not \b: \b knows only ASCII letters, so it sees no boundary after the ă
+    // of „Mică” (and one inside „Mareșal”).
+    return /(?<!\p{L})(Mică|Medie|Mare)(?!\p{L})/u.test(hero) &&/\d+ (de )?minute|un minut/.test(hero) && /actualizat/i.test(hero);
   };
   await check('F3 crowding: a level word, minutes and the age — or says there is no data', async () => {
     if (!(await heroShowsEstimate())) await see(p, /Nu avem date acum|Închis/);
