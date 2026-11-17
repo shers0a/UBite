@@ -1,0 +1,13 @@
+# Continuous deployment of UBite on the UB VM (deploy/cd.sh, docs/24). Installed by deploy/install-cd.sh.
+[Unit]
+Description=UBite: deploy the signed image main points to
+Wants=network-online.target
+After=network-online.target podman-restart.service
+
+[Service]
+Type=oneshot
+# Unset for system services; cosign keeps its Sigstore trust root in $HOME/.sigstore.
+Environment=HOME=/root
+ExecStart=/opt/ubite/deploy/cd.sh
+TimeoutStartSec=30min
+Nice=10

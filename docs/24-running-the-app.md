@@ -98,8 +98,8 @@ docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js
 
 Rules that come from the docs:
 
-- **Never deploy between 11:00 and 17:30 on a weekday.** Migrations are their own step, after a
-  manual backup (`deploy/backup.sh`).
+- **Never deploy between 11:00 and 17:30 on a weekday.** On the UB VM, `deploy/cd.sh` enforces it.
+  Migrations run before the new version starts, after a backup (`deploy/backup.sh`).
 - **Uptime monitoring** watches `GET /api/health`, which also names the deployed commit (`version`,
   from the `GIT_SHA` build argument; `unknown` when the build was not given one); alerts for "no menu by 10:00" and "camera silent
   15 minutes" go to `ALERT_EMAILS` — name the person who acts on them.
@@ -133,11 +133,78 @@ podman-compose -f docker-compose.prod.yml up -d db app caddy
 crontab -e                               # 30 3 * * * /opt/ubite/deploy/backup.sh
 ```
 
-To update: `git pull`, rebuild `app` with `GIT_SHA` as above, run `migrate` (after a backup), then
-`up -d app`. `curl -s https://$DOMAIN/api/health` then shows the new commit.
+Updates are not made by hand any more: see "Continuous deployment" below. The commands above stay
+for a new machine, and for an emergency when GitHub or ghcr.io is down.
 
-While the final domain is pending, `DOMAIN` is the address that works now and `DOMAIN_ALIASES` lists
-the others. Caddy gets certificates for all of them and sends the aliases to `DOMAIN`.
+`DOMAIN` is the address the app lives on (`ubite.acc.unibuc.ro` since 17 Nov 2026), and
+`DOMAIN_ALIASES` lists the old ones (`ubite.hypha.ro 195-95-166-134.sslip.io`). Caddy gets
+certificates for all of them. On an alias, a page a browser opens is sent on to `DOMAIN`, so new
+installs happen there. The API, the service worker and the files are still served on the alias: an
+app installed on an old address keeps working and keeps updating, with its own sign-in and
+notifications, until the student installs it again from `DOMAIN`. After changing `DOMAIN` in `.env`,
+recreate caddy and app (`podman rm -f ubite_caddy_1 ubite_vision_1 ubite_app_1`, then
+`deploy/cd.sh --retry --now`, or `up -d` as above).
+
+### Continuous deployment
+
+Every push to `main` that passes CI publishes two images to ghcr.io, `ghcr.io/shers0a/ubite` and
+`ghcr.io/shers0a/ubite-vision`, tagged `sha-<commit>`. Each is signed with cosign keyless, so the
+certificate names `.github/workflows/ci.yml@refs/heads/main` and the commit, and each gets a build
+provenance attestation. Then `main` moves to them. The VM pulls on its own: no inbound port is opened,
+and GitHub holds no key to it. `deploy/cd.sh` runs every 5 minutes, from the `ubite-cd` systemd timer:
+
+1. When `ghcr.io/shers0a/ubite:main` points to the digest that already runs, it does nothing.
+2. It holds while the canteen serves: never between 11:00 and 17:30 on a weekday (Bucharest time).
+   A release made at lunch goes out at 17:30.
+3. It pulls by digest and checks the signature (identity, `refs/heads/main`, and the commit in the
+   image label). An image built anywhere else never runs.
+4. It checks out that commit in `/opt/ubite` (compose file, Caddyfile, scripts). It takes a backup
+   with `deploy/backup.sh` and runs `migrate` with the new image. It then replaces caddy, the counter
+   and the app, and waits until `/api/health` names the commit, both directly and through Caddy with
+   the real certificate.
+5. If they do not come up, the previous images return. Every deploy and every failure is emailed to
+   `ALERT_EMAILS`, and a failed digest is not tried again.
+
+```bash
+sudo /opt/ubite/deploy/cd.sh --status     # what runs, what main is, why it waits, the last deploys
+sudo /opt/ubite/deploy/cd.sh --now        # deploy now, even at lunch (an urgent fix)
+sudo /opt/ubite/deploy/cd.sh --rollback   # back to the previous version; pauses the timer
+sudo /opt/ubite/deploy/cd.sh --pause      # or --resume; --retry tries a failed digest again
+journalctl -u ubite-cd -n 50              # what each run did
+```
+
+- **Migrations must work with the version before them.** A rollback brings back the old image, not
+  the old schema. Add columns and tables; drop them a release later.
+- **Never edit files in `/opt/ubite` that git tracks.** The checkout follows the deployed commit, and
+  local changes stop the deploy. `.env`, `backups/` and `services/vision/models/` are not tracked.
+- **The counter's weights** live in `services/vision/models/` on the VM, mounted read-only. They are
+  not in git or in the image.
+- **Installed once** with `sudo /opt/ubite/deploy/install-cd.sh`. It installs cosign (pinned and
+  checksummed) and the timer, and starts paused, so a person watches the first deploy.
+- Anyone with push access to `main` can deploy. That is the point, and it is also why `main` should
+  be protected (reviews, required checks) in the repository settings.
+
+### Verifying what runs in production
+
+`/api/health` names the commit (`version`) and the image digest (`image`). Anyone can check that the
+image was built by this repository's CI from that commit on `main`:
+
+```bash
+curl -s https://ubite.acc.unibuc.ro/api/health
+# {"ok":true,"time":"…","version":"<commit>","image":"ghcr.io/shers0a/ubite@sha256:…"}
+cosign verify \
+  --certificate-identity https://github.com/shers0a/UBite/.github/workflows/ci.yml@refs/heads/main \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-github-workflow-sha <commit> \
+  ghcr.io/shers0a/ubite@sha256:…
+gh attestation verify oci://ghcr.io/shers0a/ubite@sha256:… -R shers0a/UBite   # the provenance
+```
+
+The **Production** workflow repeats this every half hour from GitHub. It also checks that the
+certificate has 14 days left and that the old addresses still redirect, and that production runs the
+newest commit that passed CI (or that it waits for 17:30). A failed run emails whoever last changed
+its schedule. CodeQL scans the TypeScript, the Python and the workflows on every push. Its results
+are in the repository's Security tab.
 
 ### Free hosting: Vercel
 

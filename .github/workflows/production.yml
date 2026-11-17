@@ -1,0 +1,98 @@
+# Production check (docs/12 "Monitoring", docs/24): from outside the UB network, every half hour.
+# - The site answers and its database is up; the certificate has at least 14 days left.
+# - The old addresses send a browser on to the main one, and still serve apps installed there.
+# - What runs is an image CI signed on main for the commit /api/health names: anyone can repeat this
+#   step to check that the code in the repository is the code that is deployed.
+# - It is the newest commit that passed CI, unless the lunch hold (11:00–17:30 on weekdays) keeps it.
+# A failed run notifies whoever last changed this schedule (GitHub's rule for scheduled workflows).
+name: Production
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SITE: ubite.acc.unibuc.ro
+  ALIASES: ubite.hypha.ro 195-95-166-134.sslip.io
+  SIGNER: https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main
+  COSIGN_VERSION: v3.1.4
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: The site answers
+        run: |
+          for i in 1 2 3; do
+            curl -fsS --max-time 20 "https://$SITE/api/health" -o health.json && break
+            [ "$i" = 3 ] && { echo "::error::https://$SITE/api/health does not answer"; exit 1; }
+            sleep 30
+          done
+          cat health.json; echo
+          jq -e '.ok == true' health.json > /dev/null
+
+      - name: The certificate has at least 14 days left
+        run: |
+          end=$(echo | openssl s_client -servername "$SITE" -connect "$SITE:443" 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
+          left=$(( ($(date -d "$end" +%s) - $(date +%s)) / 86400 ))
+          echo "The certificate ends $end, in $left days."
+          [ "$left" -ge 14 ] || { echo "::error::The certificate of $SITE ends in $left days"; exit 1; }
+
+      - name: The old addresses send pages on and still serve installed apps
+        run: |
+          for a in $ALIASES; do
+            to=$(curl -sS -o /dev/null -w '%{redirect_url}' --max-time 20 -H 'Sec-Fetch-Mode: navigate' "https://$a/menu")
+            [ "$to" = "https://$SITE/menu" ] || { echo "::error::$a sends a page to '$to'"; exit 1; }
+            curl -fsS -o /dev/null --max-time 20 "https://$a/api/health" || { echo "::error::$a/api/health fails"; exit 1; }
+            echo "$a → https://$SITE (the API still answers on $a)"
+          done
+
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+
+      - name: What runs is the image CI signed on main for that commit
+        run: |
+          image=$(jq -r '.image // empty' health.json)
+          version=$(jq -r '.version' health.json)
+          [ -n "$image" ] || { echo "::error::/api/health names no image digest: this was not deployed by deploy/cd.sh"; exit 1; }
+          cosign verify \
+            --certificate-identity "$SIGNER" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-github-workflow-repository "${{ github.repository }}" \
+            --certificate-github-workflow-ref refs/heads/main \
+            --certificate-github-workflow-sha "$version" \
+            "$image" > /dev/null
+          {
+            echo "### Production runs a signed image"
+            echo "\`$image\`, signed by \`ci.yml\` on main for [\`${version:0:7}\`](${{ github.server_url }}/${{ github.repository }}/commit/$version)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: It is the newest commit that passed CI, or it waits for 17:30
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r '.version' health.json)
+          read -r newest finished < <(gh run list -R "${{ github.repository }}" -w CI -b main -e push -s success -L 1 \
+            --json headSha,updatedAt --jq '.[0] | "\(.headSha) \(.updatedAt)"')
+          [ "$version" = "$newest" ] && { echo "Up to date: $version"; exit 0; }
+          export TZ=Europe/Bucharest
+          now=$(date +%s); since=$(date -d "$finished" +%s)
+          hold_start=$(date -d 'today 11:00' +%s); hold_end=$(date -d 'today 17:30' +%s)
+          if [ "$(date +%u)" -le 5 ]; then
+            if [ "$now" -ge "$hold_start" ] && [ "$now" -lt "$hold_end" ]; then
+              echo "::notice::$newest waits for 17:30 (lunch hold); production runs $version"; exit 0
+            fi
+            # Released during today's hold: it has been pending only since 17:30.
+            if [ "$since" -ge "$hold_start" ] && [ "$since" -lt "$hold_end" ]; then since=$hold_end; fi
+          fi
+          age=$(( (now - since) / 60 ))
+          # The VM looks every 5 minutes, and a deploy takes a few more.
+          [ "$age" -lt 40 ] && { echo "::notice::$newest has been due for $age minutes; deploying"; exit 0; }
+          echo "::error::Production runs $version, but $newest passed CI and has been due for $age minutes (paused, or the deploy failed: journalctl -u ubite-cd on the VM)"
+          exit 1
