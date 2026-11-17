@@ -32,6 +32,9 @@
 set -euo pipefail
 umask 022
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Under systemd, podman would leave each container's conmon in the calling service, and systemd
+# stops whatever is left in a service when its run ends: the site went down that way on 17 Nov 2026.
+unset INVOCATION_ID
 
 REPO_DIR=/opt/ubite
 COMPOSE_FILE=docker-compose.prod.yml
@@ -164,6 +167,12 @@ healthy() { # <expected version, or "" for any> <with vision: 1 or "">
     ip=""; sleep 3
   done
   [ -n "$ip" ] || { log "Caddy does not serve https://$domain/api/health"; return 1; }
+  # Each container is watched by a conmon in its own scope, so it outlives this run.
+  local c cg
+  for c in ubite_db_1 ubite_app_1 ubite_caddy_1 ${2:+ubite_vision_1}; do
+    cg=$(cat "/proc/$(podman container inspect "$c" --format '{{.State.ConmonPid}}' 2>/dev/null)/cgroup" 2>/dev/null || true)
+    case "$cg" in *libpod-conmon-*) ;; *) log "$c is not in a scope of its own (${cg:-no conmon}): it would stop with this run"; return 1 ;; esac
+  done
   if [ -n "$2" ]; then
     sleep 20
     [ "$(podman container inspect ubite_vision_1 --format '{{.State.Running}} {{.RestartCount}}' 2>/dev/null)" = "true 0" ] \
