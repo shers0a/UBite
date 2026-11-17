@@ -80,6 +80,9 @@ const schema = z.object({
   /** The commit this build came from, which /api/health reports: the Dockerfile's GIT_SHA build
    *  argument, or the one scripts/vercel-build.ts writes into the function. Never set it by hand. */
   GIT_SHA: optional,
+  /** The image this container runs, by digest: deploy/cd.sh sets it (UBITE_IMAGE in the compose
+   *  file) and /api/health shows it, so anyone can check its signature (docs/24). Never set it by hand. */
+  IMAGE: optional,
 });
 
 export type Config = z.infer<typeof schema>;
@@ -106,6 +109,12 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
 export function appVersion(cfg: Config): string {
   const sha = cfg.GIT_SHA?.trim();
   return sha && sha !== 'unknown' && /^[\w.-]{1,64}$/.test(sha) ? sha : 'unknown';
+}
+
+/** The image /api/health names: only a digest reference (registry/name@sha256:…), else null. */
+export function appImage(cfg: Config): string | null {
+  const ref = cfg.IMAGE?.trim();
+  return ref && /^[a-z0-9.-]+(:\d+)?\/[a-z0-9._/-]+@sha256:[a-f0-9]{64}$/.test(ref) ? ref : null;
 }
 
 export function features(cfg: Config) {

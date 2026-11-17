@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { appFor, lastCode, testContext, type TestCtx } from './helpers';
 import { runFusion } from '../src/services/crowding';
 import { csvCell } from '../src/services/dashboard';
-import { appVersion, loadConfig } from '../src/config';
+import { appImage, appVersion, loadConfig } from '../src/config';
 
 let ctx: TestCtx;
 let app: ReturnType<typeof appFor>;
@@ -95,6 +95,15 @@ describe('health', () => {
     const sha = 'e588810'.padEnd(40, '0');
     expect(appVersion(loadConfig({ NODE_ENV: 'test', VERCEL_GIT_COMMIT_SHA: sha }))).toBe(sha);
     expect(appVersion(loadConfig({ NODE_ENV: 'test', GIT_SHA: '<script>' }))).toBe('unknown');
+  });
+
+  it('names the signed image it runs, only as a digest reference (deploy/cd.sh)', async () => {
+    expect((await request(app).get('/api/health').expect(200)).body.image).toBeNull();
+    const ref = `ghcr.io/shers0a/ubite@sha256:${'ab'.repeat(32)}`;
+    expect(appImage(loadConfig({ NODE_ENV: 'test', IMAGE: ref }))).toBe(ref);
+    for (const bad of ['localhost/ubite_app:latest', 'ghcr.io/shers0a/ubite:main', `${ref}<script>`, '']) {
+      expect(appImage(loadConfig({ NODE_ENV: 'test', IMAGE: bad })), bad).toBeNull();
+    }
   });
 });
 

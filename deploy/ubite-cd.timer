@@ -1,0 +1,11 @@
+# Every 5 minutes; deploy/cd.sh does nothing when main has not moved, and holds during weekday lunch.
+[Unit]
+Description=UBite: look for a new release every 5 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=5min
+RandomizedDelaySec=30s
+
+[Install]
+WantedBy=timers.target

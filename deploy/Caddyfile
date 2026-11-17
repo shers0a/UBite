@@ -1,10 +1,27 @@
 # HTTPS is mandatory: a PWA will not install without it and push will not work (docs/12).
-# DOMAIN is where the app lives. DOMAIN_ALIASES (optional, space-separated) get certificates too and
-# are sent on to DOMAIN, so the PWA is only ever installed on one origin. The redirect stays
-# temporary while the main domain can still change (sslip.io → ubite.hypha.ro → ubite.unibuc.ro).
+# DOMAIN is where the app lives. DOMAIN_ALIASES (optional, space-separated) get certificates too.
+#
+# On an alias, a page a browser opens is sent on to DOMAIN, so new installs happen on one origin.
+# Everything else (the API, the service worker, scripts, photos) is still served there: an app
+# installed on an old address draws its pages from its service worker and never reaches the redirect,
+# and a cross-origin redirect would break its API calls (no CORS) and its updates (a service worker
+# script may not redirect). Such an app keeps working, with its own sign-in and notifications, and
+# it updates. The redirect stays temporary while the main domain can still change
+# (sslip.io → ubite.hypha.ro → ubite.acc.unibuc.ro).
 {$DOMAIN} {$DOMAIN_ALIASES} {
-	@alias not host {$DOMAIN}
-	redir @alias https://{$DOMAIN}{uri}
+	@alias_page {
+		not host {$DOMAIN}
+		header Sec-Fetch-Mode navigate
+	}
+	# Browsers that send no fetch metadata: a GET that asks for HTML.
+	@alias_page_legacy {
+		not host {$DOMAIN}
+		method GET HEAD
+		header !Sec-Fetch-Mode
+		header Accept *text/html*
+	}
+	redir @alias_page https://{$DOMAIN}{uri}
+	redir @alias_page_legacy https://{$DOMAIN}{uri}
 	encode zstd gzip
 	reverse_proxy app:8080
 	header {

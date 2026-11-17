@@ -106,6 +106,20 @@ The canteen serves employees as well as students, and staff mail lives on `g.uni
 test). *Consequence:* `unibuc.ro` and any subdomain are accepted; the `student` role keeps its
 name and means anyone from UB.
 
+**D-29 · `ubite.acc.unibuc.ro` is the address (17 Nov 2026).**
+ACC delegated the subdomain at Rareș Cristea's request. It replaces `ubite.hypha.ro`, lent by Sergiu
+Nisioi. *Consequence:* the old addresses send pages on to it but keep serving the API, so apps
+installed there keep working until students install the app again. Sign-in email still goes out
+from `ubite.hypha.ro` until Brevo's DNS records exist in `acc.unibuc.ro`.
+
+**D-30 · Signed images, pulled by the VM, deployed automatically outside lunch (17 Nov 2026).**
+UB IT asked for an automated pipeline, so that the code in the repository is the code that runs.
+CI signs the images it builds on `main` (cosign keyless). The VM pulls them, verifies the
+signature and deploys after 17:30 on weekdays, or at once at other times. It rolls back when the
+new version does not come up. *Consequence:* this supersedes "manual promotion to production"
+(docs/12). The hold, the backup before each migration and the rollback do the job manual promotion
+did. `/api/health` names the commit and the digest, so anyone can verify them (docs/24).
+
 **D-17 · Polling every 30 seconds, not persistent connections.**
 Three levels do not change second to second, and polling survives weak Wi-Fi.
 

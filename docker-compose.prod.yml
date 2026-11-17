@@ -3,6 +3,9 @@
 # Image names are fully qualified and restart is `always` so the file runs unchanged under Podman,
 # which has no default registry and restarts only `always` containers at boot (docs/24).
 #
+# On the UB VM, deploy/cd.sh runs the images CI signed on main: it sets UBITE_IMAGE and
+# UBITE_VISION_IMAGE to their digests and never builds. Elsewhere the defaults build locally.
+#
 #   cp .env.example .env        # fill in DOMAIN, SESSION_SECRET, SMTP_URL, VAPID_*, …
 #   docker compose -f docker-compose.prod.yml up -d --build
 #   docker compose -f docker-compose.prod.yml run --rm app node apps/api/dist/cli.js migrate
@@ -23,6 +26,7 @@ services:
     depends_on: [app]
 
   app:
+    image: ${UBITE_IMAGE:-localhost/ubite_app:latest}
     # GIT_SHA=$(git rev-parse --short HEAD) before `build`, so /api/health names the commit.
     build:
       context: .
@@ -35,6 +39,8 @@ services:
       DATABASE_URL: postgres://ubite:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/ubite
       PUBLIC_URL: https://${DOMAIN}
       TRUST_PROXY: "1"
+      # The digest /api/health names, so anyone can verify the signature of what runs (docs/24).
+      IMAGE: ${UBITE_IMAGE:-}
     depends_on:
       db: { condition: service_healthy }
 
@@ -61,6 +67,7 @@ services:
   #             "--post", "http://app:8080/api/vision/observations"]
   vision:
     profiles: [camera]
+    image: ${UBITE_VISION_IMAGE:-localhost/ubite_vision:latest}
     build: services/vision
     restart: always
     environment:
@@ -73,6 +80,9 @@ services:
       CAMERA_C5_RTSP: ${CAMERA_C5_RTSP:-}
     command: ["watch", "--model", "${VISION_MODEL:-models/yolo11n.onnx}", "--source", "${CAMERA_RTSP_URL:-}", "--every", "5",
               "--post", "http://app:8080/api/vision/observations", "--config", "http://app:8080/api/vision/config"]
+    # The weights are not in git or in the image: copy the .onnx files into services/vision/models.
+    volumes:
+      - ./services/vision/models:/app/models:ro
     depends_on: [app]
 
 volumes:

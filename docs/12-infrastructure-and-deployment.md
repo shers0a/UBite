@@ -29,8 +29,8 @@ neutralising it unblocks everything else.
 
 Requested: **`ubite.unibuc.ro`**, for institutional credibility and zero cost.
 
-Request it now, through Andra to UB digitalisation. Until it exists, run on the hosting
-provider's subdomain.
+**Live since 17 Nov 2026: `ubite.acc.unibuc.ro`**, delegated by ACC (D-29). The earlier addresses,
+`ubite.hypha.ro` and `195-95-166-134.sslip.io`, redirect pages to it.
 
 HTTPS is not optional — a PWA will not install without it, and push notifications will not
 work. Free automatic certificates are standard on every candidate host.
@@ -40,12 +40,15 @@ work. Free automatic certificates are standard on every candidate host.
 
 ## Deployment
 
-- **CI on every pull request**: typecheck, lint, tests, build
-- **Automatic deploy to staging** from the main branch
-- **Manual promotion to production**, deliberately — a student project should not auto-deploy
-  into a live lunch service
+- **CI on every pull request**: typecheck, lint, tests, build, the production dependencies' audit,
+  both images, and CodeQL
+- **Automatic deploy to production** from the main branch (D-30, 17 Nov 2026; this replaces manual
+  promotion). CI signs the images, and the UB VM pulls them, verifies them and deploys. It holds
+  during lunch and rolls back on failure (docs/24 "Continuous deployment").
 - **Never deploy between 11:00 and 17:30 on a weekday.** That is the entire operating window.
-- Database migrations run as a separate, explicit step
+  `deploy/cd.sh` enforces it.
+- Database migrations run before the new version starts, after a backup. They must work with the
+  version before them, because a rollback restores the image, not the schema.
 
 ## The vision service
 
