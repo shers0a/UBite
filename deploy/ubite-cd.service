@@ -8,6 +8,8 @@ After=network-online.target podman-restart.service
 Type=oneshot
 # Unset for system services; cosign keeps its Sigstore trust root in $HOME/.sigstore.
 Environment=HOME=/root
-ExecStart=/opt/ubite/deploy/cd.sh
+# Without INVOCATION_ID, podman gives each container's conmon its own scope (machine.slice).
+# With it, conmon stays in this service, and systemd stops the containers when the run ends.
+ExecStart=/usr/bin/env -u INVOCATION_ID /opt/ubite/deploy/cd.sh
 TimeoutStartSec=30min
 Nice=10
