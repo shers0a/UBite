@@ -134,7 +134,7 @@ export function ReportSheet() {
   );
 }
 
-/* ── Feedback: four questions, under thirty seconds, anonymous allowed (docs/03 F5) ───── */
+/* ── Feedback: five questions, under thirty seconds, anonymous allowed (docs/03 F5) ───── */
 
 function Scale({ label, value, onChange }: { label: string; value: number | null; onChange: (n: number) => void }) {
   const { t } = useI18n();
@@ -157,19 +157,20 @@ export function FeedbackSheet() {
   const { t, lang } = useI18n();
   const { sheet, openSheet, toast } = useApp();
   const [food, setFood] = React.useState<number | null>(null);
+  const [comment, setComment] = React.useState('');
   const [app, setApp] = React.useState<number | null>(null);
   const [missing, setMissing] = React.useState('');
   const [came, setCame] = React.useState<boolean | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   React.useEffect(() => {
-    if (sheet === 'feedback') { setFood(null); setApp(null); setMissing(''); setCame(null); setError(null); track('feedback_open'); }
+    if (sheet === 'feedback') { setFood(null); setComment(''); setApp(null); setMissing(''); setCame(null); setError(null); track('feedback_open'); }
   }, [sheet]);
   if (sheet !== 'feedback') return null;
 
   const submit = async () => {
-    const body: FeedbackRequest = { foodRating: food, appRating: app, missingFeature: missing.trim() || null, cameBecauseOfApp: came, source: 'app' };
-    if (food === null && app === null && !body.missingFeature && came === null) { setError(t('feedback.empty')); return; }
+    const body: FeedbackRequest = { foodRating: food, foodComment: comment.trim() || null, appRating: app, missingFeature: missing.trim() || null, cameBecauseOfApp: came, source: 'app' };
+    if (food === null && !body.foodComment && app === null && !body.missingFeature && came === null) { setError(t('feedback.empty')); return; }
     setBusy(true);
     track('feedback_submit');
     const done = (queued: boolean) => {
@@ -190,6 +191,11 @@ export function FeedbackSheet() {
     <Sheet open fixed title={t('feedback.title')} onClose={() => openSheet(null)} lang={lang}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
         <Scale label={t('feedback.food')} value={food} onChange={setFood} />
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)' }}>{t('feedback.foodComment')}</span>
+          <textarea className="ub-textarea" rows={3} maxLength={1000} value={comment} onChange={(e) => setComment(e.target.value)}
+            placeholder={t('feedback.missingHint')} />
+        </label>
         <Scale label={t('feedback.app')} value={app} onChange={setApp} />
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
           <legend style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-semibold)', marginBottom: 'var(--space-2)' }}>{t('feedback.came')}</legend>

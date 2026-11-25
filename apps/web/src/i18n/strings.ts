@@ -67,7 +67,7 @@ export const ro = {
   'spot.alert.action': 'Anunță-mă',
   'spot.alert.on': 'Activat',
   'spot.feedback.eyebrow': 'Părerea ta',
-  'spot.feedback.title': 'Patru întrebări, treizeci de secunde. Ne ajută să facem aplicația mai bună.',
+  'spot.feedback.title': 'Cinci întrebări, treizeci de secunde. Ne ajută să facem aplicația mai bună.',
   'spot.feedback.action': 'Răspund',
 
   // Menu
@@ -168,6 +168,7 @@ export const ro = {
   // Feedback
   'feedback.title': 'Părerea ta',
   'feedback.food': 'Cât de mulțumit ești de mâncare?',
+  'feedback.foodComment': 'Ce ți-a plăcut și ce nu la mâncare?',
   'feedback.app': 'Cât de utilă îți e aplicația?',
   'feedback.missing': 'Ce ți-ar lipsi din aplicație?',
   'feedback.missingHint': 'Opțional. Scrie liber.',
@@ -411,7 +412,7 @@ export const en: Record<StringKey, string> = {
   'spot.alert.action': 'Notify me',
   'spot.alert.on': 'On',
   'spot.feedback.eyebrow': 'Your opinion',
-  'spot.feedback.title': 'Four questions, thirty seconds. It helps us make the app better.',
+  'spot.feedback.title': 'Five questions, thirty seconds. It helps us make the app better.',
   'spot.feedback.action': 'Answer',
 
   'menu.title': "Today's menu",
@@ -503,6 +504,7 @@ export const en: Record<StringKey, string> = {
 
   'feedback.title': 'Your opinion',
   'feedback.food': 'How happy are you with the food?',
+  'feedback.foodComment': 'What did you like about the food, and what not?',
   'feedback.app': 'How useful is the app to you?',
   'feedback.missing': 'What is missing from the app?',
   'feedback.missingHint': 'Optional. Write freely.',

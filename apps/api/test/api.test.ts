@@ -215,6 +215,8 @@ describe('status, feedback, analytics', () => {
   it('takes anonymous feedback and refuses an empty form', async () => {
     await request(app).post('/api/feedback').set(H).send({ foodRating: 4, appRating: 5, cameBecauseOfApp: true, source: 'app' }).expect(201);
     await request(app).post('/api/feedback').set(H).send({ source: 'kiosk' }).expect(422);
+    await request(app).post('/api/feedback').set(H).send({ foodComment: 'Ciorba prea sărată', source: 'app' }).expect(201);
+    expect((await ctx.db.query('SELECT food_comment FROM feedback WHERE food_comment IS NOT NULL')).rows).toEqual([{ food_comment: 'Ciorba prea sărată' }]);
   });
 
   it('counts events without any identifier or cookie', async () => {
