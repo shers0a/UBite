@@ -10,6 +10,22 @@ import { startOutbox } from './api/outbox';
 import { startServiceWorker } from './pwa';
 import { watchImages, watchReveals } from './motion';
 
+// The entrance tablet (docs/08): opening /kiosk?device=1 once makes the installed app start on the
+// kiosk instead of the student home; /kiosk?device=0 undoes it. Chrome and the installed app share storage.
+try {
+  const q = new URLSearchParams(location.search);
+  const device = q.get('device');
+  if (device !== null && location.pathname.startsWith('/kiosk')) {
+    q.delete('device');
+    const target = location.pathname + (q.toString() ? `?${q}` : '');
+    if (device === '1') localStorage.setItem('ubite.kioskDevice', target); else localStorage.removeItem('ubite.kioskDevice');
+    history.replaceState(null, '', target);
+  } else if (location.pathname === '/') {
+    const target = localStorage.getItem('ubite.kioskDevice');
+    if (target?.startsWith('/kiosk')) history.replaceState(null, '', target);
+  }
+} catch { /* storage blocked: the kiosk still opens by its address */ }
+
 const kiosk = location.pathname.startsWith('/kiosk');
 startServiceWorker({ autoReload: kiosk });
 startOutbox();

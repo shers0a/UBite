@@ -66,7 +66,9 @@ is not a place for typing.
 ## Device configuration
 
 - Android tablet, ~900 RON class
-- Locked into kiosk mode so only the browser, on one URL, is reachable
+- Locked into kiosk mode so only the browser, on one URL, is reachable. Since 26 Nov 2026: open
+  `/kiosk?device=1` once in Chrome, install the app, then pin it (Android "Pin app"). The installed app
+  then starts on the kiosk; `/kiosk?device=0` undoes it. No Fully Kiosk licence.
 - Screen always on while powered; auto-launch on boot after a power cut
 - Automatic daily reboot outside opening hours
 - Device account separate from anyone's personal account
