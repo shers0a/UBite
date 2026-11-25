@@ -251,6 +251,18 @@ export interface PublishMenuRequest {
   items: Array<{ dishId: string; priceBani: number; portionsPrepared?: number | null }>;
 }
 
+/** The canteen's emailed Excel menu, read into the editor: nothing is published yet. */
+export interface MenuImportResponse {
+  /** The day the sheet is for. */
+  date: string;
+  items: Array<{ dishId: string; priceBani: number }>;
+  /** Dishes the catalogue did not have, added with a guessed category. */
+  created: string[];
+  /** Rows the sheet gave no price for. */
+  skipped: string[];
+  catalogue: StaffDish[];
+}
+
 export interface PublishMenuResponse {
   menu: MenuDay;
   /** Students who get a push notification for this publication. */

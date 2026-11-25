@@ -176,7 +176,7 @@ export function Home() {
   /* ── Zone 6: canteen announcements, plus upcoming schedule changes ── */
   const exceptions = (status.data?.exceptions ?? []).filter((e) => e.date >= today && e.date <= addDays(today, 7));
 
-  const loyaltyOn = (status.data?.features.loyalty ?? true) && (!me || me.role === 'student');
+  const loyaltyOn = !!status.data?.features.loyalty && (!me || me.role === 'student');
   const rewardWaiting = !!loyalty.data?.rewards.length;
 
   return (

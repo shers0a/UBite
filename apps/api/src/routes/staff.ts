@@ -9,6 +9,7 @@ import type { Ctx } from '../context';
 import { HttpError } from '../context';
 import { isoDate, limits, parse, requireRole } from '../http';
 import { getMenu, previousPublished, publishMenu, saveDish, staffCatalogue } from '../services/menu';
+import { importMenu } from '../services/menu-import';
 import { redeemAtTill } from '../services/loyalty';
 import { MAX_INPUT_PIXELS, checkImage } from '../services/receipt-image';
 
@@ -58,6 +59,14 @@ export function staffRoutes(ctx: Ctx) {
       })).min(1).max(80),
     }), req.body);
     res.json(await publishMenu(ctx, req.user!.id, body.date || localDate(ctx.now()), body.items));
+  });
+
+  /** The menu as the canteen emails it (an .xlsx): its rows land in the editor, unpublished. */
+  const sheet = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
+  r.post('/staff/menu/import', limits.staffPhoto, sheet.single('menu'), async (req, res) => {
+    if (!req.file) throw new HttpError(422, 'no_file');
+    // multer reads the name as latin1; the browser sent UTF-8 ("MENIU 25.11.2026.xlsx").
+    res.json(await importMenu(ctx, req.file.buffer, Buffer.from(req.file.originalname, 'latin1').toString('utf8')));
   });
 
   r.get('/staff/dishes', async (_req, res) => {

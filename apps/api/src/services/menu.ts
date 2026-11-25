@@ -135,11 +135,17 @@ export async function todayMenu(ctx: Ctx) {
 
 const GROUP_RANK = new Map(CATEGORY_GROUPS.flatMap((g, gi) => g.categories.map((c, ci) => [c, gi * 10 + ci] as const)));
 
+/** A menu goes out for yesterday (a late correction) up to a week ahead. */
+export function assertPublishable(ctx: Ctx, date: string) {
+  const today = localDate(ctx.now());
+  if (date < addDays(today, -1) || date > addDays(today, 7)) throw new HttpError(422, 'date_out_of_range', 'A menu can be published from yesterday to a week ahead.', { date });
+}
+
 export async function publishMenu(
   ctx: Ctx, userId: string, date: string, items: Array<{ dishId: string; priceBani: number; portionsPrepared?: number | null }>,
 ) {
   const today = localDate(ctx.now());
-  if (date < addDays(today, -1) || date > addDays(today, 7)) throw new HttpError(422, 'date_out_of_range');
+  assertPublishable(ctx, date);
   if (!items.length) throw new HttpError(422, 'empty_menu', 'Select at least one dish.');
   const ids = [...new Set(items.map((i) => i.dishId))];
   const cats = await ctx.db.query<{ id: string; category: Category }>('SELECT id, category::text AS category FROM dishes WHERE id = ANY($1::uuid[])', [ids]);
@@ -178,7 +184,14 @@ export async function saveDish(db: Db, input: DishInput, id?: string): Promise<s
   return db.tx((q) => writeDish(q, input, id));
 }
 
-async function writeDish(q: Queryable, input: DishInput, id?: string): Promise<string> {
+export async function setAllergens(q: Queryable, dishId: string, allergens: DishAllergen[]) {
+  await q.query('DELETE FROM dish_allergens WHERE dish_id = $1', [dishId]);
+  for (const a of allergens) {
+    await q.query('INSERT INTO dish_allergens (dish_id, allergen, source) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [dishId, a.allergen, a.source]);
+  }
+}
+
+export async function writeDish(q: Queryable, input: DishInput, id?: string): Promise<string> {
   const nameRo = input.nameRo.trim();
   // Translated by the team (docs/05); until then the Romanian name stands in.
   const nameEn = (input.nameEn || '').trim() || nameRo;
@@ -202,11 +215,6 @@ async function writeDish(q: Queryable, input: DishInput, id?: string): Promise<s
     await q.query('DELETE FROM dish_diet_tags WHERE dish_id = $1', [dishId]);
     for (const tag of new Set(input.tags)) await q.query('INSERT INTO dish_diet_tags (dish_id, tag) VALUES ($1, $2)', [dishId, tag]);
   }
-  if (input.allergens) {
-    await q.query('DELETE FROM dish_allergens WHERE dish_id = $1', [dishId]);
-    for (const a of input.allergens) {
-      await q.query('INSERT INTO dish_allergens (dish_id, allergen, source) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [dishId, a.allergen, a.source]);
-    }
-  }
+  if (input.allergens) await setAllergens(q, dishId!, input.allergens);
   return dishId!;
 }

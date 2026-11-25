@@ -74,6 +74,7 @@ export function SignInSheet() {
             {demoCode ? t('signin.demoCode', { code: demoCode })
               : t(isUbEmail(email.trim()) ? 'signin.codeSent' : 'signin.codeSentIfAccount', { email: email.trim().toLowerCase() })}
           </p>
+          {!demoCode && <p style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>{t('signin.junk')}</p>}
           <Input label={t('signin.code')} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="\d{6}"
             className="ub-numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             error={error || undefined} lang={lang} autoFocus />

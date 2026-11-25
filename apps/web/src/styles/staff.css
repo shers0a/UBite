@@ -10,6 +10,7 @@
 .ub-staff-section-title h2 { font-size: var(--text-xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); }
 .ub-staff-row { display: flex; align-items: center; gap: 10px; background: var(--surface-raised); border-radius: var(--radius-sm); padding: 10px 12px; flex-wrap: wrap; }
 .ub-staff-publish { display: flex; align-items: center; gap: 14px; margin-top: var(--space-5); flex-wrap: wrap; }
+.ub-staff-import { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .ub-catalog { max-height: 560px; overflow: auto; }
 .ub-check { display: flex; align-items: center; gap: var(--space-3); min-height: var(--min-target); padding: 0 var(--space-2); border-radius: var(--radius-sm); cursor: pointer; }
 .ub-check:hover { background: var(--hover-wash); }

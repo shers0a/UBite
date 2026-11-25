@@ -70,14 +70,11 @@ export default defineConfig({
         // Long-press on the icon.
         shortcuts: [
           { name: 'Meniul de azi și coada', short_name: 'Meniu', url: '/?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
-          { name: 'Cardul de fidelitate', short_name: 'Card', url: '/card?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
-          { name: 'Adaugă bonul', short_name: 'Bon', url: '/visit?source=shortcut', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
         ],
         // The richer install sheet on Android shows these (scripts/pwa-screenshots.mjs).
         screenshots: [
           { src: '/screenshots/home.png', sizes: '780x1688', type: 'image/png', form_factor: 'narrow', label: 'Coada de acum, în minute, și meniul de azi' },
           { src: '/screenshots/menu.png', sizes: '780x1688', type: 'image/png', form_factor: 'narrow', label: 'Meniul pe categorii, cu filtre alimentare' },
-          { src: '/screenshots/card.png', sizes: '780x1688', type: 'image/png', form_factor: 'narrow', label: 'Cardul de fidelitate: a șasea masă e gratuită' },
         ],
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

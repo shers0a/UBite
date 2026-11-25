@@ -8,6 +8,7 @@ import { addDays, formatLei, localDate, weekdayOf } from '@ubite/shared';
 import { Badge, Button, Chip, EmptyState, RatingStars, Skeleton, Wordmark } from '@ds';
 import { apiGet, ApiError } from '../../api/client';
 import { formatDayShort, formatTime, useI18n, weekdayName } from '../../i18n';
+import { useApp } from '../../state/app';
 import { Gate, LangChip, SignOutButton, ThemeChip, useL } from '../staff/common';
 
 const PROJECT_START = '2026-09-25';
@@ -44,6 +45,8 @@ function Bars({ data, unit = '', label }: { data: Array<[string, number]>; unit?
 }
 
 function DashboardView() {
+  // The free meal is off while FEATURE_LOYALTY is: no cost to report.
+  const loyalty = !!useApp().status.data?.features.loyalty;
   const L = useL();
   const { lang } = useI18n();
   const today = localDate();
@@ -103,7 +106,7 @@ function DashboardView() {
                   {L(' și au raportat de ', ' and reported their wait ')}<strong>{h.waitReports} {L('ori cât au așteptat', 'times')}</strong>.
                   {busiest && L(` Vârful e de obicei la ${busiest.hour}`, ` The peak is usually at ${busiest.hour}`)}
                   {quietDay && L(`, iar ${quietDay} e cea mai liniștită zi`, `, and ${quietDay} is the quietest day`)}.
-                  {L(' Mai jos, ce spun studenții și cât a costat fidelitatea.', ' Below: what students say, and what loyalty cost.')}
+                  {loyalty ? L(' Mai jos, ce spun studenții și cât a costat fidelitatea.', ' Below: what students say, and what loyalty cost.') : L(' Mai jos, ce spun studenții.', ' Below: what students say.')}
                 </>
               )}
             </p>
@@ -114,8 +117,8 @@ function DashboardView() {
                 note={L(`din ${h.waitReports} raportări`, `from ${h.waitReports} reports`)} />
               <Metric label={L('Studenți care spun că aplicația i-a adus', 'Students who say the app brought them')} value={pct !== null ? String(pct) : '—'} unit={pct !== null ? '%' : undefined}
                 note={L(`din ${h.cameBecauseOfApp.answered} răspunsuri`, `from ${h.cameBecauseOfApp.answered} answers`)} tone="var(--crowd-low-text)" />
-              <Metric label={L('Mese gratuite acordate', 'Free meals given')} value={String(h.freeMealsGiven)}
-                note={L(`cost estimat ${formatLei(h.freeMealsCostBani, lang)} lei`, `estimated cost ${formatLei(h.freeMealsCostBani, lang)} lei`)} tone="var(--crowd-moderate-text)" />
+              {loyalty && <Metric label={L('Mese gratuite acordate', 'Free meals given')} value={String(h.freeMealsGiven)}
+                note={L(`cost estimat ${formatLei(h.freeMealsCostBani, lang)} lei`, `estimated cost ${formatLei(h.freeMealsCostBani, lang)} lei`)} tone="var(--crowd-moderate-text)" />}
             </div>
 
             <div className="ub-dash-grid">
@@ -161,14 +164,14 @@ function DashboardView() {
                   </>
                 )}
               </section>
-              <section className="ub-panel">
+              {loyalty && <section className="ub-panel">
                 <h2>{L('Fidelitate', 'Loyalty')}</h2>
                 <div className="ub-dish-line"><span>{L('Studenți înscriși (cel puțin o vizită)', 'Students enrolled (at least one visit)')}</span><span className="ub-numeric">{data.loyalty.enrolled}</span></div>
                 <div className="ub-dish-line"><span>{L('Buline acordate', 'Dots given')}</span><span className="ub-numeric">{data.loyalty.visits}</span></div>
                 <div className="ub-dish-line"><span>{L('Mese gratuite câștigate / acordate', 'Free meals earned / given')}</span><span className="ub-numeric">{data.loyalty.rewardsIssued} / {data.loyalty.rewardsRedeemed}</span></div>
                 <div className="ub-dish-line"><span>{L('Cost estimat', 'Estimated cost')}</span><span className="ub-numeric">{formatLei(data.loyalty.costBani, lang)} lei</span></div>
                 <p className="ub-note">{L('Costul folosește valoarea unei mese stabilite de echipă (implicit 10 lei). Nicio masă nu se acordă fără cod valid.', 'The cost uses the meal value set by the team (10 lei by default). No meal is given without a valid code.')}</p>
-              </section>
+              </section>}
               {data.waste.length > 0 && (
                 <section className="ub-panel ub-panel--wide">
                   <h2>{L('Porții pregătite și cerere înregistrată', 'Portions prepared and recorded demand')}</h2>

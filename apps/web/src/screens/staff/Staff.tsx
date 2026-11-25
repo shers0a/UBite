@@ -5,7 +5,7 @@ import React from 'react';
 import { Wallpaper } from '../../components/Chrome';
 import { useLocation } from 'wouter';
 import type {
-  Allergen, AnnouncementInput, Category, DietTag, MenuDay, PublishMenuResponse, RedeemResponse, StaffDish, StaffMenuDraft,
+  Allergen, AnnouncementInput, Category, DietTag, MenuDay, MenuImportResponse, PublishMenuResponse, RedeemResponse, StaffDish, StaffMenuDraft,
 } from '@ubite/shared';
 import {
   ALLERGENS, ALLERGEN_LABELS, CATEGORIES, CATEGORY_GROUPS, CATEGORY_LABELS, DIET_TAGS, DIET_TAG_LABELS,
@@ -29,11 +29,14 @@ function StaffTools() {
   const L = useL();
   const { lang } = useI18n();
   const [location, navigate] = useLocation();
+  const { status } = useApp();
   const today = localDate();
+  // The free meal is off while FEATURE_LOYALTY is (the API answers 404): no code to redeem.
+  const loyalty = !!status.data?.features.loyalty;
   const tabs: Array<[string, string]> = [
     ['/staff', L('Meniul de azi', "Today's menu")],
     ['/staff/announcements', L('Anunțuri', 'Announcements')],
-    ['/staff/redeem', L('Cod de recompensă', 'Reward code')],
+    ...(loyalty ? [['/staff/redeem', L('Cod de recompensă', 'Reward code')] as [string, string]] : []),
     ['/staff/catalogue', L('Catalog', 'Catalogue')],
   ];
   return (
@@ -53,7 +56,7 @@ function StaffTools() {
       </nav>
       <main id="main">
         {location === '/staff/announcements' ? <Announcements />
-          : location === '/staff/redeem' ? <Redeem />
+          : location === '/staff/redeem' && loyalty ? <Redeem />
             : location === '/staff/catalogue' ? <Catalogue />
               : <MenuEditor />}
       </main>
@@ -78,9 +81,12 @@ function MenuEditor() {
   const [draft, setDraft] = React.useState<StaffMenuDraft | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [sel, setSel] = React.useState<Record<string, Sel>>({});
-  const [source, setSource] = React.useState<'current' | 'previous' | 'none'>('none');
+  const [source, setSource] = React.useState<'current' | 'previous' | 'excel' | 'none'>('none');
   const [busy, setBusy] = React.useState(false);
   const [adding, setAdding] = React.useState(false);
+  const [imported, setImported] = React.useState<{ created: string[]; skipped: string[] } | null>(null);
+  const [importing, setImporting] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const load = React.useCallback(async () => {
     try {
@@ -120,18 +126,49 @@ function MenuEditor() {
   const invalid = chosen.filter((d) => parseLei(sel[d.id].price) === null || (sel[d.id].portions !== '' && !/^\d{1,5}$/.test(sel[d.id].portions)));
   const name = (d: StaffDish) => (lang === 'ro' ? d.nameRo : d.nameEn || d.nameRo);
 
+  const isToday = draft.date === localDate();
+  const dayName = formatDayLong(draft.date, lang);
+
+  /** The menu as it arrives by email: its dishes ticked with their prices, for the sheet's day. */
+  const importSheet = async (file: File) => {
+    setImporting(true);
+    try {
+      const form = new FormData();
+      form.append('menu', file);
+      const r = await apiSend<MenuImportResponse>('POST', '/staff/menu/import', form);
+      setDraft({ ...draft, date: r.date, current: null, catalogue: r.catalogue });
+      setSel(Object.fromEntries(r.items.map((i) => [i.dishId, { price: formatLei(i.priceBani, lang), portions: '' }])));
+      setSource('excel');
+      setImported({ created: r.created, skipped: r.skipped });
+    } catch (e) {
+      const err = e as ApiError;
+      const day = err.body?.date ? formatDayLong(err.body.date, lang) : null;
+      toast(err.offline ? L('Fără internet. Încarcă fișierul când revine semnalul.', 'No internet. Upload the file when the signal is back.')
+        : err.code === 'menu_unreadable' ? L('Fișierul nu e meniul cantinei. Alege Excelul primit pe email (.xlsx).', 'This is not the canteen menu. Choose the Excel file from the email (.xlsx).')
+          : err.code === 'date_out_of_range' ? L(`Excelul e pentru ${day ?? 'altă zi'}. Se publică meniuri de ieri până la o săptămână înainte.`, `The file is for ${day ?? 'another day'}. Menus go out from yesterday to a week ahead.`)
+            : err.code === 'too_large' ? L('Fișierul e prea mare pentru un meniu.', 'The file is too large for a menu.')
+              : L('Nu am putut citi fișierul. Încearcă din nou.', 'We could not read the file. Try again.'), { tone: 'danger', icon: 'triangle-alert' });
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
   const publish = async () => {
     if (!chosen.length || invalid.length) return;
     setBusy(true);
     try {
       const r = await apiSend<PublishMenuResponse>('POST', '/staff/menu', {
+        date: draft.date,
         items: chosen.map((d) => ({ dishId: d.id, priceBani: parseLei(sel[d.id].price)!, portionsPrepared: sel[d.id].portions ? Number(sel[d.id].portions) : null })),
       });
       setDraft({ ...draft, current: r.menu });
       setSource('current');
-      toast(r.notified > 0
-        ? L(`Meniul de azi e publicat. ${r.notified} studenți primesc o notificare.`, `Today's menu is published. ${r.notified} students get a notification.`)
-        : L('Meniul de azi e publicat. Studenții îl văd acum.', "Today's menu is published. Students can see it now."), { tone: 'success', icon: 'circle-check' });
+      setImported(null);
+      toast(!isToday ? L(`Meniul pentru ${dayName} e publicat.`, `The menu for ${dayName} is published.`)
+        : r.notified > 0
+          ? L(`Meniul de azi e publicat. ${r.notified} studenți primesc o notificare.`, `Today's menu is published. ${r.notified} students get a notification.`)
+          : L('Meniul de azi e publicat. Studenții îl văd acum.', "Today's menu is published. Students can see it now."), { tone: 'success', icon: 'circle-check' });
     } catch (e) {
       toast((e as ApiError).offline ? L('Fără internet. Încearcă din nou când revine semnalul.', 'No internet. Try again when the signal is back.') : L('Nu am putut publica. Încearcă din nou.', 'We could not publish. Try again.'), { tone: 'danger', icon: 'triangle-alert' });
     } finally { setBusy(false); }
@@ -142,15 +179,38 @@ function MenuEditor() {
     ? <Badge tone="success" icon="check">{L(`publicat la ${formatTime(draft.current.publishedAt, lang)}`, `published at ${formatTime(draft.current.publishedAt, lang)}`)}</Badge>
     : source === 'previous' && draft.previous
       ? <Badge tone="accent" icon="refresh-cw">{draft.previous.serviceDate === yesterday ? L('preluat din meniul de ieri', "carried over from yesterday's menu") : L(`preluat din meniul din ${formatDayLong(draft.previous.serviceDate, lang)}`, `carried over from ${formatDayLong(draft.previous.serviceDate, lang)}`)}</Badge>
-      : null;
+      : source === 'excel' ? <Badge tone="accent" icon="info">{L('din Excel, nepublicat', 'from the Excel file, not published')}</Badge>
+        : null;
 
   return (
     <div className="ub-staff-grid">
       <section aria-labelledby="today-title">
         <div className="ub-staff-section-title">
-          <h2 id="today-title">{L('Meniul de azi', "Today's menu")}</h2>
+          <h2 id="today-title">{isToday ? L('Meniul de azi', "Today's menu") : L(`Meniul pentru ${dayName}`, `The menu for ${dayName}`)}</h2>
           {sourceBadge}
         </div>
+
+        <div className="ub-staff-import">
+          <input ref={fileRef} type="file" className="ub-visually-hidden" tabIndex={-1} aria-hidden="true"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) importSheet(f); }} />
+          <Button variant="secondary" loading={importing} onClick={() => fileRef.current?.click()}>
+            {L('Încarcă meniul din Excel', 'Upload the menu from Excel')}
+          </Button>
+          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+            {L('Fișierul primit pe email. Felurile se bifează cu prețurile din el. Le verifici și apeși Publică.', 'The file from the email. Its dishes are ticked with its prices. Check them and press Publish.')}
+          </span>
+        </div>
+        {imported && (imported.created.length > 0 || imported.skipped.length > 0) && (
+          <div className="ub-note" role="status" style={{ marginBottom: 'var(--space-4)' }}>
+            {imported.created.length > 0 && (
+              <p>{L(`Feluri noi, adăugate în catalog (verifică-le categoria în Catalog): ${imported.created.join(', ')}.`, `New dishes added to the catalogue (check their category in the Catalogue): ${imported.created.join(', ')}.`)}</p>
+            )}
+            {imported.skipped.length > 0 && (
+              <p>{L(`Fără preț în Excel, deci nebifate: ${imported.skipped.join(', ')}.`, `No price in the file, so not ticked: ${imported.skipped.join(', ')}.`)}</p>
+            )}
+          </div>
+        )}
 
         {chosen.length === 0 ? (
           <EmptyState icon="utensils" title={L('Niciun fel selectat', 'No dish selected')}

@@ -14,7 +14,7 @@ import { GlassFloat } from './Glass';
 
 export function BottomNav() {
   const { t } = useI18n();
-  const { status, requireSignIn, me, loyalty: card } = useApp();
+  const { status, requireSignIn, me, loyalty: card, openSheet } = useApp();
   const [location, navigate] = useLocation();
   // A free meal waiting shows as a badge on the installed app's icon, like an unread message.
   const rewards = card.data?.rewards.length ?? 0;
@@ -24,11 +24,14 @@ export function BottomNav() {
   }, [rewards]);
   // Folds to its icons while the student scrolls down, and opens again on the way up (Revolut).
   const folded = useScrollFold();
-  // Loyalty belongs to students; the canteen and DCCAS accounts never see a card.
-  const loyalty = (status.data?.features.loyalty ?? true) && (!me || me.role === 'student');
+  // Loyalty belongs to students; the canteen and DCCAS accounts never see a card. Off (FEATURE_LOYALTY)
+  // until the server says otherwise, so a slow status never flashes its tabs.
+  const loyalty = !!status.data?.features.loyalty && (!me || me.role === 'student');
   const items: Array<[string, string, string, boolean]> = [
     ['/', 'utensils', t('nav.menu'), false],
     ...(loyalty ? [['/card', 'star', t('nav.card'), true], ['/visit', 'camera', t('nav.visit'), true]] as Array<[string, string, string, boolean]> : []),
+    // The same four questions as the home page's feedback link, from anywhere.
+    ['#feedback', 'face-slightly-smiling', t('nav.feedback'), false],
     ['/account', 'settings', t('nav.account'), false],
   ];
   return (
@@ -43,7 +46,8 @@ export function BottomNav() {
               onClick={(e) => {
                 if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                 e.preventDefault();
-                if (needsAccount) requireSignIn('loyalty', () => navigate(path));
+                if (path === '#feedback') openSheet('feedback');
+                else if (needsAccount) requireSignIn('loyalty', () => navigate(path));
                 else navigate(path);
               }}>
               <Icon name={icon} size={20} />
