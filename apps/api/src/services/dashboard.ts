@@ -69,12 +69,13 @@ export async function summary(ctx: Ctx, from: string, to: string): Promise<Dashb
   const best = [...sorted].sort((a, b) => b.average - a.average || b.count - a.count).slice(0, 5);
   const worst = [...sorted].sort((a, b) => a.average - b.average || b.count - a.count).filter((r) => r.average < 3.5).slice(0, 5);
 
-  const missing = await db.query<{ text: string; at: Date }>(
-    `SELECT missing_feature AS text, submitted_at AS at FROM feedback
-     WHERE missing_feature IS NOT NULL AND length(trim(missing_feature)) > 0
+  const said = (column: 'missing_feature' | 'food_comment') => db.query<{ text: string; at: Date }>(
+    `SELECT ${column} AS text, submitted_at AS at FROM feedback
+     WHERE ${column} IS NOT NULL AND length(trim(${column})) > 0
        AND ${localDay('submitted_at')} >= $1 AND ${localDay('submitted_at')} < $2
      ORDER BY submitted_at DESC LIMIT 30`, range,
   );
+  const [missing, food] = await Promise.all([said('missing_feature'), said('food_comment')]);
 
   // F17: only days and dishes where staff entered portions — demand shown as recorded visits
   // that named the dish, never an invented "sold" figure.
@@ -116,6 +117,7 @@ export async function summary(ctx: Ctx, from: string, to: string): Promise<Dashb
     feedback: {
       count: f.n, foodAverage: round1(f.food), appAverage: round1(f.app),
       bySource: { app: f.app_src, kiosk: f.kiosk_src },
+      food: food.rows.map((m) => ({ text: m.text, at: m.at.toISOString() })),
       missing: missing.rows.map((m) => ({ text: m.text, at: m.at.toISOString() })),
     },
     loyalty: { enrolled: l.enrolled, visits: l.visits, rewardsIssued: l.issued, rewardsRedeemed: l.redeemed, costBani: l.redeemed * cfg.freeMealValueBani },
@@ -142,7 +144,7 @@ export const EXPORTS: Record<string, { title: string; sql: string }> = {
   feedback: {
     title: 'Feedback (R11)',
     sql: `SELECT to_char(submitted_at AT TIME ZONE ${TZ}, 'YYYY-MM-DD HH24:MI') AS trimis, source AS sursa, food_rating AS nota_mancare,
-            app_rating AS nota_aplicatie, came_because_of_app AS venit_datorita_aplicatiei, missing_feature AS ce_lipseste
+            food_comment AS despre_mancare, app_rating AS nota_aplicatie, came_because_of_app AS venit_datorita_aplicatiei, missing_feature AS ce_lipseste
           FROM feedback WHERE ${localDay('submitted_at')} >= $1 AND ${localDay('submitted_at')} < $2 ORDER BY submitted_at`,
   },
   estimates: {

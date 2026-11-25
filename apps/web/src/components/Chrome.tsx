@@ -30,7 +30,7 @@ export function BottomNav() {
   const items: Array<[string, string, string, boolean]> = [
     ['/', 'utensils', t('nav.menu'), false],
     ...(loyalty ? [['/card', 'star', t('nav.card'), true], ['/visit', 'camera', t('nav.visit'), true]] as Array<[string, string, string, boolean]> : []),
-    // The same four questions as the home page's feedback link, from anywhere.
+    // The same questions as the home page's feedback link, from anywhere.
     ['#feedback', 'face-slightly-smiling', t('nav.feedback'), false],
     ['/account', 'settings', t('nav.account'), false],
   ];

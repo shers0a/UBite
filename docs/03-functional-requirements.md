@@ -68,8 +68,9 @@ but first to be cut under time pressure.
 - Submitting takes one interaction and returns the user to where they were
 
 ### F5 · Feedback — P0
-- Four questions: satisfaction with food (1–5), usefulness of the app (1–5), what feature is
-  missing (free text), and whether the app influenced the decision to come
+- Five questions: satisfaction with food (1–5), what was good or not about the food (free text,
+  asked by the canteen on 25 Nov 2026), usefulness of the app (1–5), what feature is missing
+  (free text), and whether the app influenced the decision to come
 - Offered after several visits, not on first use
 - May be submitted anonymously
 - Completable in under thirty seconds

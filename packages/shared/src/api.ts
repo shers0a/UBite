@@ -225,6 +225,7 @@ export interface HistoryResponse {
 
 export interface FeedbackRequest {
   foodRating?: number | null;
+  foodComment?: string | null;
   appRating?: number | null;
   missingFeature?: string | null;
   cameBecauseOfApp?: boolean | null;
@@ -317,6 +318,7 @@ export interface DashboardSummary {
     foodAverage: number | null;
     appAverage: number | null;
     bySource: { app: number; kiosk: number };
+    food: Array<{ text: string; at: string }>;
     missing: Array<{ text: string; at: string }>;
   };
   loyalty: { enrolled: number; visits: number; rewardsIssued: number; rewardsRedeemed: number; costBani: number };

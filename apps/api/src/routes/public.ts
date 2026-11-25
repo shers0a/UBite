@@ -128,19 +128,21 @@ export function publicRoutes(ctx: Ctx) {
     const star = z.number().int().min(1).max(5).nullable().optional();
     const body = parse(z.object({
       foodRating: star,
+      foodComment: z.string().max(1000).nullable().optional(),
       appRating: star,
       missingFeature: z.string().max(1000).nullable().optional(),
       cameBecauseOfApp: z.boolean().nullable().optional(),
       source: z.enum(['app', 'kiosk']).default('app'),
     }), req.body);
     const text = body.missingFeature?.trim() || null;
-    if (body.foodRating == null && body.appRating == null && !text && body.cameBecauseOfApp == null) {
+    const comment = body.foodComment?.trim() || null;
+    if (body.foodRating == null && !comment && body.appRating == null && !text && body.cameBecauseOfApp == null) {
       throw new HttpError(422, 'empty_feedback');
     }
     await ctx.db.query(
-      `INSERT INTO feedback (user_id, food_rating, app_rating, missing_feature, came_because_of_app, source, submitted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [req.user?.id ?? null, body.foodRating ?? null, body.appRating ?? null, text, body.cameBecauseOfApp ?? null, body.source, ctx.now()],
+      `INSERT INTO feedback (user_id, food_rating, food_comment, app_rating, missing_feature, came_because_of_app, source, submitted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [req.user?.id ?? null, body.foodRating ?? null, comment, body.appRating ?? null, text, body.cameBecauseOfApp ?? null, body.source, ctx.now()],
     );
     res.status(201).json({ ok: true });
   });

@@ -155,6 +155,14 @@ function DashboardView() {
                 <div className="ub-dish-line"><span>{L('Mulțumire față de mâncare', 'Satisfaction with the food')}</span><span className="ub-numeric">{data.feedback.foodAverage !== null ? `${fmt(data.feedback.foodAverage, lang)} / 5` : '—'}</span></div>
                 <div className="ub-dish-line"><span>{L('Utilitatea aplicației', 'Usefulness of the app')}</span><span className="ub-numeric">{data.feedback.appAverage !== null ? `${fmt(data.feedback.appAverage, lang)} / 5` : '—'}</span></div>
                 <div className="ub-dish-line"><span>{L('Răspunsuri', 'Answers')}</span><span className="ub-numeric">{data.feedback.count} ({L('aplicație', 'app')} {data.feedback.bySource.app} · {L('tabletă', 'tablet')} {data.feedback.bySource.kiosk})</span></div>
+                {data.feedback.food.length > 0 && (
+                  <>
+                    <h3 className="ub-eyebrow" style={{ margin: '14px 0 6px' }}>{L('Despre mâncare', 'About the food')}</h3>
+                    <ul style={{ margin: 0, paddingLeft: 'var(--space-5)', color: 'var(--text-secondary)' }}>
+                      {data.feedback.food.slice(0, 8).map((m, i) => <li key={i}>{m.text}</li>)}
+                    </ul>
+                  </>
+                )}
                 {data.feedback.missing.length > 0 && (
                   <>
                     <h3 className="ub-eyebrow" style={{ margin: '14px 0 6px' }}>{L('Ce le lipsește', 'What they miss')}</h3>
