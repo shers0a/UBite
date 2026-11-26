@@ -226,6 +226,10 @@ describe('camera live view (docs/11, the live-view exception)', () => {
     await d.agent.post('/api/admin/camera/live').set(H).expect(403);
     await d.agent.get('/api/admin/camera/live').expect(403);
     await request(app).post('/api/vision/live').set('Content-Type', LIVE).send(await frame()).expect(401);
+    // Cross-site requests cannot set the custom header: opening and closing need it (CSRF guard in app.ts).
+    const { agent } = await admin();
+    expect((await agent.post('/api/admin/camera/live').expect(403)).body.error).toBe('missing_header');
+    expect((await agent.delete('/api/admin/camera/live').expect(403)).body.error).toBe('missing_header');
   });
 
   it('asks for frames only while a view is open, and keeps none when nobody watches', async () => {
