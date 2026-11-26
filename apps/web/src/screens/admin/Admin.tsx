@@ -1,5 +1,6 @@
 /* tech_admin (docs/10): configuration without a deploy — crowding thresholds, the camera zone,
-   the opening schedule and its exceptions, the non-student accounts, and system health. */
+   the opening schedule and its exceptions, the non-student accounts, system health, and the camera
+   live view (docs/11). */
 import React from 'react';
 import { Wallpaper } from '../../components/Chrome';
 import type { AdminUser, CrowdingConfig, Role, ScheduleDay, ScheduleException } from '@ubite/shared';
@@ -9,6 +10,7 @@ import { apiGet, apiSend } from '../../api/client';
 import { formatTime, useI18n, weekdayName } from '../../i18n';
 import { useApp } from '../../state/app';
 import { Gate, LangChip, SignOutButton, ThemeChip, useL } from '../staff/common';
+import { CameraLive } from './CameraLive';
 
 export function Admin() {
   return <Gate roles={['tech_admin']}><AdminView /></Gate>;
@@ -26,6 +28,7 @@ function AdminView() {
       </header>
       <main id="main" style={{ display: 'grid', gap: 'var(--space-5)' }}>
         <Health />
+        <CameraLive />
         <div className="ub-staff-grid">
           <CrowdingSettings />
           <ScheduleSettings />

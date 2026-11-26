@@ -344,3 +344,35 @@ export interface AdminUser {
   role: Role;
   createdAt: string;
 }
+
+/** A detection as the camera live view draws it: the box in 0–1 image coordinates, and the kind of zone it
+ *  counted in (null: seen, not counted). */
+export interface LiveDetection {
+  box: [number, number, number, number];
+  score: number;
+  kind: 'queue' | 'hall' | null;
+}
+
+/** The frame the counter just counted, held in the API's memory for a few seconds (docs/11). */
+export interface LiveFrame {
+  camera: string;
+  observedAt: string;
+  width: number;
+  height: number;
+  /** The queue polygon in 0–1 image coordinates (one-camera counting), or null (zones on the floor plan). */
+  zone: Array<[number, number]> | null;
+  personCount: number | null;
+  detections: LiveDetection[];
+  /** A data: URL; never stored anywhere. */
+  image: string;
+}
+
+export interface LiveViewState {
+  open: boolean;
+  /** When the view closes itself (it lasts five minutes). */
+  closesAt: string | null;
+  everySeconds: number;
+  frames: LiveFrame[];
+  /** Who opened the view lately, and when: the record docs/11 asks for, never what was seen. */
+  recent: Array<{ email: string | null; openedAt: string }>;
+}

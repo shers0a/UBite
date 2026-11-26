@@ -1,7 +1,7 @@
 /* DCCAS (read-only) and tech-admin endpoints, plus the vision service's two endpoints. */
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { z } from 'zod';
-import type { AdminUser, CrowdingConfig } from '@ubite/shared';
+import type { AdminUser, CrowdingConfig, LiveViewState } from '@ubite/shared';
 import { addDays, localDate } from '@ubite/shared';
 import type { Ctx } from '../context';
 import { HttpError } from '../context';
@@ -11,6 +11,7 @@ import { getCrowdingConfig, setCrowdingConfig } from '../services/config-store';
 import { invalidateSchedule, loadSchedule } from '../services/schedule';
 import { recordVisit } from '../services/loyalty';
 import { runFusion } from '../services/crowding';
+import { liveView } from '../services/live-view';
 
 function rangeFrom(ctx: Ctx, q: any) {
   const today = localDate(ctx.now());
@@ -156,8 +157,43 @@ export function adminRoutes(ctx: Ctx) {
     });
   });
 
+  // The camera live view (docs/11, the live-view exception): frames in memory only, five minutes at a time,
+  // every opening recorded.
+  const liveState = async (userId: string): Promise<LiveViewState> => {
+    const polled = liveView(ctx).poll(userId);
+    const recent = await ctx.db.query<{ email: string | null; opened_at: Date }>(
+      `SELECT u.email::text AS email, v.opened_at FROM camera_live_views v LEFT JOIN users u ON u.id = v.user_id
+       ORDER BY v.opened_at DESC LIMIT 5`,
+    );
+    return {
+      open: polled !== null,
+      closesAt: polled ? new Date(polled.closesAt).toISOString() : null,
+      everySeconds: 5,
+      frames: polled?.frames ?? [],
+      recent: recent.rows.map((x) => ({ email: x.email, openedAt: x.opened_at.toISOString() })),
+    };
+  };
+
+  r.post('/admin/camera/live', async (req, res) => {
+    liveView(ctx).open(req.user!.id);
+    await ctx.db.query('INSERT INTO camera_live_views (user_id, opened_at) VALUES ($1, $2)', [req.user!.id, ctx.now()]);
+    res.set('Cache-Control', 'no-store').json(await liveState(req.user!.id));
+  });
+
+  r.get('/admin/camera/live', async (req, res) => {
+    res.set('Cache-Control', 'no-store').json(await liveState(req.user!.id));
+  });
+
+  r.delete('/admin/camera/live', (req, res) => {
+    liveView(ctx).close(req.user!.id);
+    res.status(204).end();
+  });
+
   return r;
 }
+
+/** The media type of a live-view frame (services/vision bench.py `Live`). */
+export const LIVE_FRAME_TYPE = 'application/vnd.ubite.live+json';
 
 /** services/vision posts counts with a rotatable bearer token; it holds no database credentials. */
 export function visionRoutes(ctx: Ctx) {
@@ -191,7 +227,37 @@ export function visionRoutes(ctx: Ctx) {
       );
       stored++;
     }
-    res.status(202).json({ stored });
+    // `live`: a tech admin has the live view open, so the service sends the frame it just counted.
+    res.status(202).json({ stored, live: liveView(ctx).watching() });
+  });
+
+  const unit = z.number().min(0).max(1);
+  const liveFrame = z.object({
+    camera: z.string().trim().min(1).max(40),
+    observed_at: z.string().datetime({ offset: true }),
+    width: z.number().int().min(1).max(10_000),
+    height: z.number().int().min(1).max(10_000),
+    zone: z.array(z.tuple([unit, unit])).min(3).max(64).nullable().optional(),
+    person_count: z.number().int().min(0).max(500).nullable().optional(),
+    detections: z.array(z.object({
+      box: z.tuple([unit, unit, unit, unit]),
+      score: unit,
+      kind: z.enum(['queue', 'hall']).nullable(),
+    })).max(500),
+    jpeg: z.string().min(4).max(2_500_000).regex(/^[A-Za-z0-9+/]+={0,2}$/),
+  });
+
+  // The frame for an open live view. Kept in memory for seconds (services/live-view), never stored or logged;
+  // dropped at once when nobody is watching. A 1280 px JPEG in base64 is larger than the API's general JSON
+  // limit, so it comes with its own media type, which only this route parses.
+  r.post('/vision/live', express.json({ limit: '3mb', type: [LIVE_FRAME_TYPE] }), (req, res) => {
+    const f = parse(liveFrame, req.body);
+    if (!f.jpeg.startsWith('/9j/')) throw new HttpError(422, 'not_a_jpeg');
+    const kept = liveView(ctx).put({
+      camera: f.camera, observedAt: f.observed_at, width: f.width, height: f.height, zone: f.zone ?? null,
+      personCount: f.person_count ?? null, detections: f.detections, jpeg: f.jpeg,
+    });
+    res.status(kept ? 202 : 204).end();
   });
 
   r.get('/vision/config', async (_req, res) => {

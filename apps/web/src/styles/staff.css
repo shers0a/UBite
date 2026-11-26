@@ -32,6 +32,30 @@
 .ub-result[data-tone="warning"] { background: var(--status-warning-quiet); color: var(--status-warning-text); }
 .ub-scanner { position: relative; border-radius: var(--radius-md); overflow: hidden; background: var(--surface-inverse); aspect-ratio: 4 / 3; max-width: 420px; }
 .ub-scanner video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Camera live view (admin, docs/11): the counted frame with its boxes. The line style tells counted from
+   not counted, so colour is never the only cue. */
+.ub-live-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-4); }
+.ub-live-frame { margin: 0; display: grid; gap: var(--space-2); min-width: 0; }
+.ub-live-caption { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-base); }
+.ub-live-image { position: relative; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-inverse); }
+.ub-live-image img { display: block; width: 100%; height: auto; }
+.ub-live-image svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ub-live-zone { fill: var(--accent); fill-opacity: .14; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ub-live-box rect { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.ub-live-box.is-queue rect { stroke: var(--crowd-low-fill); }
+.ub-live-box.is-hall rect { stroke: var(--accent); }
+.ub-live-box.is-out rect { stroke: var(--crowd-moderate-fill); stroke-dasharray: 6 4; }
+.ub-live-box circle { stroke: var(--surface-inverse); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.ub-live-box.is-queue circle { fill: var(--crowd-low-fill); }
+.ub-live-box.is-hall circle { fill: var(--accent); }
+.ub-live-box.is-out circle { fill: var(--crowd-moderate-fill); }
+.ub-live-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--text-sm); color: var(--text-secondary); }
+.ub-live-legend li { display: flex; align-items: center; gap: var(--space-2); }
+.ub-live-key { width: 22px; height: 14px; border-radius: 2px; flex: none; border: 2.5px solid var(--crowd-low-fill); }
+.ub-live-key.is-hall { border-color: var(--accent); }
+.ub-live-key.is-out { border: 2.5px dashed var(--crowd-moderate-fill); }
+.ub-live-key.is-zone { border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .ub-gate { max-width: 480px; margin: 12vh auto 0; padding: var(--space-5); }
 
 /* DCCAS dashboard */

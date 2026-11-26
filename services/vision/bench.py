@@ -13,7 +13,9 @@
 times a whole site (every camera's full frame and tiles), which is what the service does every 5 s.
 `watch` (one camera, the admin's image polygon) and `site` (several calibrated cameras, zones on the
 floor plan) never write a frame anywhere: they print one JSON line per observation, and with --post
-send it to the API, exactly what the production service does.
+send it to the API, exactly what the production service does. While a tech admin has the live view
+open in the admin screen, the API says so in its answer, and the frame just counted goes to it too,
+in memory only (`Live`, docs/11).
 
 A source is an RTSP stream, a video file, a webcam index, or an http(s) still URL (a camera's or NVR's
 snapshot, e.g. Hikvision ISAPI `/ISAPI/Streaming/channels/<n>01/picture`, user:password in the URL). A still
@@ -43,7 +45,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-from counter import Detector, Site, Zone, count, count_site
+from counter import Detection, Detector, Site, Zone, count, count_site
 
 
 def machine() -> dict:
@@ -126,10 +128,68 @@ def fetch_zone(url: str) -> list | None:
         return None
 
 
+def iso(t: float) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
+
+
+def camera_name(source: str) -> str:
+    """The live view's label for a camera: its NVR channel, never the URL (which carries the password)."""
+    m = re.search(r"channels/(\d+)", source)
+    return f"Canal {m.group(1)}" if m else "Camera"
+
+
+def drawn(d: Detection, w: int, h: int, kind: str | None) -> dict:
+    """A detection as the live view draws it: the box in 0–1 image coordinates, and the kind of zone it counted
+    in (None: not counted)."""
+    x1, y1, x2, y2 = d.box
+    return {"box": [round(min(max(v / s, 0.0), 1.0), 4) for v, s in ((x1, w), (y1, h), (x2, w), (y2, h))],
+            "score": round(d.score, 3), "kind": kind}
+
+
+class Live:
+    """The live view a tech admin opens in the admin screen to check what the counter sees (docs/11, the
+    live-view exception). The API answers every observation with whether a view is open; only then does the
+    frame just counted go to it, once, scaled down and JPEG-encoded in memory, with its detections. Nothing is
+    written to disk, the camera URL never leaves, and while nobody watches nothing is sent at all."""
+
+    WIDTH = 1280
+    QUALITY = 70
+
+    def __init__(self, url: str | None):
+        self.url = url
+        self.wanted = False
+
+    def heard(self, answer: dict | None) -> None:
+        self.wanted = bool(self.url and isinstance(answer, dict) and answer.get("live"))
+
+    def send(self, camera: str, frame: np.ndarray, at: float, detections: list[dict], zone: list | None = None,
+             person_count: int | None = None) -> None:
+        if not self.wanted:
+            return
+        h, w = frame.shape[:2]
+        small = cv2.resize(frame, (self.WIDTH, round(h * self.WIDTH / w)), interpolation=cv2.INTER_AREA) if w > self.WIDTH else frame
+        ok, jpeg = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, self.QUALITY])
+        if not ok:
+            return
+        # its own media type: larger than the API's general JSON limit, parsed only by the live route
+        post(self.url, {"camera": camera, "observed_at": iso(at), "width": w, "height": h, "zone": zone,
+                        "person_count": person_count, "detections": detections,
+                        "jpeg": base64.b64encode(jpeg.tobytes()).decode()}, "application/vnd.ubite.live+json")
+
+
+def live_url(args) -> str | None:
+    """Where the live view's frames go: --live, or next to --post (…/vision/observations → …/vision/live)."""
+    if args.no_live:
+        return None
+    return args.live or (args.post.rsplit("/", 1)[0] + "/live" if args.post else None)
+
+
 def cmd_watch(args) -> None:
     det = Detector(args.model, imgsz=args.imgsz[0], conf=args.conf or 0.35)
     zone = Zone("queue", json.loads(args.zone) if args.zone else (fetch_zone(args.config) if args.config else None))
     config_at = time.time()
+    live = Live(live_url(args))
+    name = args.name or camera_name(args.source)
 
     def observe(frame: np.ndarray) -> None:
         nonlocal zone, config_at
@@ -137,11 +197,15 @@ def cmd_watch(args) -> None:
         if args.config and now - config_at > 600:  # pick up a redrawn zone every ten minutes
             zone = Zone("queue", fetch_zone(args.config) or zone.points)
             config_at = now
-        obs = count(frame, det, zone)
-        obs["observed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(obs["timestamp"]))
+        seen: list = []
+        obs = count(frame, det, zone, seen)
+        obs["observed_at"] = iso(obs["timestamp"])
         print(json.dumps(obs), flush=True)
         if args.post:
-            post(args.post, obs)
+            live.heard(post(args.post, obs))
+        h, w = frame.shape[:2]
+        live.send(name, frame, obs["timestamp"], [drawn(d, w, h, "queue" if counted else None) for d, counted in seen],
+                  [list(p) for p in zone.points], obs["person_count"])
 
     if Still.handles(args.source):
         still = Still(args.source)
@@ -176,14 +240,21 @@ def cmd_watch(args) -> None:
         del frame
 
 
-def post(url: str, body) -> None:
+def post(url: str, body, content_type: str = "application/json") -> dict | None:
+    """POST as JSON with the service token; the API's JSON answer, or None."""
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
-                                 headers={"Content-Type": "application/json",
+                                 headers={"Content-Type": content_type,
                                           "Authorization": f"Bearer {os.environ.get('VISION_TOKEN', '')}"})
     try:
-        urllib.request.urlopen(req, timeout=5).close()
+        with urllib.request.urlopen(req, timeout=5) as r:
+            data = r.read()
     except OSError as e:
         print(json.dumps({"timestamp": time.time(), "error": f"post failed: {e}"}), flush=True)
+        return None
+    try:
+        return json.loads(data) if data else None
+    except ValueError:
+        return None
 
 
 class Stream:
@@ -327,17 +398,22 @@ def cmd_site(args) -> None:
     streams = [open_stream(c.id, c.source) for c in site.cameras if c.source]
     pool = ThreadPoolExecutor(max_workers=max(1, len(streams)))   # stills of all cameras at the same moment
     memory: dict = {}                     # the queue's head positions of the previous round, nothing else
+    live = Live(live_url(args))
     while True:
         tick = time.time()
         taken = pool.map(lambda s: (s.cid, s.take(max_age=2.0)), streams)
         frames = {cid: f for cid, f in taken if f is not None}
-        obs = count_site(frames, det, site, memory)
-        del frames
+        seen: dict = {}
+        obs = count_site(frames, det, site, memory, seen=seen)
         for o in obs:
-            o["observed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(o["timestamp"]))
+            o["observed_at"] = iso(o["timestamp"])
             print(json.dumps(o), flush=True)
         if args.post and obs:
-            post(args.post, obs)
+            live.heard(post(args.post, obs))
+        for cid, frame in frames.items():   # sends only while a tech admin has the live view open
+            h, w = frame.shape[:2]
+            live.send(cid, frame, tick, [drawn(d, w, h, kind) for d, kind in seen.get(cid, [])])
+        del frames, seen
         time.sleep(max(0.0, args.every - (time.time() - tick)))
 
 
@@ -363,10 +439,14 @@ def main() -> None:
     watch.add_argument("--every", type=float, default=5, help="seconds between observations")
     watch.add_argument("--post", help="API endpoint that receives each observation")
     watch.add_argument("--config", help="API endpoint with the zone polygon (GET /api/vision/config)")
+    watch.add_argument("--name", help="the camera's label in the live view (default: its NVR channel)")
     site = sub.choices["site"]
     site.add_argument("--site", required=True, help="site file: cameras, calibration, floor zones (sites/*.json)")
     site.add_argument("--every", type=float, default=5, help="seconds between observations")
     site.add_argument("--post", help="API endpoint that receives each tick's observations")
+    for s in (watch, site):
+        s.add_argument("--live", help="API endpoint for the frames a tech admin's live view asks for (default: next to --post)")
+        s.add_argument("--no-live", action="store_true", help="never send a frame, even while a live view is open")
     args = p.parse_args()
     {"speed": cmd_speed, "images": cmd_images, "watch": cmd_watch, "site": cmd_site}[args.cmd](args)
 

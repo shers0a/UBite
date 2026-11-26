@@ -154,6 +154,17 @@ the "one point per day" rule at database level, not in application code.
 **This table never contains an image.** See [07](07-crowding-module.md) and
 [11](11-privacy-gdpr-accessibility.md).
 
+### `camera_live_views` — who opened the camera live view
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | bigserial PK | |
+| `user_id` | uuid FK → users, null after erasure | The tech admin |
+| `opened_at` | timestamptz | |
+
+Who and when, never what was seen: the frames stay in the API's memory for seconds
+([11](11-privacy-gdpr-accessibility.md), the live-view exception).
+
 ### `wait_reports` — student reports
 
 | Column | Type | Notes |

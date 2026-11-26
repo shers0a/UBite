@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { appFor, lastCode, testContext, type TestCtx } from './helpers';
+import { appFor, lastCode, testContext, tinyJpeg, type TestCtx } from './helpers';
 import { runFusion } from '../src/services/crowding';
 import { csvCell } from '../src/services/dashboard';
 import { appImage, appVersion, loadConfig } from '../src/config';
@@ -201,6 +201,102 @@ describe('camera observations (docs/06 services/vision)', () => {
     const f = await runFusion(ctx);
     expect(f?.result.cameraWeight).toBeCloseTo(0.7, 6);
     expect(f?.result.waitMinutes).toBeCloseTo(4.5, 6); // prior: 0.1 × 40 + 0.5
+  });
+});
+
+describe('camera live view (docs/11, the live-view exception)', () => {
+  const V = { Authorization: 'Bearer vision-test-token' };
+  const LIVE = 'application/vnd.ubite.live+json';
+  const observe = () => request(app).post('/api/vision/observations').set(V)
+    .send({ timestamp: ctx.now().getTime() / 1000, zone: 'queue', person_count: 2 }).expect(202);
+  const frame = async (camera = 'Canal 301') => ({
+    camera, observed_at: ctx.now().toISOString(), width: 1920, height: 1080, person_count: 1,
+    zone: [[0.1, 0.2], [0.9, 0.2], [0.9, 1], [0.1, 1]],
+    detections: [{ box: [0.2, 0.3, 0.3, 0.9], score: 0.81, kind: 'queue' }, { box: [0.6, 0.1, 0.65, 0.3], score: 0.52, kind: null }],
+    jpeg: (await tinyJpeg()).toString('base64'),
+  });
+  const admin = async () => {
+    await ctx.db.query("INSERT INTO users (email, role) VALUES ('admin@unibuc.ro', 'tech_admin')");
+    return signIn('admin@unibuc.ro');
+  };
+
+  it('is for the tech team only', async () => {
+    await ctx.db.query("INSERT INTO users (email, role) VALUES ('dccas@unibuc.ro', 'dccas_admin')");
+    const d = await signIn('dccas@unibuc.ro');
+    await d.agent.post('/api/admin/camera/live').set(H).expect(403);
+    await d.agent.get('/api/admin/camera/live').expect(403);
+    await request(app).post('/api/vision/live').set('Content-Type', LIVE).send(await frame()).expect(401);
+    // Cross-site requests cannot set the custom header: opening and closing need it (CSRF guard in app.ts).
+    const { agent } = await admin();
+    expect((await agent.post('/api/admin/camera/live').expect(403)).body.error).toBe('missing_header');
+    expect((await agent.delete('/api/admin/camera/live').expect(403)).body.error).toBe('missing_header');
+  });
+
+  it('asks for frames only while a view is open, and keeps none when nobody watches', async () => {
+    expect((await observe()).body.live).toBe(false);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(204);
+
+    const { agent, me } = await admin();
+    const opened = await agent.post('/api/admin/camera/live').set(H).expect(200);
+    expect(opened.body).toMatchObject({ open: true, frames: [], everySeconds: 5 });
+    expect(opened.body.closesAt).toBe(new Date(ctx.now().getTime() + 5 * 60_000).toISOString());
+    expect(opened.body.recent).toEqual([{ email: 'admin@unibuc.ro', openedAt: ctx.now().toISOString() }]);
+    expect((await observe()).body.live).toBe(true);
+
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(202);
+    const s = await agent.get('/api/admin/camera/live').expect(200);
+    expect(s.headers['cache-control']).toBe('no-store');
+    expect(s.body.frames).toHaveLength(1);
+    expect(s.body.frames[0]).toMatchObject({ camera: 'Canal 301', personCount: 1, width: 1920, detections: [{ kind: 'queue' }, { kind: null }] });
+    expect(s.body.frames[0].image).toMatch(/^data:image\/jpeg;base64,\/9j\//);
+
+    // The record says who and when, never what was seen; no table holds an image.
+    const log = await ctx.db.query('SELECT * FROM camera_live_views');
+    expect(log.rows).toEqual([{ id: expect.anything(), user_id: me.id, opened_at: expect.any(Date) }]);
+
+    await agent.delete('/api/admin/camera/live').set(H).expect(204);
+    expect((await observe()).body.live).toBe(false);
+    expect((await agent.get('/api/admin/camera/live').expect(200)).body).toMatchObject({ open: false, frames: [] });
+  });
+
+  it('closes itself after five minutes, and forgets a frame after fifteen seconds', async () => {
+    const { agent } = await admin();
+    await agent.post('/api/admin/camera/live').set(H).expect(200);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(202);
+    const t0 = ctx.now().getTime();
+    const at = (ms: number) => ctx.setNow(new Date(t0 + ms).toISOString());
+
+    at(16_000);
+    expect((await agent.get('/api/admin/camera/live').expect(200)).body.frames).toEqual([]);
+    for (let ms = 30_000; ms < 5 * 60_000; ms += 15_000) {   // the page keeps asking
+      at(ms);
+      expect((await agent.get('/api/admin/camera/live').expect(200)).body.open).toBe(true);
+    }
+    at(5 * 60_000);
+    expect((await agent.get('/api/admin/camera/live').expect(200)).body.open).toBe(false);
+    expect((await observe()).body.live).toBe(false);
+  });
+
+  it('closes a view whose page stopped asking', async () => {
+    const { agent } = await admin();
+    await agent.post('/api/admin/camera/live').set(H).expect(200);
+    ctx.setNow(new Date(ctx.now().getTime() + 21_000).toISOString());
+    expect((await observe()).body.live).toBe(false);
+  });
+
+  it('refuses what is not a JPEG frame', async () => {
+    const { agent } = await admin();
+    await agent.post('/api/admin/camera/live').set(H).expect(200);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send({ ...(await frame()), jpeg: Buffer.from('<svg/>').toString('base64') }).expect(422);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send({ ...(await frame()), detections: [{ box: [0, 0, 2, 1], score: 0.5, kind: null }] }).expect(422);
+  });
+
+  it('takes a full-size frame, over the general 200 kB JSON limit', async () => {
+    const { agent } = await admin();
+    await agent.post('/api/admin/camera/live').set(H).expect(200);
+    const big = { ...(await frame()), jpeg: `/9j/${'A'.repeat(400_000)}` };
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(big).expect(202);
+    await request(app).post('/api/vision/observations').set(V).send(big).expect(413);   // the general limit still holds
   });
 });
 

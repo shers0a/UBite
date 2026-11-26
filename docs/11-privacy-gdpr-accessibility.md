@@ -36,8 +36,10 @@ These are architectural constraints, enforced in code.
 
 1. **No image is ever written to the database.** `crowd_observations` contains a count, never a
    frame. See [05-domain-model.md](05-domain-model.md).
-2. **Frames are discarded immediately after inference**, within the same function call.
-3. **Only `{timestamp, zone, person_count, confidence}` leaves the vision service.**
+2. **Frames are discarded immediately after inference**, within the same function call — except
+   while a tech admin has the live view open (see "The live-view exception" below).
+3. **Only `{timestamp, zone, person_count, confidence}` leaves the vision service**, with the same
+   exception.
 4. **No identification, no tracking, no re-identification** between frames or across time. A
    person is an anonymous increment.
 5. **A configured zone polygon** limits counting to the queue area, so the system processes as
@@ -59,6 +61,29 @@ the following apply:
 
 Simpler and strongly recommended: **skip it.** A pre-trained detector counts people without any
 canteen images at all, which removes this entire category of risk for no loss of capability.
+
+### The live-view exception
+
+Decided by Marius on 26 Nov 2026, after the dashboard showed queue averages that looked low for the
+lunch rush. Whether the counter sees right cannot be judged from numbers alone, so the admin screen
+(`/admin`, tech_admin only) can show the frame the counter just counted, with every box, the zone
+and which boxes counted. To keep this a check rather than a surveillance screen:
+
+- **On demand only.** The API answers every observation with `live: true|false`. The vision service
+  sends a frame only after a `true`, so while nobody watches, no image leaves it.
+- **Memory only.** The API holds the latest frame per camera in process memory for at most 15
+  seconds, and only while a view is open. It never writes one to the database, the disk or a log.
+  The vision service encodes it in memory and keeps nothing.
+- **Five minutes at a time.** A view closes itself after 5 minutes, or 20 seconds after its page
+  stops asking. Leaving the page closes it at once.
+- **Recorded.** Each opening is a row in `camera_live_views` (who, when), listed under the view.
+  What was seen is not recorded.
+- **Tech admins only.** DCCAS and canteen accounts cannot open it.
+- **The cameras the counter already uses**, at the resolution it already fetches, scaled to 1280 px
+  wide. No other NVR channel is read for it.
+
+Code: `services/vision/bench.py` (`Live`), `apps/api/src/services/live-view.ts`,
+`apps/web/src/screens/admin/CameraLive.tsx`. The DPIA should describe it next to the counter.
 
 ## Required paperwork
 
@@ -83,7 +108,8 @@ area is one of the standard triggers. Assume it is needed and be pleasantly surp
 
 | Data | Retention | Reason |
 |---|---|---|
-| Camera frames | **Zero** — never stored | Design constraint |
+| Camera frames | **Zero** — never stored; an open live view holds the latest in memory ≤15 s | Design constraint |
+| Live-view openings | Duration of pilot + reporting (who and when, no image) | Accountability for the live view |
 | Person counts | Duration of pilot + reporting period | Needed for R7, R8, R12 |
 | Receipt images | Deleted immediately after parsing | Only hash and totals persist |
 | Receipt hashes | Duration of loyalty programme | Duplicate prevention |
