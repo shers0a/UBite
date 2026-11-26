@@ -2,7 +2,8 @@
 
 CPU only, onnxruntime only: the same code runs on a laptop, on the UB HCI VM (no GPU) and on an
 edge box beside the camera. Frames live in memory and are dropped after counting; the only
-output is {timestamp, zone, person_count, confidence} (docs/07, docs/11).
+output is {timestamp, zone, person_count, confidence} (docs/07, docs/11), except while a tech admin
+has the live view open (docs/11, the live-view exception; see bench.py `Live`).
 
 Two ways to count:
 - One camera, one image polygon (`Zone`, `count`): the first setup, drawn in the admin screen.
@@ -160,10 +161,14 @@ class Zone:
         return cv2.pointPolygonTest(poly, (float(x), float(y)), False) >= 0
 
 
-def count(frame: np.ndarray, detector: Detector, zone: Zone) -> dict:
-    """One observation. The frame is not kept; only this dict leaves the function."""
+def count(frame: np.ndarray, detector: Detector, zone: Zone, seen: list | None = None) -> dict:
+    """One observation. The frame is not kept; only this dict leaves the function. With `seen`, the caller also
+    gets every detection and whether it counted, for the live view a tech admin has open (docs/11)."""
     h, w = frame.shape[:2]
-    inside = [d for d in detector.detect(frame, classes=(PERSON,)) if zone.contains(*d.feet, w, h)]
+    dets = [(d, zone.contains(*d.feet, w, h)) for d in detector.detect(frame, classes=(PERSON,))]
+    if seen is not None:
+        seen.extend(dets)
+    inside = [d for d, counted in dets if counted]
     return {
         "timestamp": time.time(),
         "zone": zone.name,
@@ -344,7 +349,7 @@ def persisting(now: list[tuple[float, float]], before: list[tuple[float, float]]
 
 
 def count_site(frames: dict[str, np.ndarray], detector: Detector, site: Site, memory: dict | None = None,
-               now: float | None = None) -> list[dict]:
+               now: float | None = None, seen: dict | None = None) -> list[dict]:
     """One observation per zone kind (queue, hall). Every camera's heads go on the floor plan; the same person
     seen by several cameras counts once (`fuse`); each person counts in the kind of zone they stand in. Where
     the cameras see only part of a kind's places, the count is scaled up by the share seen (people are
@@ -353,12 +358,16 @@ def count_site(frames: dict[str, np.ndarray], detector: Detector, site: Site, me
     left out when a camera that owns some of its zones has no frame: a missing count is better than a short
     one. With `memory` (a dict the caller keeps between rounds), the queue counts only the heads that were
     already there at the previous round (`persisting`), so people walking along the aisle with a tray do not
-    lengthen it; the memory holds the queue's head positions of one round, nothing else."""
-    return tally(*detect_site(frames, detector, site), site, memory, now)
+    lengthen it; the memory holds the queue's head positions of one round, nothing else. With `seen`, see
+    detect_site."""
+    return tally(*detect_site(frames, detector, site, seen), site, memory, now)
 
 
-def detect_site(frames: dict[str, np.ndarray], detector: Detector, site: Site) -> tuple[list[Placed], set[str]]:
-    """Every camera's heads on the floor plan, and the zone kinds a camera without a frame leaves uncounted."""
+def detect_site(frames: dict[str, np.ndarray], detector: Detector, site: Site,
+                seen: dict | None = None) -> tuple[list[Placed], set[str]]:
+    """Every camera's heads on the floor plan, and the zone kinds a camera without a frame leaves uncounted. With
+    `seen`, each camera's detections and the kind of zone each one landed in (None: not counted), for the live
+    view a tech admin has open (docs/11); before fusion, so a person two cameras see is drawn on both."""
     points: list[Placed] = []
     missing: set[str] = set()
     unit = detector.heads or {PERSON: None}
@@ -368,8 +377,11 @@ def detect_site(frames: dict[str, np.ndarray], detector: Detector, site: Site) -
             missing.update(z.kind for z in site.zones if z.camera == cam.id)
             continue
         for d in detector.detect_tiled(frame, site.full, cam.tiles, site.tile):
-            if d.cls in unit and (p := site.locate(cam, d, unit[d.cls])) is not None:
+            p = site.locate(cam, d, unit[d.cls]) if d.cls in unit else None
+            if p is not None:
                 points.append(p)
+            if seen is not None and d.cls in unit:
+                seen.setdefault(cam.id, []).append((d, p.zone.kind if p else None))
     return points, missing
 
 
