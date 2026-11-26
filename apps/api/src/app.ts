@@ -51,8 +51,6 @@ export function createApp(ctx: Ctx) {
   app.use(helmet(helmetOptions(ctx.cfg)));
   app.use(compression());
   app.use(cookieParser());
-  // A live-view frame (docs/11): a 1280 px JPEG in base64. Parsed here first, so the general limit skips it.
-  app.use('/api/vision/live', express.json({ limit: '3mb', type: ['application/json'] }));
   app.use('/api', express.json({ limit: '200kb', type: ['application/json'] }));
   app.use('/api/analytics', express.text({ limit: '2kb', type: ['text/plain'] }));
 

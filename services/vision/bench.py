@@ -171,9 +171,10 @@ class Live:
         ok, jpeg = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, self.QUALITY])
         if not ok:
             return
+        # its own media type: larger than the API's general JSON limit, parsed only by the live route
         post(self.url, {"camera": camera, "observed_at": iso(at), "width": w, "height": h, "zone": zone,
                         "person_count": person_count, "detections": detections,
-                        "jpeg": base64.b64encode(jpeg.tobytes()).decode()})
+                        "jpeg": base64.b64encode(jpeg.tobytes()).decode()}, "application/vnd.ubite.live+json")
 
 
 def live_url(args) -> str | None:
@@ -239,10 +240,10 @@ def cmd_watch(args) -> None:
         del frame
 
 
-def post(url: str, body) -> dict | None:
+def post(url: str, body, content_type: str = "application/json") -> dict | None:
     """POST as JSON with the service token; the API's JSON answer, or None."""
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
-                                 headers={"Content-Type": "application/json",
+                                 headers={"Content-Type": content_type,
                                           "Authorization": f"Bearer {os.environ.get('VISION_TOKEN', '')}"})
     try:
         with urllib.request.urlopen(req, timeout=5) as r:

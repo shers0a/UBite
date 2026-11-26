@@ -206,6 +206,7 @@ describe('camera observations (docs/06 services/vision)', () => {
 
 describe('camera live view (docs/11, the live-view exception)', () => {
   const V = { Authorization: 'Bearer vision-test-token' };
+  const LIVE = 'application/vnd.ubite.live+json';
   const observe = () => request(app).post('/api/vision/observations').set(V)
     .send({ timestamp: ctx.now().getTime() / 1000, zone: 'queue', person_count: 2 }).expect(202);
   const frame = async (camera = 'Canal 301') => ({
@@ -224,12 +225,12 @@ describe('camera live view (docs/11, the live-view exception)', () => {
     const d = await signIn('dccas@unibuc.ro');
     await d.agent.post('/api/admin/camera/live').set(H).expect(403);
     await d.agent.get('/api/admin/camera/live').expect(403);
-    await request(app).post('/api/vision/live').send(await frame()).expect(401);
+    await request(app).post('/api/vision/live').set('Content-Type', LIVE).send(await frame()).expect(401);
   });
 
   it('asks for frames only while a view is open, and keeps none when nobody watches', async () => {
     expect((await observe()).body.live).toBe(false);
-    await request(app).post('/api/vision/live').set(V).send(await frame()).expect(204);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(204);
 
     const { agent, me } = await admin();
     const opened = await agent.post('/api/admin/camera/live').set(H).expect(200);
@@ -238,7 +239,7 @@ describe('camera live view (docs/11, the live-view exception)', () => {
     expect(opened.body.recent).toEqual([{ email: 'admin@unibuc.ro', openedAt: ctx.now().toISOString() }]);
     expect((await observe()).body.live).toBe(true);
 
-    await request(app).post('/api/vision/live').set(V).send(await frame()).expect(202);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(202);
     const s = await agent.get('/api/admin/camera/live').expect(200);
     expect(s.headers['cache-control']).toBe('no-store');
     expect(s.body.frames).toHaveLength(1);
@@ -257,7 +258,7 @@ describe('camera live view (docs/11, the live-view exception)', () => {
   it('closes itself after five minutes, and forgets a frame after fifteen seconds', async () => {
     const { agent } = await admin();
     await agent.post('/api/admin/camera/live').set(H).expect(200);
-    await request(app).post('/api/vision/live').set(V).send(await frame()).expect(202);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(await frame()).expect(202);
     const t0 = ctx.now().getTime();
     const at = (ms: number) => ctx.setNow(new Date(t0 + ms).toISOString());
 
@@ -282,8 +283,16 @@ describe('camera live view (docs/11, the live-view exception)', () => {
   it('refuses what is not a JPEG frame', async () => {
     const { agent } = await admin();
     await agent.post('/api/admin/camera/live').set(H).expect(200);
-    await request(app).post('/api/vision/live').set(V).send({ ...(await frame()), jpeg: Buffer.from('<svg/>').toString('base64') }).expect(422);
-    await request(app).post('/api/vision/live').set(V).send({ ...(await frame()), detections: [{ box: [0, 0, 2, 1], score: 0.5, kind: null }] }).expect(422);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send({ ...(await frame()), jpeg: Buffer.from('<svg/>').toString('base64') }).expect(422);
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send({ ...(await frame()), detections: [{ box: [0, 0, 2, 1], score: 0.5, kind: null }] }).expect(422);
+  });
+
+  it('takes a full-size frame, over the general 200 kB JSON limit', async () => {
+    const { agent } = await admin();
+    await agent.post('/api/admin/camera/live').set(H).expect(200);
+    const big = { ...(await frame()), jpeg: `/9j/${'A'.repeat(400_000)}` };
+    await request(app).post('/api/vision/live').set(V).set('Content-Type', LIVE).send(big).expect(202);
+    await request(app).post('/api/vision/observations').set(V).send(big).expect(413);   // the general limit still holds
   });
 });
 

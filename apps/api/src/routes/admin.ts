@@ -1,5 +1,5 @@
 /* DCCAS (read-only) and tech-admin endpoints, plus the vision service's two endpoints. */
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { z } from 'zod';
 import type { AdminUser, CrowdingConfig, LiveViewState } from '@ubite/shared';
 import { addDays, localDate } from '@ubite/shared';
@@ -192,6 +192,9 @@ export function adminRoutes(ctx: Ctx) {
   return r;
 }
 
+/** The media type of a live-view frame (services/vision bench.py `Live`). */
+export const LIVE_FRAME_TYPE = 'application/vnd.ubite.live+json';
+
 /** services/vision posts counts with a rotatable bearer token; it holds no database credentials. */
 export function visionRoutes(ctx: Ctx) {
   const r = Router();
@@ -245,8 +248,9 @@ export function visionRoutes(ctx: Ctx) {
   });
 
   // The frame for an open live view. Kept in memory for seconds (services/live-view), never stored or logged;
-  // dropped at once when nobody is watching.
-  r.post('/vision/live', (req, res) => {
+  // dropped at once when nobody is watching. A 1280 px JPEG in base64 is larger than the API's general JSON
+  // limit, so it comes with its own media type, which only this route parses.
+  r.post('/vision/live', express.json({ limit: '3mb', type: [LIVE_FRAME_TYPE] }), (req, res) => {
     const f = parse(liveFrame, req.body);
     if (!f.jpeg.startsWith('/9j/')) throw new HttpError(422, 'not_a_jpeg');
     const kept = liveView(ctx).put({
